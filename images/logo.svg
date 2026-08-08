@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="260" viewBox="0 0 720 260">
+  <defs>
+    <linearGradient id="gb" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <!-- gauge / radar -->
+  <g transform="translate(120,120)">
+    <circle r="86" fill="none" stroke="#334155" stroke-width="14" opacity="0.35"/>
+    <path d="M -86 0 A 86 86 0 1 1 60.8 60.8" fill="none" stroke="url(#gb)" stroke-width="14" stroke-linecap="round"/>
+    <!-- needle -->
+    <line x1="0" y1="0" x2="52" y2="-52" stroke="#FBBF24" stroke-width="10" stroke-linecap="round"/>
+    <circle r="13" fill="#FBBF24"/>
+    <!-- antenna dot ticks -->
+    <circle cx="0" cy="-86" r="7" fill="#22D3EE"/>
+    <circle cx="-86" cy="0" r="7" fill="#8B5CF6"/>
+    <circle cx="61" cy="61" r="7" fill="#22D3EE"/>
+  </g>
+  <text x="250" y="130" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="700" fill="#8B5CF6">Telco<tspan fill="url(#gb)">AI</tspan><tspan fill="#94A3B8">Bench</tspan></text>
+  <text x="253" y="168" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="1.5" fill="#94A3B8">MEASURE YOUR TELCO AI</text>
+</svg>
