@@ -2618,7 +2618,7 @@ class ChatInterface:
                 return "", new_history, None, session_id
             
             # Process with smart completion
-            print("🤖 Calling chat completion...")
+            print("Calling chat completion...")
             response = self.client.chat_completion(
                 messages=messages,
                 temperature=temperature,
@@ -3793,7 +3793,7 @@ class ChatInterface:
         return diagnostic_text
 
     # ------------------------------------------------------------------
-    # Benchmark tab — embedded Open-Telco eval framework (benchmarks/open-telco)
+    # Benchmark tab - embedded Open-Telco eval framework (benchmarks/open-telco)
     # ------------------------------------------------------------------
     BENCHMARK_FRAMEWORK_DIR = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "benchmarks", "open-telco")
@@ -3804,7 +3804,7 @@ class ChatInterface:
         path = os.path.join(self.BENCHMARK_FRAMEWORK_DIR, "otel_eval.py")
         if not os.path.exists(path):
             raise FileNotFoundError(
-                f"Eval framework not found at {path} — is benchmarks/open-telco/ present?")
+                f"Eval framework not found at {path} - is benchmarks/open-telco/ present?")
         spec = importlib.util.spec_from_file_location("otel_eval", path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -3821,14 +3821,16 @@ class ChatInterface:
         try:
             mod = self._load_eval_framework()
         except Exception as e:
-            yield f"❌ {e}", [], ""
+            yield f"{e}", [], ""
             return
         if not tasks:
-            yield "⚠️ Select at least one benchmark.", [], ""
+            yield "Select at least one benchmark.", [], ""
             return
 
         limit = int(limit) if limit and int(limit) > 0 else None
         max_tokens = int(max_tokens) if max_tokens and int(max_tokens) > 0 else None
+        self._bench_stop = threading.Event()
+        model_tag = f"**Benchmarking model:** `{self.config.model_name}` @ `{self.config.api_endpoint}`"
         client = mod.Client(
             self.config.api_endpoint.rstrip("/") + "/v1",
             self.config.model_name,
@@ -3856,7 +3858,8 @@ class ChatInterface:
                 try:
                     _h["result"] = mod.run_task(
                         _task, tier, client, int(max_connections), limit,
-                        out_dir, progress_cb=_cb)
+                        out_dir, progress_cb=_cb,
+                        stop_event=self._bench_stop)
                 except Exception as e:
                     _h["error"] = str(e)
 
@@ -3867,33 +3870,52 @@ class ChatInterface:
                     d, t, c = prog["done"], prog["total"], prog["correct"]
                 acc = (c / d) if d else 0.0
                 live = rows + [[task, t or "…", d,
-                                f"{acc:.3f}" if d else "…", "", "▶ running"]]
-                yield (f"**Running `{task}`** ({ti + 1}/{len(tasks)}) — "
-                       f"{d}/{t or '?'} samples · elapsed {int(_time.time() - t_start)}s",
+                                f"{acc:.3f}" if d else "…", "", "running"]]
+                stopping = " | STOP REQUESTED, finishing in-flight requests..." \
+                    if self._bench_stop.is_set() else ""
+                yield (f"{model_tag}\n\n**Running `{task}`** ({ti + 1}/{len(tasks)}) - "
+                       f"{d}/{t or '?'} samples | elapsed {int(_time.time() - t_start)}s{stopping}",
                        live, "")
                 _time.sleep(2)
             th.join()
 
             if "error" in holder:
-                rows.append([task, "", "", "", "", f"❌ {holder['error'][:80]}"])
+                rows.append([task, "", "", "", "", f"{holder['error'][:80]}"])
             else:
                 r = holder["result"]
                 summary.append(r)
-                rows.append([task, r["n"], r["n"], f"{r['accuracy']:.4f}",
-                             f"±{r['stderr']:.4f}", "✅ done"])
-            yield (f"Finished `{task}` ({ti + 1}/{len(tasks)})", list(rows), "")
+                status = "stopped (partial)" if r.get("stopped") else "done"
+                rows.append([task, r.get("total_planned", r["n"]), r["n"],
+                             f"{r['accuracy']:.4f}", f"±{r['stderr']:.4f}", status])
+            yield (f"{model_tag}\n\nFinished `{task}` ({ti + 1}/{len(tasks)})",
+                   list(rows), "")
+            if self._bench_stop.is_set():
+                for skipped in tasks[ti + 1:]:
+                    rows.append([skipped, "", "", "", "", "skipped (stopped)"])
+                yield (f"{model_tag}\n\nBenchmark stopped by user.", list(rows), "")
+                break
 
         if summary:
             avg = sum(s["accuracy"] for s in summary) / len(summary)
-            md = (f"### 🏁 Benchmark run complete — average accuracy "
+            stopped_note = " (stopped early - partial results)" \
+                if self._bench_stop.is_set() else ""
+            md = (f"### Benchmark run complete{stopped_note} - average accuracy "
                   f"**{avg:.4f}** across {len(summary)} benchmark(s)\n\n"
-                  f"Model: `{self.config.model_name}` · endpoint: "
-                  f"`{self.config.api_endpoint}` · tier: **{tier}** · "
-                  f"temperature 0.0 · {int(_time.time() - t_start)}s total\n\n"
+                  f"Model: `{self.config.model_name}` | endpoint: "
+                  f"`{self.config.api_endpoint}` | tier: **{tier}** | "
+                  f"temperature 0.0 | {int(_time.time() - t_start)}s total\n\n"
                   f"Per-sample transcripts saved to `{out_dir}` (app container).")
         else:
             md = "⚠️ No benchmarks completed successfully."
-        yield ("✅ Benchmark run complete", list(rows), md)
+        yield ("Benchmark run complete", list(rows), md)
+
+    def stop_benchmark(self):
+        """Request cooperative stop of the running benchmark."""
+        ev = getattr(self, "_bench_stop", None)
+        if ev is not None and not ev.is_set():
+            ev.set()
+            return "Stop requested - queued samples cancelled, waiting for in-flight requests to finish..."
+        return "No benchmark run in progress."
 
     def create_interface(self) -> gr.Blocks:
         """Create enhanced Gradio interface"""
@@ -4063,29 +4085,29 @@ class ChatInterface:
                     
                     gr.Markdown(
                         f"""
-                        # 🤖 TelcoAIBench — Telco AI Portal & Benchmark Suite
+                        # TelcoAIBench
                         **Connected to:** {active_model} | **Features:** Smart streaming, timeout handling, context optimization
                         """
                     )
                 with gr.Column(scale=1):
                     # Status indicator in header
                     if self.client.health_check():
-                        gr.Markdown("✅ **Status:** Online")
+                        gr.Markdown("**Status:** Online")
                     else:
-                        gr.Markdown("❌ **Status:** Offline")
+                        gr.Markdown("**Status:** Offline")
             
             # Session management row
             with gr.Row():
                 with gr.Column(scale=2):
                     session_id_input = gr.Textbox(
-                        label="🔑 Session ID",
+                        label="Session ID",
                         placeholder="Leave empty for new session or enter existing session ID",
                         value="",
                         interactive=True
                     )
                 with gr.Column(scale=1):
-                    load_session_btn = gr.Button("📂 Load Session", variant="secondary")
-                    new_session_btn = gr.Button("🆕 New Session", variant="primary")
+                    load_session_btn = gr.Button("Load Session", variant="secondary")
+                    new_session_btn = gr.Button("New Session", variant="primary")
             
             # Sessions list display (collapsible)
             with gr.Accordion("📂 Active Sessions", open=False) as sessions_accordion:
@@ -4100,11 +4122,11 @@ class ChatInterface:
                             interactive=True,
                             show_label=False
                         )
-                        quick_load_btn = gr.Button("⚡ Quick Load", variant="primary", size="sm")
+                        quick_load_btn = gr.Button("Quick Load", variant="primary", size="sm")
             
             # Main content area with tabs for better organization
             with gr.Tabs():
-                with gr.TabItem("💬 Chat"):
+                with gr.TabItem("Chat"):
                     with gr.Row():
                         # Main chat column - use most of the screen
                         with gr.Column(scale=5):
@@ -4133,10 +4155,10 @@ class ChatInterface:
                             # Action buttons
                             with gr.Row():
                                 submit = gr.Button("Send", variant="primary", scale=1)
-                                clear = gr.Button("🗑️ Clear", scale=1)
-                                export = gr.Button("📥 Export", scale=1)
+                                clear = gr.Button("Clear", scale=1)
+                                export = gr.Button("Export", scale=1)
                                 file_upload = gr.File(
-                                    label="📎 Attach",
+                                    label="Attach",
                                     file_types=[".txt", ".md", ".csv", ".json", ".py"],
                                     file_count="single",
                                     scale=1
@@ -4147,7 +4169,7 @@ class ChatInterface:
                             
                             # Export output (hidden by default)
                             export_output = gr.Textbox(
-                                label="📄 Exported Conversation",
+                                label="Exported Conversation",
                                 visible=False,
                                 lines=10
                             )
@@ -4173,7 +4195,7 @@ class ChatInterface:
                                     maximum=1.0,
                                     value=self.config.default_temperature,
                                     step=0.1,
-                                    label="🌡️ Temperature",
+                                    label="Temperature",
                                     scale=1,
                                     info="Controls randomness (0=focused, 1=creative)",
                                     interactive=True
@@ -4184,7 +4206,7 @@ class ChatInterface:
                                     maximum=32768,
                                     value=self.config.default_max_tokens,
                                     step=100,
-                                    label="📏 Max Tokens",
+                                    label="Max Tokens",
                                     scale=1,
                                     info="Maximum response length",
                                     interactive=True
@@ -4200,7 +4222,7 @@ class ChatInterface:
                             gr.HTML("<h4 style='color: #555; margin: 15px 0 8px 0;'>📝 Prompt Override</h4>")
                             with gr.Group():
                                 custom_system = gr.Textbox(
-                                    label="🎯 Selected System Prompt Detail",
+                                    label="Selected System Prompt Detail",
                                     placeholder="Override selected template with custom prompt...",
                                     lines=12,
                                     max_lines=20,
@@ -4210,13 +4232,13 @@ class ChatInterface:
                                     elem_classes="system-prompt-detail"
                                 )
                 
-                with gr.TabItem("📝 Prompt Manager"):
+                with gr.TabItem("Prompt Manager"):
                     with gr.Row():
                         with gr.Column(scale=1):
                             gr.Markdown("### System Prompt Management")
                             
                             # Existing prompts section
-                            gr.Markdown("### 📚 Existing Prompts")
+                            gr.Markdown("### Existing Prompts")
                             existing_prompt_dropdown = gr.Dropdown(
                                 choices=list(self.system_prompts.keys()),
                                 value=list(self.system_prompts.keys())[0] if self.system_prompts else None,
@@ -4224,11 +4246,11 @@ class ChatInterface:
                                 interactive=True
                             )
                             
-                            load_prompt_btn = gr.Button("📖 Load Selected Prompt", variant="secondary")
+                            load_prompt_btn = gr.Button("Load Selected Prompt", variant="secondary")
                             
                             with gr.Row():
-                                reload_prompts_btn = gr.Button("🔄 Reload from File", variant="secondary")
-                                delete_prompt_btn = gr.Button("🗑️ Delete Selected", variant="stop")
+                                reload_prompts_btn = gr.Button("Reload from File", variant="secondary")
+                                delete_prompt_btn = gr.Button("Delete Selected", variant="stop")
                             
                             prompt_status = gr.Textbox(
                                 label="Status",
@@ -4237,7 +4259,7 @@ class ChatInterface:
                             )
                             
                         with gr.Column(scale=2):
-                            gr.Markdown("### ✏️ Edit Prompt")
+                            gr.Markdown("### Edit Prompt")
                             edit_prompt_name = gr.Textbox(
                                 label="Prompt Name",
                                 placeholder="e.g., Security Expert, Project Manager...",
@@ -4252,8 +4274,8 @@ class ChatInterface:
                             )
                             
                             with gr.Row():
-                                save_prompt_btn = gr.Button("💾 Save/Update Prompt", variant="primary")
-                                clear_form_btn = gr.Button("🆕 Clear Form", variant="secondary")
+                                save_prompt_btn = gr.Button("Save/Update Prompt", variant="primary")
+                                clear_form_btn = gr.Button("Clear Form", variant="secondary")
                             
                             gr.Markdown(
                                 """
@@ -4266,10 +4288,10 @@ class ChatInterface:
                                 """
                             )
                 
-                with gr.TabItem("🧬 Embeddings Generation"):
+                with gr.TabItem("Embeddings Generation"):
                     with gr.Row():
                         with gr.Column(scale=1):
-                            gr.Markdown("### 📝 Text Input")
+                            gr.Markdown("### Text Input")
                             
                             # Text input area
                             embedding_text = gr.Textbox(
@@ -4281,7 +4303,7 @@ class ChatInterface:
                             )
                             
                             # File upload
-                            gr.Markdown("### 📎 File Upload")
+                            gr.Markdown("### File Upload")
                             pdf_support_msg = "📄 PDF support enabled" if PDF_SUPPORT else "⚠️ PDF support disabled (install PyPDF2)"
                             gr.Markdown(f"*{pdf_support_msg}*")
                             
@@ -4296,13 +4318,13 @@ class ChatInterface:
                             )
                             
                             # Generate button
-                            generate_embeddings_btn = gr.Button("🚀 Generate Embeddings", variant="primary", size="lg")
+                            generate_embeddings_btn = gr.Button("Generate Embeddings", variant="primary", size="lg")
                             
                             # Connection test
-                            test_embedding_connection_btn = gr.Button("🔧 Test Connection", variant="secondary")
+                            test_embedding_connection_btn = gr.Button("Test Connection", variant="secondary")
                             
                             # Preview section (moved from right column)
-                            gr.Markdown("### 👁️ Preview")
+                            gr.Markdown("### Preview")
                             embedding_preview = gr.Textbox(
                                 label="Embedding Preview (first 10 dimensions)",
                                 interactive=False,
@@ -4311,7 +4333,7 @@ class ChatInterface:
                             )
                             
                         with gr.Column(scale=1):
-                            gr.Markdown("### 📊 Results & Download")
+                            gr.Markdown("### Results & Download")
                             
                             # Status and info
                             embedding_status = gr.Textbox(
@@ -4331,7 +4353,7 @@ class ChatInterface:
                             )
                             
                             # Download section
-                            gr.Markdown("### 💾 Download Options")
+                            gr.Markdown("### Download Options")
                             
                             with gr.Row():
                                 download_format = gr.Dropdown(
@@ -4341,17 +4363,17 @@ class ChatInterface:
                                     interactive=True
                                 )
                             
-                            download_embeddings_btn = gr.Button("📥 Download Embeddings", variant="secondary", interactive=False)
+                            download_embeddings_btn = gr.Button("Download Embeddings", variant="secondary", interactive=False)
                             
                             # File component for download
                             download_file = gr.File(
-                                label="📄 Download File",
+                                label="Download File",
                                 visible=True,
                                 interactive=False
                             )
                             
                             # Semantic Search section
-                            gr.Markdown("### 🔍 Semantic Search")
+                            gr.Markdown("### Semantic Search")
                             gr.Markdown("*Search for answers within generated embeddings*")
                             
                             search_query = gr.Textbox(
@@ -4362,14 +4384,14 @@ class ChatInterface:
                             )
                             
                             with gr.Row():
-                                search_btn = gr.Button("🔍 Search", variant="primary", interactive=False)
+                                search_btn = gr.Button("Search", variant="primary", interactive=False)
                                 search_results_count = gr.Dropdown(
                                     choices=["1", "3", "5", "10"],
                                     value="3",
                                     label="Results Count",
                                     interactive=True
                                 )
-                                clear_collection_btn = gr.Button("🗑️ Clear All", variant="stop", size="sm")
+                                clear_collection_btn = gr.Button("Clear All", variant="stop", size="sm")
                             
                             search_results = gr.Textbox(
                                 label="Search Results",
@@ -4379,23 +4401,23 @@ class ChatInterface:
                                 show_label=True
                             )
                 
-                with gr.TabItem("📊 Observability"):
+                with gr.TabItem("Observability"):
                     # Single control panel at the top
                     with gr.Row():
                         with gr.Column(scale=3):
-                            gr.Markdown("### 🎯 **Dual-API Observability Dashboard**")
+                            gr.Markdown("### **Dual-API Observability Dashboard**")
                             gr.Markdown("*Real-time monitoring for Chat API and Embeddings API*")
                         with gr.Column(scale=2):
                             with gr.Row():
-                                refresh_all_btn_2 = gr.Button("🔄 Refresh All Data", variant="primary", size="lg")
-                                start_collection_btn_2 = gr.Button("▶️ Start Collection", variant="secondary", size="lg")
-                                stop_collection_btn_2 = gr.Button("⏸️ Stop", variant="stop", size="lg")
+                                refresh_all_btn_2 = gr.Button("Refresh All Data", variant="primary", size="lg")
+                                start_collection_btn_2 = gr.Button("Start Collection", variant="secondary", size="lg")
+                                stop_collection_btn_2 = gr.Button("Stop", variant="stop", size="lg")
                     
                     # Status and control panel
                     with gr.Row():
                         with gr.Column(scale=2):
                             collection_status_2 = gr.Textbox(
-                                label="📡 Collection Status",
+                                label="Collection Status",
                                 value="Ready to start collection...",
                                 interactive=False,
                                 max_lines=1
@@ -4406,12 +4428,12 @@ class ChatInterface:
                                 maximum=300,
                                 value=30,
                                 step=5,
-                                label="⏱️ Pull Interval (sec)",
+                                label="Pull Interval (sec)",
                                 interactive=True
                             )
                         with gr.Column(scale=1):
                             last_update_display_2 = gr.Textbox(
-                                label="🕐 Last Update",
+                                label="Last Update",
                                 value="Never",
                                 interactive=False,
                                 max_lines=1
@@ -4419,17 +4441,17 @@ class ChatInterface:
                     
                     # Main content tabs
                     with gr.Tabs():
-                        with gr.TabItem("🎯 Live Metrics Dashboard"):
+                        with gr.TabItem("Live Metrics Dashboard"):
                             # Dual API overview section
                             with gr.Row():
                                 with gr.Column(scale=1):
-                                    gr.Markdown("#### 💬 **Chat API Status**")
+                                    gr.Markdown("#### **Chat API Status**")
                                     chat_api_status_2 = gr.Markdown(
                                         value="*Click 'Refresh All Data' to load status...*",
                                         elem_id="chat-api-status-2"
                                     )
                                 with gr.Column(scale=1):
-                                    gr.Markdown("#### 🧬 **Embeddings API Status**")
+                                    gr.Markdown("#### **Embeddings API Status**")
                                     embeddings_api_status_2 = gr.Markdown(
                                         value="*Click 'Refresh All Data' to load status...*",
                                         elem_id="embeddings-api-status-2"
@@ -4438,44 +4460,44 @@ class ChatInterface:
                             # Visual metrics dashboard
                             with gr.Row():
                                 with gr.Tabs():
-                                    with gr.TabItem("⚡ Performance Monitor"):
+                                    with gr.TabItem("Performance Monitor"):
                                         performance_dashboard_2 = gr.HTML(
                                             label="Real-Time Performance for Both APIs",
                                             elem_id="performance-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see live performance metrics</div>"
                                         )
                                     
-                                    with gr.TabItem("🏥 Health & Status"):
+                                    with gr.TabItem("Health & Status"):
                                         health_dashboard_2 = gr.HTML(
                                             label="System Health for Chat & Embeddings APIs",
                                             elem_id="health-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see health status</div>"
                                         )
                                     
-                                    with gr.TabItem("🚀 Efficiency Analysis"):
+                                    with gr.TabItem("Efficiency Analysis"):
                                         efficiency_dashboard_2 = gr.HTML(
                                             label="Performance Optimization for Dual APIs",
                                             elem_id="efficiency-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see efficiency metrics</div>"
                                         )
                                     
-                                    with gr.TabItem("🧠 AI Insights"):
+                                    with gr.TabItem("AI Insights"):
                                         insights_dashboard_2 = gr.HTML(
                                             label="Actionable Insights for Both APIs",
                                             elem_id="insights-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see AI insights</div>"
                                         )
                         
-                        with gr.TabItem("🔧 System Information"):
+                        with gr.TabItem("System Information"):
                             with gr.Row():
                                 with gr.Column(scale=1):
-                                    gr.Markdown("#### 💬 **Chat API Capabilities**")
+                                    gr.Markdown("#### **Chat API Capabilities**")
                                     chat_capabilities_2 = gr.Markdown(
                                         value="*API capabilities will appear here after refresh...*",
                                         elem_id="chat-capabilities-2"
                                     )
                                 with gr.Column(scale=1):
-                                    gr.Markdown("#### 🧬 **Embeddings API Capabilities**")
+                                    gr.Markdown("#### **Embeddings API Capabilities**")
                                     embeddings_capabilities_2 = gr.Markdown(
                                         value="*API capabilities will appear here after refresh...*",
                                         elem_id="embeddings-capabilities-2"
@@ -4488,25 +4510,25 @@ class ChatInterface:
                                     elem_id="management-overview-2"
                                 )
                         
-                        with gr.TabItem("🔍 Diagnostics & Testing"):
+                        with gr.TabItem("Diagnostics & Testing"):
                             with gr.Row():
-                                run_diagnostics_btn_2 = gr.Button("🔍 Run Full Diagnostics", variant="primary", size="sm")
-                                test_streaming_btn_2 = gr.Button("🧪 Test Streaming", variant="secondary", size="sm")
-                                test_ui_btn_2 = gr.Button("🎯 Test UI Update", variant="secondary", size="sm")
+                                run_diagnostics_btn_2 = gr.Button("Run Full Diagnostics", variant="primary", size="sm")
+                                test_streaming_btn_2 = gr.Button("Test Streaming", variant="secondary", size="sm")
+                                test_ui_btn_2 = gr.Button("Test UI Update", variant="secondary", size="sm")
                             
                             diagnostics_output_2 = gr.Textbox(
-                                label="📊 Comprehensive Diagnostics Report",
+                                label="Comprehensive Diagnostics Report",
                                 lines=15,
                                 max_lines=25,
                                 value="Click 'Run Full Diagnostics' to test all Chat and Embeddings API endpoints..."
                             )
                         
-                        with gr.TabItem("💾 Data Management"):
+                        with gr.TabItem("Data Management"):
                             with gr.Row():
-                                export_btn_2 = gr.Button("📤 Export Data", variant="primary", size="sm")
-                                import_btn_2 = gr.Button("📥 Import Data", variant="secondary", size="sm")
-                                clear_archive_btn_2 = gr.Button("🗑️ Clear Archive", variant="stop", size="sm")
-                                refresh_files_btn_2 = gr.Button("🔄 Refresh Files", variant="secondary", size="sm")
+                                export_btn_2 = gr.Button("Export Data", variant="primary", size="sm")
+                                import_btn_2 = gr.Button("Import Data", variant="secondary", size="sm")
+                                clear_archive_btn_2 = gr.Button("Clear Archive", variant="stop", size="sm")
+                                refresh_files_btn_2 = gr.Button("Refresh Files", variant="secondary", size="sm")
                             
                             with gr.Row():
                                 export_filename_2 = gr.Textbox(
@@ -4535,12 +4557,12 @@ class ChatInterface:
                                     elem_id="metrics-display-2"
                                 )
             
-                with gr.TabItem("🏆 Benchmark"):
+                with gr.TabItem("Benchmark"):
                     gr.Markdown(
                         "Run the **embedded Open-Telco benchmark suite** "
                         "(`benchmarks/open-telco/`) against the configured model "
                         "endpoint, with live progress. Datasets are embedded in "
-                        "this repository — no external dependencies. Scoring is "
+                        "this repository - no external dependencies. Scoring is "
                         "parity-validated against the official GSMA harness."
                     )
                     with gr.Row():
@@ -4567,8 +4589,16 @@ class ChatInterface:
                             value=8192, precision=0,
                             label="Max tokens per answer (0 = uncapped)"
                         )
-                    bench_run_btn = gr.Button("🚀 Run Benchmark", variant="primary")
-                    bench_status = gr.Markdown("Ready — select benchmarks and press Run.")
+                    bench_model_info = gr.Markdown(
+                        f"### Target model: `{self.config.model_name}`\n"
+                        f"Endpoint: `{self.config.api_endpoint}` | "
+                        f"auth: {'on' if self.config.use_token_auth else 'off'} | "
+                        f"temperature 0.0 (benchmark standard)"
+                    )
+                    with gr.Row():
+                        bench_run_btn = gr.Button("Run Benchmark", variant="primary", scale=4)
+                        bench_stop_btn = gr.Button("Stop", variant="stop", scale=1)
+                    bench_status = gr.Markdown("Ready - select benchmarks and press Run.")
                     bench_table = gr.Dataframe(
                         headers=["Benchmark", "Samples", "Done", "Accuracy",
                                  "StdErr", "Status"],
@@ -4580,6 +4610,11 @@ class ChatInterface:
                         inputs=[bench_tasks, bench_tier, bench_limit,
                                 bench_conns, bench_max_tokens],
                         outputs=[bench_status, bench_table, bench_summary]
+                    )
+                    bench_stop_btn.click(
+                        fn=self.stop_benchmark,
+                        inputs=[],
+                        outputs=[bench_status]
                     )
 
             # Event handlers
@@ -5778,7 +5813,7 @@ class ChatInterface:
 
 def main():
     """Launch the enhanced chat interface"""
-    print("🚀 Starting TelcoAIBench Portal...")
+    print("Starting TelcoAIBench Portal...")
     
     config = Config()
     chat = ChatInterface(config)

@@ -1,4 +1,4 @@
-# Parity Validation — otel_eval.py vs gsma-labs/evals (Inspect AI)
+# Parity Validation - otel_eval.py vs gsma-labs/evals (Inspect AI)
 
 **Date:** 2026-08-08
 **Model under test:** OTel-2.0-LLM-31B-IT, revision `e120ca76`, served by vLLM
@@ -18,14 +18,14 @@ cap (no sample reached it) and streaming enabled. Zero request errors.
 | 3GPP-TSG | 100 | 0.610 | 0.600 | +0.010 |
 
 All deltas are ≤1 percentage point (≤1 sample on the 100-sample tasks;
-4 samples of 1,000 on TeleQnA) — well inside run-to-run variation for a
+4 samples of 1,000 on TeleQnA) - well inside run-to-run variation for a
 nondeterministic serving stack even at temperature 0 (batching order changes
 floating-point reduction order). The two harnesses are measurement-equivalent.
 
 Notes:
 - Streaming (SSE) is the default transport in otel_eval.py because
   non-streaming long generations get silently killed by common middleboxes
-  (kube-rbac-proxy ~30s, haproxy route timeouts, corporate egress proxies) —
+  (kube-rbac-proxy ~30s, haproxy route timeouts, corporate egress proxies) -
   discovered empirically during the leaderboard verification runs.
 - The default 8,192-token generation cap prevents pathological runaway
   chain-of-thought loops at temperature 0 (observed on hard TeleTables

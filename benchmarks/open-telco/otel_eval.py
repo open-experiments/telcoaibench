@@ -270,10 +270,16 @@ class Client:
 # Runner
 # --------------------------------------------------------------------------
 
-def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None):
-    """Run one benchmark. progress_cb(done, total, correct), if given, is
-    invoked after every completed sample (used by the SME portal's live
-    Benchmark tab)."""
+def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
+             stop_event=None):
+    """Run one benchmark.
+
+    progress_cb(done, total, correct), if given, is invoked after every
+    completed sample (used by the portal's live Benchmark tab).
+    stop_event (threading.Event), if given and set mid-run, cancels all
+    queued samples; in-flight requests finish and partial results are
+    returned with "stopped": True.
+    """
     records = load_dataset(task, tier, limit)
     spec = TASKS[task]
     results = [None] * len(records)
@@ -295,9 +301,16 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None):
                    "output_tokens": usage.get("completion_tokens"),
                    "completion": completion}
 
+    stopped = False
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
         futs = [ex.submit(one, i) for i in range(len(records))]
         for fut in cf.as_completed(futs):
+            if stop_event is not None and stop_event.is_set() and not stopped:
+                stopped = True
+                for f_ in futs:
+                    f_.cancel()
+            if fut.cancelled():
+                continue
             i, row = fut.result()
             results[i] = row
             with lock:
@@ -312,15 +325,17 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None):
                     print(f"  {task}: {done}/{len(records)}  "
                           f"acc={correct/done:.3f}", flush=True)
 
-    n = len(results)
+    done_rows = [r for r in results if r is not None]
+    n = len(done_rows)
     acc = correct / n if n else 0.0
     stderr = math.sqrt(acc * (1 - acc) / n) if n else 0.0
-    errors = sum(1 for r in results if r["error"])
+    errors = sum(1 for r in done_rows if r["error"])
     with open(os.path.join(out_dir, f"{task}.jsonl"), "w") as w:
-        for r in results:
+        for r in done_rows:
             w.write(json.dumps(r, ensure_ascii=False) + "\n")
     return {"task": task, "tier": tier, "n": n, "accuracy": round(acc, 4),
-            "stderr": round(stderr, 4), "request_errors": errors}
+            "stderr": round(stderr, 4), "request_errors": errors,
+            "stopped": stopped, "total_planned": len(records)}
 
 
 def main():

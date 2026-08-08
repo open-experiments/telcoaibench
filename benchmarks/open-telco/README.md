@@ -1,7 +1,7 @@
 # Telco-AIX Self-Contained Telco LLM Eval Framework
 
 A zero-external-dependency benchmark harness for telecom LLMs. Everything
-needed to evaluate a model — datasets, prompts, scorers, runner — lives in
+needed to evaluate a model - datasets, prompts, scorers, runner - lives in
 this folder. If every upstream source (the GSMA leaderboard, the
 `gsma-labs/evals` repo, the Hugging Face datasets) disappeared tomorrow,
 these benchmarks still run, byte-for-byte identical.
@@ -9,7 +9,7 @@ these benchmarks still run, byte-for-byte identical.
 Born out of the **GSMA Open Telco Leaderboard verification exercise**
 (2026-08-07, see `reference/GSMA-OTel2-Leaderboard-Verification-Report_2026-08-07.md`),
 where we measured the public OTel-2.0-LLM-31B-IT checkpoint at 0.625
-average against its claimed rank-1 score of 0.903 — and learned the hard way
+average against its claimed rank-1 score of 0.903 - and learned the hard way
 why pinned, self-contained, independently runnable evals matter.
 
 ## What's included
@@ -18,8 +18,8 @@ why pinned, self-contained, independently runnable evals matter.
 evals/
 ├── otel_eval.py          # single-file runner (Python 3.9+, needs only `requests`)
 ├── datasets/
-│   ├── lite/             # GSMA ot-lite snapshot (leaderboard default) — 8 tasks, gzipped JSONL
-│   ├── full/             # GSMA ot-full snapshot — 8 tasks incl. TeleQnA 10k
+│   ├── lite/             # GSMA ot-lite snapshot (leaderboard default) - 8 tasks, gzipped JSONL
+│   ├── full/             # GSMA ot-full snapshot - 8 tasks incl. TeleQnA 10k
 │   └── PROVENANCE.md     # exact snapshot sources, dates, schemas
 ├── reference/
 │   ├── leaderboard_scores_2026-08-07.csv           # leaderboard claim snapshot (CSV era)
@@ -29,8 +29,8 @@ evals/
 └── results/              # runner output lands here (per-run folders)
 ```
 
-Benchmarks: **TeleQnA · TeleTables · TeleMath · TeleLogs · 3GPP-TSG ·
-ORANBench · srsRANBench** (the 7 leaderboard tasks, run by default) plus
+Benchmarks: **TeleQnA | TeleTables | TeleMath | TeleLogs | 3GPP-TSG |
+ORANBench | srsRANBench** (the 7 leaderboard tasks, run by default) plus
 **6G-Bench** (opt-in via `--tasks`).
 
 The historical Telco-AIX vendor benchmark sets (Ericsson / Nokia / Mavenir
@@ -60,12 +60,12 @@ python3 otel_eval.py --endpoint https://$H/v1 --model <name> --ca-bundle lab-ca.
 
 Useful flags:
 
-- `--tier full` — full datasets (TeleQnA 10,000 etc.) instead of lite
-- `--tasks teleqna,telemath` — subset; add `sixg_bench` for 6G-Bench
-- `--limit 50` — quick smoke run
-- `--api-key KEY` — sent as `Authorization: Bearer` (vLLM `--api-key`, rbac proxies)
-- `--max-tokens 8192` — cap generations (recommended for long-reasoning models)
-- `--extra-body '{"chat_template_kwargs":{"enable_thinking":true}}'` — provider extras
+- `--tier full` - full datasets (TeleQnA 10,000 etc.) instead of lite
+- `--tasks teleqna,telemath` - subset; add `sixg_bench` for 6G-Bench
+- `--limit 50` - quick smoke run
+- `--api-key KEY` - sent as `Authorization: Bearer` (vLLM `--api-key`, rbac proxies)
+- `--max-tokens 8192` - cap generations (recommended for long-reasoning models)
+- `--extra-body '{"chat_template_kwargs":{"enable_thinking":true}}'` - provider extras
 - `--temperature`, `--timeout`, `--output-dir`
 
 Output per run: `results/<timestamp>_<model>_<tier>/` containing
@@ -81,7 +81,7 @@ TeleLogs "soft" first-integer scoring, and the 3GPP-TSG working-group regex
 scorer. Datasets are byte-faithful snapshots (see `datasets/PROVENANCE.md`).
 
 Parity was validated by re-running the same model (OTel-2.0-LLM-31B-IT,
-revision `e120ca76`, vLLM v0.26.0, temperature 0) with both harnesses —
+revision `e120ca76`, vLLM v0.26.0, temperature 0) with both harnesses -
 results agree within sampling stderr on every task (see
 `reference/parity_validation_2026-08-08.md`).
 
@@ -108,5 +108,5 @@ Full analysis in the verification report under `reference/`.
 - **stdlib + requests only**: no inspect-ai, no HF hub, no pandas/pyarrow at
   runtime; nothing to bit-rot.
 - **Reproducibility discipline**: always record the model *revision hash*,
-  serving stack + version, temperature, tier, and date alongside results —
+  serving stack + version, temperature, tier, and date alongside results -
   the exact metadata whose absence made the leaderboard claim unverifiable.
