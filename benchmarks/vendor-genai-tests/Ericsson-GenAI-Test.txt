@@ -1,0 +1,33 @@
+I need a comprehensive technical analysis of Ericsson's Cloud RAN architecture compared to their traditional deployment model. Please address each section sequentially:
+
+1. ARCHITECTURE BREAKDOWN:
+   - Detail the complete system architecture of Ericsson's Cloud RAN gNB implementation
+   - Include processing distribution across CU, DU, and RU components
+   - Specify the virtualization layers, container orchestration, and hardware abstraction methods
+   - Diagram the critical interfaces between components and data flow paths
+   - Explain the scaling mechanisms for varying traffic loads
+
+2. TRADITIONAL vs CLOUD COMPARISON:
+   - Identify key architectural differences between Ericsson's traditional 5G RAN and Cloud RAN
+   - Compare deployment flexibility, hardware requirements, and management approaches
+   - Quantify performance differences (latency, throughput, resource utilization)
+   - Contrast total cost of ownership between both approaches with specific metrics
+
+3. SHARED COMPONENTS ANALYSIS:
+   - Enumerate common software and hardware components between traditional and Cloud RAN
+   - Explain how these shared components are deployed differently in each architecture
+   - Specify any code modifications required for shared components to function in Cloud RAN
+
+4. THIRD-PARTY INTEGRATION:
+   - List specific third-party components integrated into Ericsson Cloud RAN L1 processing
+   - For each component, identify the vendor, version compatibility, and integration method
+   - Detail how these components interface with Ericsson's proprietary elements
+   - Evaluate any performance or security implications of these third-party dependencies
+
+5. RHEL IMPLEMENTATION:
+   - Identify specific Red Hat Enterprise Linux components utilized in Ericsson's 5G radio software stack
+   - Explain how these components are hardened for telecommunications requirements
+   - Detail any special configurations necessary for real-time processing capabilities
+   - List specific RHEL versions certified for Ericsson Cloud RAN deployment
+
+Please provide concrete examples, performance metrics, and reference implementations where possible. For proprietary information, specify what's publicly available versus what requires vendor engagement.

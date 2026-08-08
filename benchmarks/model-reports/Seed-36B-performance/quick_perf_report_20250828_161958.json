@@ -1,0 +1,60 @@
+{
+  "Standard": [
+    {
+      "success": true,
+      "total_time": 5.427703142166138,
+      "total_tokens": 117,
+      "completion_tokens": 100,
+      "tokens_per_second": 18.423999504160626,
+      "response_length": 392,
+      "endpoint": "https://seed-oss-36b-tme-aix.apps.sandbox02.narlabs.io"
+    },
+    {
+      "success": true,
+      "total_time": 5.015089273452759,
+      "total_tokens": 119,
+      "completion_tokens": 100,
+      "tokens_per_second": 19.939824507082523,
+      "response_length": 488,
+      "endpoint": "https://seed-oss-36b-tme-aix.apps.sandbox02.narlabs.io"
+    },
+    {
+      "success": true,
+      "total_time": 5.420960187911987,
+      "total_tokens": 117,
+      "completion_tokens": 100,
+      "tokens_per_second": 18.446916511762357,
+      "response_length": 465,
+      "endpoint": "https://seed-oss-36b-tme-aix.apps.sandbox02.narlabs.io"
+    }
+  ],
+  "High-Performance": [
+    {
+      "success": true,
+      "total_time": 5.008846759796143,
+      "total_tokens": 117,
+      "completion_tokens": 100,
+      "tokens_per_second": 19.96467546235532,
+      "response_length": 403,
+      "endpoint": "https://seed-oss-36b-hp-tme-aix.apps.sandbox02.narlabs.io"
+    },
+    {
+      "success": true,
+      "total_time": 5.015836000442505,
+      "total_tokens": 119,
+      "completion_tokens": 100,
+      "tokens_per_second": 19.936855987950533,
+      "response_length": 485,
+      "endpoint": "https://seed-oss-36b-hp-tme-aix.apps.sandbox02.narlabs.io"
+    },
+    {
+      "success": true,
+      "total_time": 5.018566131591797,
+      "total_tokens": 117,
+      "completion_tokens": 100,
+      "tokens_per_second": 19.9260102144518,
+      "response_length": 451,
+      "endpoint": "https://seed-oss-36b-hp-tme-aix.apps.sandbox02.narlabs.io"
+    }
+  ]
+}

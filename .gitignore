@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+sessions/
+metrics_archive/
+benchmarks/open-telco/results/*/
+!benchmarks/open-telco/results/.gitkeep
+.DS_Store
+*.log

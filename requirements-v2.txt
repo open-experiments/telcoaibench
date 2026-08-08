@@ -1,0 +1,30 @@
+# Core Web UI
+gradio>=4.0.0
+
+# HTTP Requests and APIs
+requests>=2.25.0
+urllib3>=1.26.0
+
+# Data Processing and Analysis
+numpy>=1.21.0
+plotly>=5.0.0
+
+# PDF Processing (optional but recommended)
+PyPDF2>=3.0.0
+
+# Standard library packages (included with Python)
+# typing - for type hints
+# datetime - for timestamps
+# io - for file handling
+# base64 - for encoding
+# dataclasses - for data structures
+# traceback - for error handling
+# time - for timing operations
+# threading - for concurrent operations
+# os - for system operations
+# uuid - for unique identifiers
+# pickle - for serialization
+# pathlib - for path operations
+# collections - for data structures
+# re - for regular expressions
+# json - for JSON handling
