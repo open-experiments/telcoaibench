@@ -3810,9 +3810,9 @@ class ChatInterface:
         spec.loader.exec_module(mod)
         return mod
 
-    def run_benchmark(self, tasks, tier, limit, max_connections, max_tokens):
-        """Generator handler for the Benchmark tab: runs the selected
-        benchmarks against the configured model endpoint and yields
+    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens):
+        """Generator handler for one benchmark slot: runs the selected
+        benchmarks against the chosen registry model, yielding
         (status_md, table_rows, summary_md) for real-time UI updates."""
         import tempfile
         import time as _time
@@ -3826,21 +3826,28 @@ class ChatInterface:
         if not tasks:
             yield "Select at least one benchmark.", [], ""
             return
+        entry = getattr(self, "_bench_registry", {}).get(model_key)
+        if not entry:
+            yield f"Unknown model selection: {model_key}. Provision or pick a model first.", [], ""
+            return
 
         limit = int(limit) if limit and int(limit) > 0 else None
         max_tokens = int(max_tokens) if max_tokens and int(max_tokens) > 0 else None
-        self._bench_stop = threading.Event()
-        model_tag = f"**Benchmarking model:** `{self.config.model_name}` @ `{self.config.api_endpoint}`"
+        if not hasattr(self, "_bench_stops"):
+            self._bench_stops = {}
+        self._bench_stops[slot] = threading.Event()
+        stop_ev = self._bench_stops[slot]
+        model_tag = f"**Benchmarking model:** `{entry['model']}` @ `{entry['endpoint']}`"
         client = mod.Client(
-            self.config.api_endpoint.rstrip("/") + "/v1",
-            self.config.model_name,
-            api_key=(self.config.api_token if self.config.use_token_auth else "none"),
+            entry["endpoint"].rstrip("/") + "/v1",
+            entry["model"],
+            api_key=(entry.get("token") or "none"),
             temperature=0.0,
             max_tokens=max_tokens,
             verify=self.config.verify_ssl,
             timeout=600,
         )
-        out_dir = tempfile.mkdtemp(prefix="benchmark_")
+        out_dir = tempfile.mkdtemp(prefix=f"benchmark_slot{slot}_")
         summary = []
         t_start = _time.time()
 
@@ -3858,8 +3865,7 @@ class ChatInterface:
                 try:
                     _h["result"] = mod.run_task(
                         _task, tier, client, int(max_connections), limit,
-                        out_dir, progress_cb=_cb,
-                        stop_event=self._bench_stop)
+                        out_dir, progress_cb=_cb, stop_event=stop_ev)
                 except Exception as e:
                     _h["error"] = str(e)
 
@@ -3869,12 +3875,13 @@ class ChatInterface:
                 with plock:
                     d, t, c = prog["done"], prog["total"], prog["correct"]
                 acc = (c / d) if d else 0.0
-                live = rows + [[task, t or "…", d,
-                                f"{acc:.3f}" if d else "…", "", "running"]]
-                stopping = " | STOP REQUESTED, finishing in-flight requests..." \
-                    if self._bench_stop.is_set() else ""
-                yield (f"{model_tag}\n\n**Running `{task}`** ({ti + 1}/{len(tasks)}) - "
-                       f"{d}/{t or '?'} samples | elapsed {int(_time.time() - t_start)}s{stopping}",
+                live = rows + [[task, t or "...", d,
+                                f"{acc:.3f}" if d else "...", "", "running"]]
+                stopping = (" | STOP REQUESTED, finishing in-flight requests..."
+                            if stop_ev.is_set() else "")
+                yield (model_tag + "\n\n"
+                       + f"**Running `{task}`** ({ti + 1}/{len(tasks)}) - "
+                       + f"{d}/{t or '?'} samples | elapsed {int(_time.time() - t_start)}s{stopping}",
                        live, "")
                 _time.sleep(2)
             th.join()
@@ -3887,35 +3894,103 @@ class ChatInterface:
                 status = "stopped (partial)" if r.get("stopped") else "done"
                 rows.append([task, r.get("total_planned", r["n"]), r["n"],
                              f"{r['accuracy']:.4f}", f"±{r['stderr']:.4f}", status])
-            yield (f"{model_tag}\n\nFinished `{task}` ({ti + 1}/{len(tasks)})",
+            yield (model_tag + "\n\n" + f"Finished `{task}` ({ti + 1}/{len(tasks)})",
                    list(rows), "")
-            if self._bench_stop.is_set():
+            if stop_ev.is_set():
                 for skipped in tasks[ti + 1:]:
                     rows.append([skipped, "", "", "", "", "skipped (stopped)"])
-                yield (f"{model_tag}\n\nBenchmark stopped by user.", list(rows), "")
+                yield (model_tag + "\n\nBenchmark stopped by user.", list(rows), "")
                 break
 
         if summary:
-            avg = sum(s["accuracy"] for s in summary) / len(summary)
-            stopped_note = " (stopped early - partial results)" \
-                if self._bench_stop.is_set() else ""
+            avg = sum(x["accuracy"] for x in summary) / len(summary)
+            stopped_note = (" (stopped early - partial results)"
+                            if stop_ev.is_set() else "")
             md = (f"### Benchmark run complete{stopped_note} - average accuracy "
-                  f"**{avg:.4f}** across {len(summary)} benchmark(s)\n\n"
-                  f"Model: `{self.config.model_name}` | endpoint: "
-                  f"`{self.config.api_endpoint}` | tier: **{tier}** | "
-                  f"temperature 0.0 | {int(_time.time() - t_start)}s total\n\n"
-                  f"Per-sample transcripts saved to `{out_dir}` (app container).")
+                  f"**{avg:.4f}** across {len(summary)} benchmark(s)" + "\n\n"
+                  + f"Model: `{entry['model']}` | endpoint: `{entry['endpoint']}` "
+                  + f"| tier: **{tier}** | temperature 0.0 "
+                  + f"| {int(_time.time() - t_start)}s total" + "\n\n"
+                  + f"Per-sample transcripts saved to `{out_dir}` (app container).")
         else:
-            md = "⚠️ No benchmarks completed successfully."
+            md = "No benchmarks completed successfully."
         yield ("Benchmark run complete", list(rows), md)
 
-    def stop_benchmark(self):
-        """Request cooperative stop of the running benchmark."""
-        ev = getattr(self, "_bench_stop", None)
+    def stop_benchmark(self, slot):
+        """Request cooperative stop of the benchmark running in a slot."""
+        ev = getattr(self, "_bench_stops", {}).get(slot)
         if ev is not None and not ev.is_set():
             ev.set()
-            return "Stop requested - queued samples cancelled, waiting for in-flight requests to finish..."
-        return "No benchmark run in progress."
+            return ("Stop requested - queued samples cancelled, waiting for "
+                    "in-flight requests to finish...")
+        return "No benchmark run in progress in this slot."
+
+    # -- model endpoint registry (provision / discover benchmark targets) --
+    BENCH_REGISTRY_FILE = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "benchmark_endpoints.json")
+    BENCH_SLOTS = 3
+
+    def _bench_registry_init(self):
+        reg = {}
+        default_key = f"{self.config.model_name} @ {self.config.api_endpoint.split('//')[-1]}"
+        reg[default_key] = {
+            "endpoint": self.config.api_endpoint,
+            "model": self.config.model_name,
+            "token": self.config.api_token if self.config.use_token_auth else "",
+        }
+        try:
+            if os.path.exists(self.BENCH_REGISTRY_FILE):
+                with open(self.BENCH_REGISTRY_FILE) as fh:
+                    for k, v in json.load(fh).items():
+                        reg.setdefault(k, v)
+        except Exception as e:
+            print(f"benchmark registry load failed: {e}")
+        self._bench_registry = reg
+        return list(reg.keys())
+
+    def _bench_registry_save(self):
+        try:
+            with open(self.BENCH_REGISTRY_FILE, "w") as fh:
+                json.dump(self._bench_registry, fh, indent=2)
+        except Exception as e:
+            print(f"benchmark registry save failed: {e}")
+
+    def add_benchmark_endpoint(self, url, token):
+        """Probe an OpenAI-compatible endpoint, register its models, and
+        refresh all slot dropdowns."""
+        url = (url or "").strip().rstrip("/")
+        if url.endswith("/v1"):
+            url = url[:-3].rstrip("/")
+        token = (token or "").strip()
+        keys = list(self._bench_registry.keys())
+        if not url:
+            upd = gr.update(choices=keys)
+            return upd, upd, upd, "Enter an endpoint base URL (without /v1)."
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        try:
+            r = requests.get(url + "/v1/models", headers=headers,
+                             timeout=20, verify=self.config.verify_ssl)
+            r.raise_for_status()
+            ids = [m.get("id") for m in r.json().get("data", []) if m.get("id")]
+        except Exception as e:
+            upd = gr.update(choices=keys)
+            return upd, upd, upd, f"Could not reach `{url}/v1/models`: {e}"
+        if not ids:
+            upd = gr.update(choices=keys)
+            return upd, upd, upd, f"Endpoint reachable but returned no models: `{url}`"
+        added = []
+        host = url.split("//")[-1]
+        for mid in ids:
+            key = f"{mid} @ {host}"
+            self._bench_registry[key] = {"endpoint": url, "model": mid,
+                                         "token": token}
+            added.append(key)
+        self._bench_registry_save()
+        keys = list(self._bench_registry.keys())
+        upd = gr.update(choices=keys)
+        auth_note = "with credentials" if token else "no credentials"
+        return upd, upd, upd, (f"Discovered {len(added)} model(s) ({auth_note}): "
+                               + ", ".join(f"`{a}`" for a in added))
 
     def create_interface(self) -> gr.Blocks:
         """Create enhanced Gradio interface"""
@@ -4560,11 +4635,31 @@ class ChatInterface:
                 with gr.TabItem("Benchmark"):
                     gr.Markdown(
                         "Run the **embedded Open-Telco benchmark suite** "
-                        "(`benchmarks/open-telco/`) against the configured model "
-                        "endpoint, with live progress. Datasets are embedded in "
-                        "this repository - no external dependencies. Scoring is "
-                        "parity-validated against the official GSMA harness."
+                        "(`benchmarks/open-telco/`) against any provisioned "
+                        "OpenAI-compatible model endpoint, with live progress. "
+                        "Datasets are embedded in this repository - no external "
+                        "dependencies. Scoring is parity-validated against the "
+                        "official GSMA harness. Up to "
+                        "three models can be benchmarked side by side."
                     )
+                    bench_keys = self._bench_registry_init()
+                    with gr.Accordion("Provision new model endpoint", open=False):
+                        with gr.Row():
+                            bench_new_url = gr.Textbox(
+                                label="Endpoint base URL (without /v1)",
+                                placeholder="https://my-model-route.apps.mylab",
+                                scale=3,
+                            )
+                            bench_new_token = gr.Textbox(
+                                label="API token (leave empty if none)",
+                                type="password", scale=2,
+                            )
+                            bench_add_btn = gr.Button(
+                                "Discover & Add", variant="primary", scale=1)
+                        bench_add_status = gr.Markdown(
+                            "Models found at the endpoint are added to every "
+                            "slot dropdown and persisted to "
+                            "`benchmark_endpoints.json`.")
                     with gr.Row():
                         bench_tasks = gr.CheckboxGroup(
                             choices=["teleqna", "teletables", "oranbench",
@@ -4589,32 +4684,59 @@ class ChatInterface:
                             value=8192, precision=0,
                             label="Max tokens per answer (0 = uncapped)"
                         )
-                    bench_model_info = gr.Markdown(
-                        f"### Target model: `{self.config.model_name}`\n"
-                        f"Endpoint: `{self.config.api_endpoint}` | "
-                        f"auth: {'on' if self.config.use_token_auth else 'off'} | "
-                        f"temperature 0.0 (benchmark standard)"
-                    )
+                    slot_dropdowns = []
                     with gr.Row():
-                        bench_run_btn = gr.Button("Run Benchmark", variant="primary", scale=4)
-                        bench_stop_btn = gr.Button("Stop", variant="stop", scale=1)
-                    bench_status = gr.Markdown("Ready - select benchmarks and press Run.")
-                    bench_table = gr.Dataframe(
-                        headers=["Benchmark", "Samples", "Done", "Accuracy",
-                                 "StdErr", "Status"],
-                        interactive=False, label="Live results"
-                    )
-                    bench_summary = gr.Markdown("")
-                    bench_run_btn.click(
-                        fn=self.run_benchmark,
-                        inputs=[bench_tasks, bench_tier, bench_limit,
-                                bench_conns, bench_max_tokens],
-                        outputs=[bench_status, bench_table, bench_summary]
-                    )
-                    bench_stop_btn.click(
-                        fn=self.stop_benchmark,
-                        inputs=[],
-                        outputs=[bench_status]
+                        for si in range(self.BENCH_SLOTS):
+                            with gr.Column():
+                                dd = gr.Dropdown(
+                                    choices=bench_keys,
+                                    value=bench_keys[0] if si == 0 else None,
+                                    label=f"Slot {si + 1} target model",
+                                )
+                                with gr.Row():
+                                    run_btn = gr.Button(
+                                        "Run", variant="primary", scale=3)
+                                    stop_btn = gr.Button(
+                                        "Stop", variant="stop", scale=1)
+                                status_md = gr.Markdown("Idle.")
+                                table = gr.Dataframe(
+                                    headers=["Benchmark", "Samples", "Done",
+                                             "Accuracy", "StdErr", "Status"],
+                                    interactive=False,
+                                    label=f"Slot {si + 1} results",
+                                )
+                                summary_md = gr.Markdown("")
+                                slot_dropdowns.append(dd)
+
+                                def _mk_run(slot):
+                                    def _run(model_key, tasks, tier, limit,
+                                             conns, mtok):
+                                        yield from self.run_benchmark(
+                                            slot, model_key, tasks, tier,
+                                            limit, conns, mtok)
+                                    return _run
+
+                                def _mk_stop(slot):
+                                    def _stop():
+                                        return self.stop_benchmark(slot)
+                                    return _stop
+
+                                run_btn.click(
+                                    fn=_mk_run(si),
+                                    inputs=[dd, bench_tasks, bench_tier,
+                                            bench_limit, bench_conns,
+                                            bench_max_tokens],
+                                    outputs=[status_md, table, summary_md],
+                                )
+                                stop_btn.click(
+                                    fn=_mk_stop(si),
+                                    inputs=[],
+                                    outputs=[status_md],
+                                )
+                    bench_add_btn.click(
+                        fn=self.add_benchmark_endpoint,
+                        inputs=[bench_new_url, bench_new_token],
+                        outputs=slot_dropdowns + [bench_add_status],
                     )
 
             # Event handlers
