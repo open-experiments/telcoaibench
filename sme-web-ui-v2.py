@@ -3755,6 +3755,19 @@ class ChatInterface:
                              rows, summary, t_start, judge_client=None,
                              judge_label=None):
         import time as _time
+        error_notes = []
+
+        def _first_error(_task):
+            try:
+                with open(os.path.join(out_dir, f"{_task}.jsonl")) as fh:
+                    for line in fh:
+                        row = json.loads(line)
+                        if row.get("error"):
+                            return str(row["error"])[:220]
+            except Exception:
+                pass
+            return None
+
         for ti, task in enumerate(tasks):
             prog = {"done": 0, "total": 0, "correct": 0}
             plock = threading.Lock()
@@ -3796,7 +3809,15 @@ class ChatInterface:
             else:
                 r = holder["result"]
                 summary.append(r)
+                nerr = r.get("request_errors", 0)
                 status = "stopped (partial)" if r.get("stopped") else "done"
+                if nerr:
+                    status += f" ({nerr} errors)"
+                    first = _first_error(task)
+                    if first:
+                        error_notes.append(
+                            f"WARNING `{task}`: {nerr} sample(s) errored and "
+                            f"scored 0. First error: `{first}`")
                 rows.append([task, r.get("total_planned", r["n"]), r["n"],
                              f"{r['accuracy']:.4f}", f"±{r['stderr']:.4f}", status])
             yield (model_tag + "\n\n" + f"Finished `{task}` ({ti + 1}/{len(tasks)})",
@@ -3818,8 +3839,12 @@ class ChatInterface:
                   + f"| tier: **{tier}** | temperature 0.0 "
                   + f"| {int(_time.time() - t_start)}s total" + "\n\n"
                   + f"Per-sample transcripts saved to `{out_dir}` (app container).")
+            if error_notes:
+                md += "\n\n" + "\n\n".join(error_notes)
         else:
             md = "No benchmarks completed successfully."
+            if error_notes:
+                md += "\n\n" + "\n\n".join(error_notes)
         yield ("Benchmark run complete", list(rows), md)
 
     def stop_benchmark(self, slot):

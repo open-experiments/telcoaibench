@@ -290,6 +290,7 @@ class Client:
         body.update(self.extra_body)
         delay = 2.0
         last_err = None
+        adapts_left = 3
         for _ in range(self.max_retries):
             if self.abort_event is not None and self.abort_event.is_set():
                 raise RuntimeError("aborted by stop request")
@@ -305,13 +306,37 @@ class Client:
                     usage = d.get("usage", {})
                     return (msg.get("content") or ""), usage
                 last_err = f"HTTP {r.status_code}: {r.text[:200]}"
+                if r.status_code == 400 and adapts_left and self._adapt_body(body, r.text):
+                    adapts_left -= 1
+                    continue  # retry immediately with adapted params
                 if r.status_code in (400, 401, 403, 404, 422):
                     break  # non-retryable
             except (requests.RequestException, RuntimeError) as e:
-                last_err = str(e)
+                msg = str(e)
+                last_err = msg
+                if "HTTP 400" in msg and adapts_left and self._adapt_body(body, msg):
+                    adapts_left -= 1
+                    continue
             time.sleep(delay)
             delay = min(delay * 2, 60)
         raise RuntimeError(f"request failed after retries: {last_err}")
+
+    @staticmethod
+    def _adapt_body(body, err_text):
+        """OpenAI reasoning models (gpt-5 family) reject 'max_tokens' (want
+        'max_completion_tokens') and any non-default temperature. Adapt the
+        payload in place based on the server's 400 message; return True if
+        something changed so the caller retries once."""
+        t = (err_text or "").lower()
+        changed = False
+        if "max_tokens" in t and "max_tokens" in body:
+            # reasoning tokens count against the cap - give headroom
+            body["max_completion_tokens"] = max(body.pop("max_tokens"), 4096)
+            changed = True
+        if "temperature" in t and "temperature" in body:
+            body.pop("temperature")
+            changed = True
+        return changed
 
     def _chat_stream(self, body):
         parts, usage = [], {}
