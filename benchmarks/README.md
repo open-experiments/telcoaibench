@@ -31,8 +31,10 @@ a **judge model** grades each candidate answer (against the official answer
 key, or against a fixed rubric) and emits `SCORE: n/10`. Provision any
 OpenAI-compatible endpoint as the judge - a frontier-class model (e.g.
 GPT-5, Claude) via an API-key-backed endpoint is recommended for grading
-quality. In the portal, provision the judge endpoint like any other target,
-then select it in the **Judge model** dropdown. On the CLI, pass
+quality. In the portal, use the dedicated **Provision judge model** form
+(endpoint URL + API key + model name) - judge endpoints are stored
+separately and never become benchmark target cards - then select the judge
+in the **Judge model** dropdown. On the CLI, pass
 `--judge-endpoint`, `--judge-model`, and `--judge-key`. Always report which
 judge was used; scores from different judges are not comparable.
 

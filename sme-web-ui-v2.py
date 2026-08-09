@@ -3690,9 +3690,11 @@ class ChatInterface:
             abort_event=stop_ev,
         )
         judge_client = None
+        judge_label = None
         judged_selected = [t for t in tasks if t in getattr(mod, "JUDGED_TASKS", [])]
         if judged_selected:
-            jentry = self._bench_registry.get(judge_key)
+            jentry = (getattr(self, "_judge_registry", {}).get(judge_key)
+                      or self._bench_registry.get(judge_key))
             if judge_key in (None, "", "(none)") or not jentry:
                 self._bench_active[slot] = False
                 yield (f"Tasks {judged_selected} need a judge model - pick one "
@@ -3705,6 +3707,7 @@ class ChatInterface:
                 max_tokens=2048, verify=self.config.verify_ssl,
                 timeout=600, abort_event=stop_ev)
             model_tag += f" | **judge:** `{jentry['model']}`"
+            judge_label = jentry['model']
         out_dir = tempfile.mkdtemp(prefix=f"benchmark_slot{slot}_")
         summary = []
         t_start = _time.time()
@@ -3713,7 +3716,7 @@ class ChatInterface:
             yield from self._run_benchmark_tasks(
                 slot, tasks, tier, limit, max_connections, mod, client,
                 stop_ev, model_tag, entry, out_dir, rows, summary, t_start,
-                judge_client=judge_client)
+                judge_client=judge_client, judge_label=judge_label)
         finally:
             # if the browser disconnected (refresh/close) Gradio kills this
             # generator - make sure the worker threads stop too instead of
@@ -3723,7 +3726,8 @@ class ChatInterface:
 
     def _run_benchmark_tasks(self, slot, tasks, tier, limit, max_connections,
                              mod, client, stop_ev, model_tag, entry, out_dir,
-                             rows, summary, t_start, judge_client=None):
+                             rows, summary, t_start, judge_client=None,
+                             judge_label=None):
         import time as _time
         for ti, task in enumerate(tasks):
             prog = {"done": 0, "total": 0, "correct": 0}
@@ -3784,6 +3788,7 @@ class ChatInterface:
             md = (f"### Benchmark run complete{stopped_note} - average accuracy "
                   f"**{avg:.4f}** across {len(summary)} benchmark(s)" + "\n\n"
                   + f"Model: `{entry['model']}` | endpoint: `{entry['endpoint']}` "
+                  + (f"| judge: `{judge_label}` " if judge_label else "")
                   + f"| tier: **{tier}** | temperature 0.0 "
                   + f"| {int(_time.time() - t_start)}s total" + "\n\n"
                   + f"Per-sample transcripts saved to `{out_dir}` (app container).")
@@ -3873,6 +3878,93 @@ class ChatInterface:
         self._bench_registry.pop(key, None)
         self._bench_registry_save()
         return list(self._bench_registry.keys())
+
+    JUDGE_REGISTRY_FILE = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "judge_endpoints.json")
+
+    def _judge_registry_init(self):
+        reg = {}
+        try:
+            if os.path.exists(self.JUDGE_REGISTRY_FILE):
+                with open(self.JUDGE_REGISTRY_FILE) as fh:
+                    reg = json.load(fh)
+        except Exception as e:
+            print(f"judge registry load failed: {e}")
+        self._judge_registry = reg
+        return list(reg.keys())
+
+    def _judge_registry_save(self):
+        try:
+            with open(self.JUDGE_REGISTRY_FILE, "w") as fh:
+                json.dump(self._judge_registry, fh, indent=2)
+        except Exception as e:
+            print(f"judge registry save failed: {e}")
+
+    def _judge_choices(self):
+        """Dropdown choices: judge-only endpoints first, then any
+        provisioned benchmark target (a lab model can judge another)."""
+        judges = list(getattr(self, "_judge_registry", {}).keys())
+        targets = [k for k in getattr(self, "_bench_registry", {}).keys()
+                   if k not in judges]
+        return ["(none)"] + judges + targets
+
+    def add_judge_endpoint(self, url, token, model_name):
+        """Register a judge-only endpoint (never becomes a target card).
+        Returns (status_markdown, dropdown_update_choices)."""
+        url = (url or "").strip().rstrip("/")
+        if url.endswith("/v1"):
+            url = url[:-3].rstrip("/")
+        token = (token or "").strip()
+        model_name = (model_name or "").strip()
+        if not url:
+            return "Enter the judge endpoint base URL (without /v1).", self._judge_choices()
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        ids, probe_err = [], None
+        try:
+            r = requests.get(url + "/v1/models", headers=headers,
+                             timeout=20, verify=self.config.verify_ssl)
+            r.raise_for_status()
+            ids = [m.get("id") for m in r.json().get("data", []) if m.get("id")]
+        except Exception as e:
+            probe_err = str(e)
+        if not model_name:
+            if len(ids) == 1:
+                model_name = ids[0]
+            elif ids:
+                sample = ", ".join(f"`{i}`" for i in ids[:8])
+                more = "..." if len(ids) > 8 else ""
+                return (f"Endpoint exposes {len(ids)} models - specify the "
+                        f"judge model name. Found: {sample}{more}"), self._judge_choices()
+            else:
+                return (f"Could not discover models at `{url}/v1/models` "
+                        f"({probe_err}) - specify the judge model name "
+                        "explicitly."), self._judge_choices()
+        note = ""
+        if ids and model_name not in ids:
+            note = (f" (warning: `{model_name}` not in the endpoint's "
+                    "model list - registered anyway)")
+        elif probe_err:
+            note = (" (warning: model list not verifiable, registered "
+                    "as given)")
+        host = url.split("//")[-1]
+        key = f"{model_name} @ {host}"
+        self._judge_registry[key] = {"endpoint": url, "model": model_name,
+                                     "token": token}
+        self._judge_registry_save()
+        auth_note = "with credentials" if token else "no credentials"
+        return (f"Judge registered ({auth_note}): `{key}`{note}. It will "
+                "not appear as a benchmark target."), self._judge_choices()
+
+    def remove_judge_endpoint(self, key):
+        """Remove a judge-only endpoint (targets are managed on their cards)."""
+        if key in getattr(self, "_judge_registry", {}):
+            self._judge_registry.pop(key, None)
+            self._judge_registry_save()
+            return f"Removed judge `{key}`.", self._judge_choices()
+        if key in getattr(self, "_bench_registry", {}):
+            return (f"`{key}` is a benchmark target - remove it from its "
+                    "target card instead."), self._judge_choices()
+        return "Select a provisioned judge to remove.", self._judge_choices()
 
     def model_hero_html(self):
         """Live model identity strip: name, status dot, latency, endpoint
@@ -4445,6 +4537,7 @@ class ChatInterface:
                         "two can run in parallel."
                     )
                     bench_keys_init = self._bench_registry_init()
+                    self._judge_registry_init()
                     bench_targets_state = gr.State(bench_keys_init)
                     with gr.Accordion("Provision new model endpoint", open=False):
                         with gr.Row():
@@ -4491,12 +4584,38 @@ class ChatInterface:
                             label="Max tokens per answer (0 = uncapped)"
                         )
                         bench_judge = gr.Dropdown(
-                            choices=["(none)"] + bench_keys_init,
+                            choices=self._judge_choices(),
                             value="(none)", interactive=True,
-                            label="Judge model (for telcos_last_exam / "
-                                  "vendor_genai - provision e.g. api.openai.com "
-                                  "with your key above)"
+                            label="Judge model (grades telcos_last_exam / "
+                                  "vendor_genai answers)"
                         )
+                    with gr.Accordion("Provision judge model "
+                                      "(judge-only endpoint, e.g. "
+                                      "api.openai.com)", open=False):
+                        with gr.Row():
+                            judge_new_url = gr.Textbox(
+                                label="Judge endpoint base URL (without /v1)",
+                                placeholder="https://api.openai.com",
+                                scale=3,
+                            )
+                            judge_new_token = gr.Textbox(
+                                label="API key (if required)",
+                                type="password", scale=2,
+                            )
+                            judge_new_model = gr.Textbox(
+                                label="Judge model name",
+                                placeholder="gpt-5", scale=2,
+                            )
+                            judge_add_btn = gr.Button(
+                                "Add Judge", variant="primary", scale=1)
+                            judge_rm_btn = gr.Button(
+                                "Remove Selected", variant="secondary",
+                                scale=1)
+                        judge_add_status = gr.Markdown(
+                            "Judge endpoints are stored separately in "
+                            "`judge_endpoints.json` and never become "
+                            "benchmark target cards. Provisioned benchmark "
+                            "targets can also be picked as judges.")
 
                     @gr.render(inputs=bench_targets_state)
                     def _render_target_cards(target_keys):
@@ -4570,7 +4689,29 @@ class ChatInterface:
 
                     def _add_endpoint_ui(url, token):
                         keys, msg = self.add_benchmark_endpoint(url, token)
-                        return keys, msg, gr.update(choices=["(none)"] + keys)
+                        return keys, msg, gr.update(choices=self._judge_choices())
+
+                    def _add_judge_ui(url, token, model_name):
+                        msg, choices = self.add_judge_endpoint(url, token,
+                                                               model_name)
+                        return msg, gr.update(choices=choices)
+
+                    def _rm_judge_ui(selected):
+                        msg, choices = self.remove_judge_endpoint(selected)
+                        return msg, gr.update(choices=choices,
+                                              value="(none)")
+
+                    judge_add_btn.click(
+                        fn=_add_judge_ui,
+                        inputs=[judge_new_url, judge_new_token,
+                                judge_new_model],
+                        outputs=[judge_add_status, bench_judge],
+                    )
+                    judge_rm_btn.click(
+                        fn=_rm_judge_ui,
+                        inputs=[bench_judge],
+                        outputs=[judge_add_status, bench_judge],
+                    )
 
                     bench_add_btn.click(
                         fn=_add_endpoint_ui,
@@ -4581,7 +4722,8 @@ class ChatInterface:
 
                     def _load_targets_ui():
                         keys = list(self._bench_registry_init())
-                        return keys, gr.update(choices=["(none)"] + keys)
+                        self._judge_registry_init()
+                        return keys, gr.update(choices=self._judge_choices())
 
                     interface.load(
                         fn=_load_targets_ui, inputs=[],

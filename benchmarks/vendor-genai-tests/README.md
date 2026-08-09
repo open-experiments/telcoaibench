@@ -35,10 +35,10 @@ vendor-genai-tests/
 
 ## How to run
 
-From the portal: open the **Benchmark** tab, select `vendor_genai`, pick a
-**Judge model** from the dropdown (provision any OpenAI-compatible endpoint
-first - a frontier-class judge gives the most reliable rubric grading),
-then Run.
+From the portal: open the **Benchmark** tab, select `vendor_genai`,
+provision a judge with the **Provision judge model** form (endpoint URL +
+API key + model name - a frontier-class judge gives the most reliable
+rubric grading), pick it in the **Judge model** dropdown, then Run.
 
 From the CLI (same engine):
 

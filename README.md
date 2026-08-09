@@ -123,11 +123,14 @@ auto-cancelled too - no orphaned GPU load.
 **Judged suites.** `telcos_last_exam` (10 hardest-questions exam graded 0-10
 against an official answer key) and `vendor_genai` (vendor-architecture
 deep-dives graded against a fixed rubric) have no deterministic scorer -
-instead a **judge model** you pick in the UI grades every answer. Provision
-any OpenAI-compatible endpoint as the judge (a frontier-class model such as
-GPT-5 or Claude via an API-key-backed endpoint is recommended), select it in
-the **Judge model** dropdown, and run. Results report the judge alongside the
-scores - numbers from different judges are not comparable.
+instead a **judge model** you pick in the UI grades every answer. Use the
+dedicated **Provision judge model** form (endpoint URL + API key + model
+name - e.g. `api.openai.com` with your key for GPT-5, or any lab endpoint);
+judge endpoints are stored separately in `judge_endpoints.json` and never
+become benchmark target cards. Select the judge in the **Judge model**
+dropdown and run - a frontier-class judge is recommended for grading
+quality. Results report the judge alongside the scores - numbers from
+different judges are not comparable.
 </details>
 
 ## Benchmark Suites

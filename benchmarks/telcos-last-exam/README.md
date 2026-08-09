@@ -28,9 +28,10 @@ telcos-last-exam/
 ## How to run
 
 From the portal: open the **Benchmark** tab, select `telcos_last_exam`,
-pick a **Judge model** from the dropdown (provision any OpenAI-compatible
-endpoint first - a frontier-class model such as GPT-5 or Claude via an
-API-key-backed endpoint gives the most reliable grading), then Run.
+provision a judge with the **Provision judge model** form (endpoint URL +
+API key + model name - a frontier-class model such as GPT-5 or Claude
+gives the most reliable grading), pick it in the **Judge model** dropdown,
+then Run.
 
 From the CLI (same engine):
 
