@@ -3956,7 +3956,7 @@ class ChatInterface:
     BENCH_REGISTRY_FILE = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "benchmark_endpoints.json")
     BENCH_SLOTS = 3  # legacy constant (dynamic cards now)
-    BENCH_MAX_PARALLEL = 3
+    BENCH_MAX_PARALLEL = 2
 
     def _bench_registry_init(self):
         reg = {}
@@ -4025,6 +4025,62 @@ class ChatInterface:
         self._bench_registry.pop(key, None)
         self._bench_registry_save()
         return list(self._bench_registry.keys())
+
+    def model_hero_html(self):
+        """Live model identity strip: name, status dot, latency, endpoint
+        details. Polled by a UI timer every 30s."""
+        import time as _time
+        model = self.config.model_name
+        host = self.config.api_endpoint.split("//")[-1]
+        online, latency_ms, ctx = False, None, None
+        try:
+            t0 = _time.time()
+            r = requests.get(self.config.api_endpoint + "/v1/models",
+                             headers=({"Authorization": f"Bearer {self.config.api_token}"}
+                                      if self.config.use_token_auth else {}),
+                             timeout=6, verify=self.config.verify_ssl)
+            latency_ms = int((_time.time() - t0) * 1000)
+            if r.status_code == 200:
+                online = True
+                data = r.json().get("data", [])
+                for m in data:
+                    if m.get("id") == model or len(data) == 1:
+                        ctx = m.get("max_model_len")
+                        if m.get("id") != model:
+                            model = m.get("id", model)
+                        break
+        except Exception:
+            pass
+        dot = "#10B981" if online else "#EF4444"
+        status_txt = f"online | {latency_ms}ms" if online else "offline"
+        ctx_txt = f"ctx {ctx:,}" if ctx else "ctx n/a"
+        auth_txt = "auth on" if self.config.use_token_auth else "auth off"
+        gauge = ('<svg width="42" height="42" viewBox="0 0 24 24" fill="none">'
+                 '<path d="M4.2 15.5a8 8 0 1 1 15.6 0" stroke="#8B5CF6" '
+                 'stroke-width="2.4" stroke-linecap="round"/>'
+                 '<path d="M12 15.5 16 9.5" stroke="#FBBF24" stroke-width="2.2" '
+                 'stroke-linecap="round"/>'
+                 '<circle cx="12" cy="15.5" r="1.8" fill="#FBBF24"/></svg>')
+        return (
+            '<div style="background:linear-gradient(#111827,#111827) padding-box,'
+            'linear-gradient(90deg,#8B5CF6,#22D3EE) border-box;'
+            'border:2px solid transparent;border-radius:14px;'
+            'padding:12px 20px;display:flex;align-items:center;gap:16px">'
+            + gauge +
+            '<div>'
+            f'<div style="color:#E2E8F0;font-size:22px;font-weight:700;'
+            f'font-family:Helvetica,Arial,sans-serif">{model} '
+            f'<span style="display:inline-block;width:11px;height:11px;'
+            f'border-radius:50%;background:{dot};margin-left:8px;'
+            f'box-shadow:0 0 8px {dot}"></span> '
+            f'<span style="color:{dot};font-size:13px;'
+            f'font-weight:400">{status_txt}</span></div>'
+            f'<div style="color:#64748B;font-size:12px;margin-top:2px;'
+            f'font-family:Helvetica,Arial,sans-serif">{host} &nbsp;|&nbsp; '
+            f'vLLM / OpenAI-compatible &nbsp;|&nbsp; {ctx_txt} &nbsp;|&nbsp; '
+            f'{auth_txt} &nbsp;|&nbsp; smart streaming | timeout handling | '
+            f'context optimization</div>'
+            '</div></div>')
 
     def create_interface(self) -> gr.Blocks:
         """Create enhanced Gradio interface"""
@@ -4185,25 +4241,13 @@ class ChatInterface:
             # Header - more compact
             with gr.Row():
                 with gr.Column(scale=4):
-                    # Get active model from API if possible
-                    try:
-                        test_result = self.client.test_connection()
-                        active_model = test_result.get('models', {}).get('configured', self.config.model_name)
-                    except:
-                        active_model = self.config.model_name
-                    
-                    gr.Markdown(
-                        f"""
-                        # TelcoAIBench
-                        **Connected to:** {active_model} | **Features:** Smart streaming, timeout handling, context optimization
-                        """
-                    )
+                    gr.Markdown("# TelcoAIBench")
+                    hero_html = gr.HTML(self.model_hero_html())
+                    hero_timer = gr.Timer(30)
+                    hero_timer.tick(fn=self.model_hero_html, inputs=[],
+                                    outputs=[hero_html])
                 with gr.Column(scale=1):
-                    # Status indicator in header
-                    if self.client.health_check():
-                        gr.Markdown("**Status:** Online")
-                    else:
-                        gr.Markdown("**Status:** Offline")
+                    pass
             
             # Session management row
             with gr.Row():
@@ -4675,7 +4719,7 @@ class ChatInterface:
                         "dependencies. Scoring is parity-validated against the "
                         "official GSMA harness. Every provisioned target gets "
                         "its own card below; up to "
-                        "three can run in parallel."
+                        "two can run in parallel."
                     )
                     bench_keys_init = self._bench_registry_init()
                     bench_targets_state = gr.State(bench_keys_init)
@@ -4729,9 +4773,9 @@ class ChatInterface:
                             gr.Markdown("No targets provisioned - add a model "
                                         "endpoint above.")
                             return
-                        for row_start in range(0, len(target_keys), 3):
+                        for row_start in range(0, len(target_keys), 2):
                             with gr.Row():
-                                for key in target_keys[row_start:row_start + 3]:
+                                for key in target_keys[row_start:row_start + 2]:
                                     entry = self._bench_registry.get(key, {})
                                     with gr.Column(variant="panel"):
                                         gr.Markdown(
@@ -4795,6 +4839,10 @@ class ChatInterface:
                         fn=self.add_benchmark_endpoint,
                         inputs=[bench_new_url, bench_new_token],
                         outputs=[bench_targets_state, bench_add_status],
+                    )
+                    interface.load(
+                        fn=lambda: list(self._bench_registry_init()),
+                        inputs=[], outputs=[bench_targets_state],
                     )
 
             # Event handlers
