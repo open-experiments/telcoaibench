@@ -68,6 +68,56 @@ WHITESPACE_PATTERN = re.compile(r"\n\s*")
 DIGIT_PATTERN = re.compile(r"\d+")
 ANSWER_PATTERN = re.compile(r"(?i)ANSWER\s*:\s*\(?([A-Za-z])\)?")
 WG_PATTERN = re.compile(r"([A-Z]+\d+(?:-[A-Z]+)?)", re.IGNORECASE)
+SCORE_PATTERN = re.compile(r"(?i)SCORE\s*:\s*(\d+(?:\.\d+)?)")
+
+JUDGE_REFERENCE_PROMPT = """You are a strict telecommunications examination grader.
+Grade the candidate answer against the official reference answer key.
+Award points for correct methodology, correct numerical results (allow minor
+rounding), correct use of 3GPP specifications, and completeness. Penalize
+fabricated specifics, wrong formulas, and missing sub-questions.
+Be strict: a perfect 10 requires matching the reference in substance.
+
+QUESTION:
+{question}
+
+REFERENCE ANSWER KEY:
+{reference}
+
+CANDIDATE ANSWER:
+{candidate}
+
+First give a 3-5 sentence justification, then output the final grade on its
+own last line in exactly this format: SCORE: <0-10>"""
+
+JUDGE_RUBRIC_PROMPT = """You are a strict telecommunications technology analyst
+grading a vendor-technology deep-dive answer. There is no single reference
+answer; grade against this rubric (equal weight):
+1. Technical accuracy - claims consistent with public knowledge of the vendor's
+   architecture; no fabricated product names, versions, or metrics.
+2. Completeness - every numbered section of the request is addressed.
+3. Depth - concrete interfaces, components, and quantitative reasoning rather
+   than generic marketing language.
+4. Honesty - clearly separates publicly known facts from what would require
+   vendor engagement; abstains rather than inventing specifics.
+
+QUESTION:
+{question}
+
+CANDIDATE ANSWER:
+{candidate}
+
+First give a 3-5 sentence justification, then output the final grade on its
+own last line in exactly this format: SCORE: <0-10>"""
+
+
+def parse_judge_score(text):
+    m = SCORE_PATTERN.findall(text or "")
+    if not m:
+        return None
+    try:
+        return max(0.0, min(10.0, float(m[-1]))) / 10.0
+    except ValueError:
+        return None
 
 
 def parse_boxed(response: str) -> str:
@@ -151,6 +201,14 @@ def build_telemath_prompt(record: dict):
     ]
 
 
+def build_exam_prompt(record: dict):
+    return [{"role": "system", "content":
+             "You are a telecommunications expert taking a rigorous exam. "
+             "Answer completely, show detailed calculations, provide specific "
+             "numerical values, and cite relevant 3GPP specifications."},
+            {"role": "user", "content": record["question"]}]
+
+
 TASKS = {
     "teleqna":     {"prompt": build_mcq_prompt,      "score": score_mcq},
     "teletables":  {"prompt": build_mcq_prompt,      "score": score_mcq},
@@ -160,7 +218,14 @@ TASKS = {
     "telemath":    {"prompt": build_telemath_prompt, "score": score_telemath},
     "telelogs":    {"prompt": build_plain_prompt,    "score": score_telelogs},
     "three_gpp":   {"prompt": build_plain_prompt,    "score": score_three_gpp},
+    # LLM-as-judge suites (need --judge-* / a judge model in the portal)
+    "telcos_last_exam": {"prompt": build_exam_prompt, "judged": "reference",
+                         "path": "telcos-last-exam/datasets/telcos_last_exam.jsonl.gz"},
+    "vendor_genai":     {"prompt": build_plain_prompt, "judged": "rubric",
+                         "path": "vendor-genai-tests/datasets/vendor_genai.jsonl.gz"},
 }
+
+JUDGED_TASKS = [k for k, v in TASKS.items() if v.get("judged")]
 
 LEADERBOARD_TASKS = [
     "teleqna", "teletables", "oranbench", "srsranbench",
@@ -169,7 +234,12 @@ LEADERBOARD_TASKS = [
 
 
 def load_dataset(task: str, tier: str, limit=None):
-    path = os.path.join(HERE, "datasets", tier, f"{task}.jsonl.gz")
+    spec = TASKS.get(task, {})
+    if spec.get("path"):
+        # suite datasets live under benchmarks/<suite>/ (sibling of open-telco)
+        path = os.path.join(os.path.dirname(HERE), spec["path"])
+    else:
+        path = os.path.join(HERE, "datasets", tier, f"{task}.jsonl.gz")
     records = []
     with gzip.open(path, "rt", encoding="utf-8") as f:
         for line in f:
@@ -278,7 +348,7 @@ class Client:
 # --------------------------------------------------------------------------
 
 def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
-             stop_event=None):
+             stop_event=None, judge_client=None):
     """Run one benchmark.
 
     progress_cb(done, total, correct), if given, is invoked after every
@@ -293,17 +363,41 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
     done = correct = 0
     lock = threading.Lock()
 
+    judged_mode = spec.get("judged")
+
     def one(i):
         rec = records[i]
         t0 = time.time()
+        judge_note = None
         try:
             completion, usage = client.chat(spec["prompt"](rec))
-            ok, parsed, target = spec["score"](completion, rec)
+            if judged_mode:
+                if judge_client is None:
+                    raise RuntimeError(
+                        f"task '{task}' needs a judge model (configure one)")
+                if judged_mode == "reference":
+                    jp = JUDGE_REFERENCE_PROMPT.format(
+                        question=rec["question"],
+                        reference=rec.get("reference_answer", ""),
+                        candidate=completion)
+                else:
+                    jp = JUDGE_RUBRIC_PROMPT.format(
+                        question=rec["question"], candidate=completion)
+                judge_note, _ = judge_client.chat(
+                    [{"role": "user", "content": jp}])
+                score = parse_judge_score(judge_note)
+                if score is None:
+                    raise RuntimeError("judge did not return a SCORE line")
+                ok, parsed, target = score, f"{score*10:.1f}/10", "judge"
+            else:
+                ok, parsed, target = spec["score"](completion, rec)
             err = None
         except Exception as e:
-            completion, usage, ok, parsed, target, err = "", {}, False, "", "", str(e)
-        return i, {"index": i, "correct": bool(ok), "parsed": parsed,
+            completion, usage, ok, parsed, target, err = "", {}, 0.0, "", "", str(e)
+        return i, {"index": i, "correct": bool(ok) if not judged_mode else None,
+                   "score": float(ok), "parsed": parsed,
                    "target": target, "error": err,
+                   "judge_rationale": judge_note,
                    "latency_s": round(time.time() - t0, 2),
                    "output_tokens": usage.get("completion_tokens"),
                    "completion": completion}
@@ -322,7 +416,7 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
             results[i] = row
             with lock:
                 done += 1
-                correct += 1 if row["correct"] else 0
+                correct += row.get("score", 1.0 if row["correct"] else 0.0)
                 if progress_cb:
                     try:
                         progress_cb(done, len(records), correct)
@@ -337,9 +431,13 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
         done_rows = [r for r in done_rows
                      if not (r["error"] and "abort" in str(r["error"]))]
     n = len(done_rows)
-    correct = sum(1 for r in done_rows if r["correct"])
-    acc = correct / n if n else 0.0
-    stderr = math.sqrt(acc * (1 - acc) / n) if n else 0.0
+    scores = [r.get("score", 1.0 if r["correct"] else 0.0) for r in done_rows]
+    acc = sum(scores) / n if n else 0.0
+    if n > 1:
+        var = sum((x - acc) ** 2 for x in scores) / (n - 1)
+        stderr = math.sqrt(var / n)
+    else:
+        stderr = 0.0
     errors = sum(1 for r in done_rows if r["error"])
     with open(os.path.join(out_dir, f"{task}.jsonl"), "w") as w:
         for r in done_rows:
@@ -375,6 +473,11 @@ def main():
     ap.add_argument("--extra-body", default=None,
                     help='JSON merged into each request, e.g. '
                          '\'{"chat_template_kwargs":{"enable_thinking":true}}\'')
+    ap.add_argument("--judge-endpoint", default=None,
+                    help="OpenAI-compatible base URL of the judge model "
+                         "(required for telcos_last_exam / vendor_genai)")
+    ap.add_argument("--judge-model", default=None)
+    ap.add_argument("--judge-key", default="none")
     ap.add_argument("--output-dir", default=os.path.join(HERE, "results"))
     args = ap.parse_args()
 
@@ -393,6 +496,17 @@ def main():
                     extra_body=json.loads(args.extra_body) if args.extra_body else None,
                     stream=not args.no_stream)
 
+    judge_client = None
+    if args.judge_endpoint and args.judge_model:
+        judge_client = Client(args.judge_endpoint.rstrip("/") +
+                              ("" if args.judge_endpoint.rstrip("/").endswith("/v1") else "/v1"),
+                              args.judge_model, args.judge_key,
+                              temperature=0.0, max_tokens=2048,
+                              verify=verify, timeout=args.timeout)
+    needs_judge = [t for t in tasks if TASKS[t].get("judged")]
+    if needs_judge and judge_client is None:
+        sys.exit(f"tasks {needs_judge} require --judge-endpoint/--judge-model")
+
     stamp = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     safe_model = re.sub(r"[^A-Za-z0-9._-]", "_", args.model)
     out_dir = os.path.join(args.output_dir, f"{stamp}_{safe_model}_{args.tier}")
@@ -405,7 +519,8 @@ def main():
     for t in tasks:
         print(f"== {t} ==", flush=True)
         summary.append(run_task(t, args.tier, client, args.max_connections,
-                                args.limit, out_dir))
+                                args.limit, out_dir,
+                                judge_client=judge_client))
 
     avg = sum(s["accuracy"] for s in summary) / len(summary) if summary else 0
     meta = {"model": args.model, "endpoint": args.endpoint, "tier": args.tier,

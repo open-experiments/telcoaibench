@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-8B5CF6.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-6366F1.svg)](https://www.python.org/)
 [![Gradio 5](https://img.shields.io/badge/UI-Gradio%205-22D3EE.svg)](https://gradio.app)
-[![Benchmarks](https://img.shields.io/badge/Benchmarks-8%20telco%20suites-FBBF24.svg)](benchmarks/README.md)
+[![Benchmarks](https://img.shields.io/badge/Benchmarks-10%20telco%20suites-FBBF24.svg)](benchmarks/README.md)
 [![Datasets](https://img.shields.io/badge/Datasets-embedded%2C%20zero%20deps-10B981.svg)](benchmarks/open-telco/datasets/PROVENANCE.md)
 
 <img src="images/icons/icon-video.svg" width="18" align="top"/> [Demo Video](https://youtu.be/UQB1T-ThQBk) &nbsp;|&nbsp; <img src="images/icons/icon-article.svg" width="18" align="top"/> [Article](https://medium.com/open-5g-hypercore/episode-xxix-the-prompt-engineering-how-to-make-a-toddler-act-talk-nice-83e9aab2e3b9) &nbsp;|&nbsp; <img src="images/icons/icon-suite.svg" width="18" align="top"/> [Benchmark Suites](benchmarks/README.md) &nbsp;|&nbsp; <img src="images/icons/icon-report.svg" width="18" align="top"/> [Verification Report](benchmarks/open-telco/reference/)
@@ -25,7 +25,7 @@ with two environment variables, and you get three things:
 
 | <img src="images/icons/icon-portal.svg" width="20" align="top"/> **Portal** | <img src="images/icons/icon-bench.svg" width="20" align="top"/> **Benchmark Suite** | <img src="images/icons/icon-report.svg" width="20" align="top"/> **Receipts** |
 |---|---|---|
-| Expert telco chat personas, embeddings playground, and a live vLLM observability dashboard - persistent sessions, streaming, file upload. | The 8 Open-Telco benchmarks (TeleQnA, TeleTables, TeleMath, TeleLogs, 3GPP-TSG, ORANBench, srsRANBench, 6G-Bench) with **datasets embedded in this repo** - run from the UI or CLI, no external dependencies, ever. | Scoring parity-validated against the official GSMA harness (≤1pp on all 7 leaderboard tasks), plus a full leaderboard-claim verification report showing why pinned, reproducible evals matter. |
+| Expert telco chat personas, embeddings playground, and a live vLLM observability dashboard - persistent sessions, streaming, file upload. | The 8 Open-Telco benchmarks (TeleQnA, TeleTables, TeleMath, TeleLogs, 3GPP-TSG, ORANBench, srsRANBench, 6G-Bench) plus 2 **LLM-as-judge suites** (Telco's Last Exam, Vendor GenAI deep-dives) with **datasets embedded in this repo** - run from the UI or CLI, no external dependencies, ever. | Scoring parity-validated against the official GSMA harness (≤1pp on all 7 leaderboard tasks), plus a full leaderboard-claim verification report showing why pinned, reproducible evals matter. |
 
 ## Quick Start
 
@@ -122,7 +122,7 @@ average, and per-sample transcripts for auditing.
 **Multi-model, side by side.** Provision any OpenAI-compatible endpoint from
 the UI (base URL plus optional API token); every discovered model gets its
 own **target card**, added and removed dynamically and persisted in
-`benchmark_endpoints.json`. Each card runs independently - up to three in
+`benchmark_endpoints.json`. Each card runs independently - up to two in
 parallel - with its own live results table and a **Stop** button that
 hard-aborts the run: queued samples are dropped and in-flight generations
 are cancelled on the server within seconds, with partial results reported
@@ -130,6 +130,15 @@ honestly as "stopped (partial)". Runs whose browser page closes are
 auto-cancelled too - no orphaned GPU load.
 
 ![Benchmark tab - two models side by side](images/tab-benchmark-multi.png)
+
+**Judged suites.** `telcos_last_exam` (10 hardest-questions exam graded 0-10
+against an official answer key) and `vendor_genai` (vendor-architecture
+deep-dives graded against a fixed rubric) have no deterministic scorer -
+instead a **judge model** you pick in the UI grades every answer. Provision
+any OpenAI-compatible endpoint as the judge (a frontier-class model such as
+GPT-5 or Claude via an API-key-backed endpoint is recommended), select it in
+the **Judge model** dropdown, and run. Results report the judge alongside the
+scores - numbers from different judges are not comparable.
 </details>
 
 ## Benchmark Suites
@@ -139,8 +148,8 @@ All benchmark assets live under [`benchmarks/`](benchmarks/README.md):
 | Suite | What it is |
 |---|---|
 | [`open-telco/`](benchmarks/open-telco/) | Self-contained Open-Telco eval framework - 8 GSMA telecom benchmarks, lite + full datasets embedded (~4.5MB gzipped JSONL), single-file runner (stdlib + `requests`). Parity-validated; includes leaderboard claim snapshots and the 2026-08 verification report. |
-| [`vendor-genai-tests/`](benchmarks/vendor-genai-tests/) | Vendor GenAI test sets (Ericsson / Nokia / Mavenir) with graded results + Telco5G reports. |
-| [`telcos-last-exam/`](benchmarks/telcos-last-exam/) | Hardest-questions telco exam with per-model answer sheets. |
+| [`vendor-genai-tests/`](benchmarks/vendor-genai-tests/) | Vendor GenAI deep-dives (Ericsson / Nokia / Mavenir) - LLM-as-judge, rubric-graded; embedded dataset + historical hand-graded results + Telco5G reports. |
+| [`telcos-last-exam/`](benchmarks/telcos-last-exam/) | Hardest-questions telco exam - LLM-as-judge, graded against the official answer key; embedded dataset + per-model answer sheets. |
 | [`model-reports/`](benchmarks/model-reports/) | Per-model benchmark answers and performance reports. |
 | [`embeddings/`](benchmarks/embeddings/) | Embeddings model benchmark notes. |
 

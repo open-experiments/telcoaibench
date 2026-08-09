@@ -3810,7 +3810,7 @@ class ChatInterface:
         spec.loader.exec_module(mod)
         return mod
 
-    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens):
+    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens, judge_key="(none)"):
         """Generator handler for one benchmark slot: runs the selected
         benchmarks against the chosen registry model, yielding
         (status_md, table_rows, summary_md) for real-time UI updates."""
@@ -3859,6 +3859,22 @@ class ChatInterface:
             timeout=600,
             abort_event=stop_ev,
         )
+        judge_client = None
+        judged_selected = [t for t in tasks if t in getattr(mod, "JUDGED_TASKS", [])]
+        if judged_selected:
+            jentry = self._bench_registry.get(judge_key)
+            if judge_key in (None, "", "(none)") or not jentry:
+                self._bench_active[slot] = False
+                yield (f"Tasks {judged_selected} need a judge model - pick one "
+                       "in the 'Judge model' dropdown (provision it first if "
+                       "needed)."), [], ""
+                return
+            judge_client = mod.Client(
+                jentry["endpoint"].rstrip("/") + "/v1", jentry["model"],
+                api_key=(jentry.get("token") or "none"), temperature=0.0,
+                max_tokens=2048, verify=self.config.verify_ssl,
+                timeout=600, abort_event=stop_ev)
+            model_tag += f" | **judge:** `{jentry['model']}`"
         out_dir = tempfile.mkdtemp(prefix=f"benchmark_slot{slot}_")
         summary = []
         t_start = _time.time()
@@ -3866,7 +3882,8 @@ class ChatInterface:
         try:
             yield from self._run_benchmark_tasks(
                 slot, tasks, tier, limit, max_connections, mod, client,
-                stop_ev, model_tag, entry, out_dir, rows, summary, t_start)
+                stop_ev, model_tag, entry, out_dir, rows, summary, t_start,
+                judge_client=judge_client)
         finally:
             # if the browser disconnected (refresh/close) Gradio kills this
             # generator - make sure the worker threads stop too instead of
@@ -3876,7 +3893,7 @@ class ChatInterface:
 
     def _run_benchmark_tasks(self, slot, tasks, tier, limit, max_connections,
                              mod, client, stop_ev, model_tag, entry, out_dir,
-                             rows, summary, t_start):
+                             rows, summary, t_start, judge_client=None):
         import time as _time
         for ti, task in enumerate(tasks):
             prog = {"done": 0, "total": 0, "correct": 0}
@@ -3892,7 +3909,8 @@ class ChatInterface:
                 try:
                     _h["result"] = mod.run_task(
                         _task, tier, client, int(max_connections), limit,
-                        out_dir, progress_cb=_cb, stop_event=stop_ev)
+                        out_dir, progress_cb=_cb, stop_event=stop_ev,
+                        judge_client=judge_client)
                 except Exception as e:
                     _h["error"] = str(e)
 
@@ -4744,7 +4762,8 @@ class ChatInterface:
                         bench_tasks = gr.CheckboxGroup(
                             choices=["teleqna", "teletables", "oranbench",
                                      "srsranbench", "telemath", "telelogs",
-                                     "three_gpp", "sixg_bench"],
+                                     "three_gpp", "sixg_bench",
+                                     "telcos_last_exam", "vendor_genai"],
                             value=["teleqna", "telemath", "telelogs"],
                             interactive=True,
                             label="Benchmarks to run"
@@ -4765,6 +4784,13 @@ class ChatInterface:
                         bench_max_tokens = gr.Number(
                             value=8192, precision=0, interactive=True,
                             label="Max tokens per answer (0 = uncapped)"
+                        )
+                        bench_judge = gr.Dropdown(
+                            choices=["(none)"] + bench_keys_init,
+                            value="(none)", interactive=True,
+                            label="Judge model (for telcos_last_exam / "
+                                  "vendor_genai - provision e.g. api.openai.com "
+                                  "with your key above)"
                         )
 
                     @gr.render(inputs=bench_targets_state)
@@ -4802,10 +4828,11 @@ class ChatInterface:
 
                                         def _mk_run(k):
                                             def _run(tasks, tier, limit,
-                                                     conns, mtok):
+                                                     conns, mtok, judge_key):
                                                 yield from self.run_benchmark(
                                                     k, k, tasks, tier, limit,
-                                                    conns, mtok)
+                                                    conns, mtok,
+                                                    judge_key=judge_key)
                                             return _run
 
                                         def _mk_stop(k):
@@ -4822,7 +4849,8 @@ class ChatInterface:
                                             fn=_mk_run(key),
                                             inputs=[bench_tasks, bench_tier,
                                                     bench_limit, bench_conns,
-                                                    bench_max_tokens],
+                                                    bench_max_tokens,
+                                                    bench_judge],
                                             outputs=[status_md, table,
                                                      summary_md],
                                         )
@@ -4835,14 +4863,24 @@ class ChatInterface:
                                             outputs=[bench_targets_state],
                                         )
 
+                    def _add_endpoint_ui(url, token):
+                        keys, msg = self.add_benchmark_endpoint(url, token)
+                        return keys, msg, gr.update(choices=["(none)"] + keys)
+
                     bench_add_btn.click(
-                        fn=self.add_benchmark_endpoint,
+                        fn=_add_endpoint_ui,
                         inputs=[bench_new_url, bench_new_token],
-                        outputs=[bench_targets_state, bench_add_status],
+                        outputs=[bench_targets_state, bench_add_status,
+                                 bench_judge],
                     )
+
+                    def _load_targets_ui():
+                        keys = list(self._bench_registry_init())
+                        return keys, gr.update(choices=["(none)"] + keys)
+
                     interface.load(
-                        fn=lambda: list(self._bench_registry_init()),
-                        inputs=[], outputs=[bench_targets_state],
+                        fn=_load_targets_ui, inputs=[],
+                        outputs=[bench_targets_state, bench_judge],
                     )
 
             # Event handlers
