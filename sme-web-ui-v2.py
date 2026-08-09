@@ -4560,7 +4560,7 @@ class ChatInterface:
                         bench_tasks = gr.CheckboxGroup(
                             choices=["teleqna", "teletables", "oranbench",
                                      "srsranbench", "telemath", "telelogs",
-                                     "three_gpp", "sixg_bench",
+                                     "3gpp", "6g_bench",
                                      "telcos_last_exam", "vendor_genai"],
                             value=["teleqna", "telemath", "telelogs"],
                             interactive=True,

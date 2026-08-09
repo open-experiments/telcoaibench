@@ -131,6 +131,8 @@ become benchmark target cards. Select the judge in the **Judge model**
 dropdown and run - a frontier-class judge is recommended for grading
 quality. Results report the judge alongside the scores - numbers from
 different judges are not comparable.
+
+![Judge model provisioning](images/tab-benchmark-judge.png)
 </details>
 
 ## Benchmark Suites

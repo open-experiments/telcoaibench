@@ -214,10 +214,10 @@ TASKS = {
     "teletables":  {"prompt": build_mcq_prompt,      "score": score_mcq},
     "oranbench":   {"prompt": build_mcq_prompt,      "score": score_mcq},
     "srsranbench": {"prompt": build_mcq_prompt,      "score": score_mcq},
-    "sixg_bench":  {"prompt": build_mcq_prompt,      "score": score_mcq},
+    "6g_bench":    {"prompt": build_mcq_prompt,      "score": score_mcq},
     "telemath":    {"prompt": build_telemath_prompt, "score": score_telemath},
     "telelogs":    {"prompt": build_plain_prompt,    "score": score_telelogs},
-    "three_gpp":   {"prompt": build_plain_prompt,    "score": score_three_gpp},
+    "3gpp":        {"prompt": build_plain_prompt,    "score": score_three_gpp},
     # LLM-as-judge suites (need --judge-* / a judge model in the portal)
     "telcos_last_exam": {"prompt": build_exam_prompt, "judged": "reference",
                          "path": "telcos-last-exam/datasets/telcos_last_exam.jsonl.gz"},
@@ -229,7 +229,7 @@ JUDGED_TASKS = [k for k, v in TASKS.items() if v.get("judged")]
 
 LEADERBOARD_TASKS = [
     "teleqna", "teletables", "oranbench", "srsranbench",
-    "telemath", "telelogs", "three_gpp",
+    "telemath", "telelogs", "3gpp",
 ]
 
 

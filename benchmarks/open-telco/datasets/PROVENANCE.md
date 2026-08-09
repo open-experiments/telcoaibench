@@ -7,8 +7,8 @@ no content modification.
 
 | Tier | Source (Hugging Face) | Snapshot date | Records |
 |---|---|---|---|
-| `lite/` | `GSMA/ot-lite` (JSON files) | 2026-08-07 | teleqna 1,000 · teletables 100 · telemath 100 · telelogs 100 · three_gpp 100 · oranbench 150 · srsranbench 150 · sixg_bench 150 |
-| `full/` | `GSMA/ot-full` (Parquet files) | 2026-08-08 | teleqna 10,000 · teletables 500 · telemath 500 · telelogs 864 · three_gpp 2,000 · oranbench 1,500 · srsranbench 1,502 · sixg_bench 3,722 |
+| `lite/` | `GSMA/ot-lite` (JSON files) | 2026-08-07 | teleqna 1,000 | teletables 100 | telemath 100 | telelogs 100 | 3gpp 100 | oranbench 150 | srsranbench 150 | 6g_bench 150 |
+| `full/` | `GSMA/ot-full` (Parquet files) | 2026-08-08 | teleqna 10,000 | teletables 500 | telemath 500 | telelogs 864 | 3gpp 2,000 | oranbench 1,500 | srsranbench 1,502 | 6g_bench 3,722 |
 
 The lite tier is the default sample set used by the
 [GSMA Open Telco Leaderboard](https://huggingface.co/spaces/GSMA/open-telco-leaderboard)
@@ -21,10 +21,10 @@ these copies exist to guarantee long-term reproducibility of Telco-AIX
 benchmark results independent of upstream availability.
 
 Record schemas (per line of JSONL):
-- MCQ tasks (`teleqna`, `teletables`, `oranbench`, `srsranbench`, `sixg_bench`):
+- MCQ tasks (`teleqna`, `teletables`, `oranbench`, `srsranbench`, `6g_bench`):
   `question` (str), `choices` (list[str]), `answer` (int index), plus
   task-specific metadata fields.
-- `telemath`, `telelogs`, `three_gpp`: `question` (str), `answer` (str), plus
+- `telemath`, `telelogs`, `3gpp`: `question` (str), `answer` (str), plus
   metadata.
 
 A snapshot of the leaderboard's published scores as of 2026-08-07 is kept in

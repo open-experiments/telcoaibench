@@ -61,7 +61,7 @@ python3 otel_eval.py --endpoint https://$H/v1 --model <name> --ca-bundle lab-ca.
 Useful flags:
 
 - `--tier full` - full datasets (TeleQnA 10,000 etc.) instead of lite
-- `--tasks teleqna,telemath` - subset; add `sixg_bench` for 6G-Bench
+- `--tasks teleqna,telemath` - subset; add `6g_bench` for 6G-Bench
 - `--limit 50` - quick smoke run
 - `--api-key KEY` - sent as `Authorization: Bearer` (vLLM `--api-key`, rbac proxies)
 - `--max-tokens 8192` - cap generations (recommended for long-reasoning models)
