@@ -120,13 +120,14 @@ and running accuracy, ending in accuracy ± stderr per benchmark, the overall
 average, and per-sample transcripts for auditing.
 
 **Multi-model, side by side.** Provision any OpenAI-compatible endpoint from
-the UI (base URL plus optional API token); its served models are
-auto-discovered and added to the target dropdowns, persisted in
-`benchmark_endpoints.json`. Three independent slots let you benchmark up to
-three models in parallel - each with its own target selector, live results
-table, and **Stop** button that cancels cooperatively (queued samples
-dropped, in-flight requests finish, partial results reported honestly as
-"stopped (partial)").
+the UI (base URL plus optional API token); every discovered model gets its
+own **target card**, added and removed dynamically and persisted in
+`benchmark_endpoints.json`. Each card runs independently - up to three in
+parallel - with its own live results table and a **Stop** button that
+hard-aborts the run: queued samples are dropped and in-flight generations
+are cancelled on the server within seconds, with partial results reported
+honestly as "stopped (partial)". Runs whose browser page closes are
+auto-cancelled too - no orphaned GPU load.
 
 ![Benchmark tab - two models side by side](images/tab-benchmark-multi.png)
 </details>

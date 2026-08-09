@@ -3838,8 +3838,12 @@ class ChatInterface:
         if not hasattr(self, "_bench_active"):
             self._bench_active = {}
         if self._bench_active.get(slot):
-            yield ("A benchmark is already running in this slot - press Stop "
-                   "first or use another slot."), [], ""
+            yield ("A benchmark is already running for this target - press "
+                   "Stop first."), [], ""
+            return
+        if sum(1 for v in self._bench_active.values() if v) >= self.BENCH_MAX_PARALLEL:
+            yield (f"Maximum {self.BENCH_MAX_PARALLEL} parallel benchmark runs "
+                   "reached - wait for one to finish or stop it."), [], ""
             return
         self._bench_active[slot] = True
         self._bench_stops[slot] = threading.Event()
@@ -3951,7 +3955,8 @@ class ChatInterface:
     # -- model endpoint registry (provision / discover benchmark targets) --
     BENCH_REGISTRY_FILE = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "benchmark_endpoints.json")
-    BENCH_SLOTS = 3
+    BENCH_SLOTS = 3  # legacy constant (dynamic cards now)
+    BENCH_MAX_PARALLEL = 3
 
     def _bench_registry_init(self):
         reg = {}
@@ -3979,16 +3984,16 @@ class ChatInterface:
             print(f"benchmark registry save failed: {e}")
 
     def add_benchmark_endpoint(self, url, token):
-        """Probe an OpenAI-compatible endpoint, register its models, and
-        refresh all slot dropdowns."""
+        """Probe an OpenAI-compatible endpoint and register its models.
+        Returns (updated_target_keys, status_markdown) - the keys drive the
+        dynamic slot cards via gr.render."""
         url = (url or "").strip().rstrip("/")
         if url.endswith("/v1"):
             url = url[:-3].rstrip("/")
         token = (token or "").strip()
         keys = list(self._bench_registry.keys())
         if not url:
-            upd = gr.update(choices=keys)
-            return upd, upd, upd, "Enter an endpoint base URL (without /v1)."
+            return keys, "Enter an endpoint base URL (without /v1)."
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         try:
             r = requests.get(url + "/v1/models", headers=headers,
@@ -3996,11 +4001,9 @@ class ChatInterface:
             r.raise_for_status()
             ids = [m.get("id") for m in r.json().get("data", []) if m.get("id")]
         except Exception as e:
-            upd = gr.update(choices=keys)
-            return upd, upd, upd, f"Could not reach `{url}/v1/models`: {e}"
+            return keys, f"Could not reach `{url}/v1/models`: {e}"
         if not ids:
-            upd = gr.update(choices=keys)
-            return upd, upd, upd, f"Endpoint reachable but returned no models: `{url}`"
+            return keys, f"Endpoint reachable but returned no models: `{url}`"
         added = []
         host = url.split("//")[-1]
         for mid in ids:
@@ -4010,10 +4013,18 @@ class ChatInterface:
             added.append(key)
         self._bench_registry_save()
         keys = list(self._bench_registry.keys())
-        upd = gr.update(choices=keys)
         auth_note = "with credentials" if token else "no credentials"
-        return upd, upd, upd, (f"Discovered {len(added)} model(s) ({auth_note}): "
-                               + ", ".join(f"`{a}`" for a in added))
+        return keys, (f"Discovered {len(added)} model(s) ({auth_note}): "
+                      + ", ".join(f"`{a}`" for a in added))
+
+    def remove_benchmark_target(self, key):
+        """Remove a provisioned target card (stops its run if active)."""
+        ev = getattr(self, "_bench_stops", {}).get(key)
+        if ev is not None:
+            ev.set()
+        self._bench_registry.pop(key, None)
+        self._bench_registry_save()
+        return list(self._bench_registry.keys())
 
     def create_interface(self) -> gr.Blocks:
         """Create enhanced Gradio interface"""
@@ -4662,10 +4673,12 @@ class ChatInterface:
                         "OpenAI-compatible model endpoint, with live progress. "
                         "Datasets are embedded in this repository - no external "
                         "dependencies. Scoring is parity-validated against the "
-                        "official GSMA harness. Up to "
-                        "three models can be benchmarked side by side."
+                        "official GSMA harness. Every provisioned target gets "
+                        "its own card below; up to "
+                        "three can run in parallel."
                     )
-                    bench_keys = self._bench_registry_init()
+                    bench_keys_init = self._bench_registry_init()
+                    bench_targets_state = gr.State(bench_keys_init)
                     with gr.Accordion("Provision new model endpoint", open=False):
                         with gr.Row():
                             bench_new_url = gr.Textbox(
@@ -4680,8 +4693,8 @@ class ChatInterface:
                             bench_add_btn = gr.Button(
                                 "Discover & Add", variant="primary", scale=1)
                         bench_add_status = gr.Markdown(
-                            "Models found at the endpoint are added to every "
-                            "slot dropdown and persisted to "
+                            "Each model found at the endpoint gets its own "
+                            "target card below; the registry persists in "
                             "`benchmark_endpoints.json`.")
                     with gr.Row():
                         bench_tasks = gr.CheckboxGroup(
@@ -4689,77 +4702,99 @@ class ChatInterface:
                                      "srsranbench", "telemath", "telelogs",
                                      "three_gpp", "sixg_bench"],
                             value=["teleqna", "telemath", "telelogs"],
+                            interactive=True,
                             label="Benchmarks to run"
                         )
                     with gr.Row():
                         bench_tier = gr.Radio(
-                            choices=["lite", "full"], value="lite",
+                            choices=["lite", "full"], value="lite", interactive=True,
                             label="Dataset tier (lite = leaderboard default)"
                         )
                         bench_limit = gr.Number(
-                            value=25, precision=0,
+                            value=25, precision=0, interactive=True,
                             label="Sample limit per task (0 = all)"
                         )
                         bench_conns = gr.Number(
-                            value=8, precision=0, label="Parallel requests"
+                            value=8, precision=0, interactive=True,
+                            label="Parallel requests"
                         )
                         bench_max_tokens = gr.Number(
-                            value=8192, precision=0,
+                            value=8192, precision=0, interactive=True,
                             label="Max tokens per answer (0 = uncapped)"
                         )
-                    slot_dropdowns = []
-                    with gr.Row():
-                        for si in range(self.BENCH_SLOTS):
-                            with gr.Column():
-                                dd = gr.Dropdown(
-                                    choices=bench_keys,
-                                    value=bench_keys[0] if si == 0 else None,
-                                    label=f"Slot {si + 1} target model",
-                                )
-                                with gr.Row():
-                                    run_btn = gr.Button(
-                                        "Run", variant="primary", scale=3)
-                                    stop_btn = gr.Button(
-                                        "Stop", variant="stop", scale=1)
-                                status_md = gr.Markdown("Idle.")
-                                table = gr.Dataframe(
-                                    headers=["Benchmark", "Samples", "Done",
-                                             "Accuracy", "StdErr", "Status"],
-                                    interactive=False,
-                                    label=f"Slot {si + 1} results",
-                                )
-                                summary_md = gr.Markdown("")
-                                slot_dropdowns.append(dd)
 
-                                def _mk_run(slot):
-                                    def _run(model_key, tasks, tier, limit,
-                                             conns, mtok):
-                                        yield from self.run_benchmark(
-                                            slot, model_key, tasks, tier,
-                                            limit, conns, mtok)
-                                    return _run
+                    @gr.render(inputs=bench_targets_state)
+                    def _render_target_cards(target_keys):
+                        if not target_keys:
+                            gr.Markdown("No targets provisioned - add a model "
+                                        "endpoint above.")
+                            return
+                        for row_start in range(0, len(target_keys), 3):
+                            with gr.Row():
+                                for key in target_keys[row_start:row_start + 3]:
+                                    entry = self._bench_registry.get(key, {})
+                                    with gr.Column(variant="panel"):
+                                        gr.Markdown(
+                                            f"### `{entry.get('model', key)}`\n"
+                                            f"{entry.get('endpoint', '')} | auth: "
+                                            f"{'on' if entry.get('token') else 'off'}")
+                                        with gr.Row():
+                                            run_btn = gr.Button(
+                                                "Run", variant="primary", scale=3)
+                                            stop_btn = gr.Button(
+                                                "Stop", variant="stop", scale=1)
+                                            rm_btn = gr.Button(
+                                                "Remove", variant="secondary",
+                                                scale=1)
+                                        status_md = gr.Markdown("Idle.")
+                                        table = gr.Dataframe(
+                                            headers=["Benchmark", "Samples",
+                                                     "Done", "Accuracy",
+                                                     "StdErr", "Status"],
+                                            interactive=False,
+                                            label="Results",
+                                        )
+                                        summary_md = gr.Markdown("")
 
-                                def _mk_stop(slot):
-                                    def _stop():
-                                        return self.stop_benchmark(slot)
-                                    return _stop
+                                        def _mk_run(k):
+                                            def _run(tasks, tier, limit,
+                                                     conns, mtok):
+                                                yield from self.run_benchmark(
+                                                    k, k, tasks, tier, limit,
+                                                    conns, mtok)
+                                            return _run
 
-                                run_btn.click(
-                                    fn=_mk_run(si),
-                                    inputs=[dd, bench_tasks, bench_tier,
-                                            bench_limit, bench_conns,
-                                            bench_max_tokens],
-                                    outputs=[status_md, table, summary_md],
-                                )
-                                stop_btn.click(
-                                    fn=_mk_stop(si),
-                                    inputs=[],
-                                    outputs=[status_md],
-                                )
+                                        def _mk_stop(k):
+                                            def _stop():
+                                                return self.stop_benchmark(k)
+                                            return _stop
+
+                                        def _mk_remove(k):
+                                            def _remove():
+                                                return self.remove_benchmark_target(k)
+                                            return _remove
+
+                                        run_btn.click(
+                                            fn=_mk_run(key),
+                                            inputs=[bench_tasks, bench_tier,
+                                                    bench_limit, bench_conns,
+                                                    bench_max_tokens],
+                                            outputs=[status_md, table,
+                                                     summary_md],
+                                        )
+                                        stop_btn.click(
+                                            fn=_mk_stop(key), inputs=[],
+                                            outputs=[status_md],
+                                        )
+                                        rm_btn.click(
+                                            fn=_mk_remove(key), inputs=[],
+                                            outputs=[bench_targets_state],
+                                        )
+
                     bench_add_btn.click(
                         fn=self.add_benchmark_endpoint,
                         inputs=[bench_new_url, bench_new_token],
-                        outputs=slot_dropdowns + [bench_add_status],
+                        outputs=[bench_targets_state, bench_add_status],
                     )
 
             # Event handlers
