@@ -3835,6 +3835,13 @@ class ChatInterface:
         max_tokens = int(max_tokens) if max_tokens and int(max_tokens) > 0 else None
         if not hasattr(self, "_bench_stops"):
             self._bench_stops = {}
+        if not hasattr(self, "_bench_active"):
+            self._bench_active = {}
+        if self._bench_active.get(slot):
+            yield ("A benchmark is already running in this slot - press Stop "
+                   "first or use another slot."), [], ""
+            return
+        self._bench_active[slot] = True
         self._bench_stops[slot] = threading.Event()
         stop_ev = self._bench_stops[slot]
         model_tag = f"**Benchmarking model:** `{entry['model']}` @ `{entry['endpoint']}`"
@@ -3846,11 +3853,27 @@ class ChatInterface:
             max_tokens=max_tokens,
             verify=self.config.verify_ssl,
             timeout=600,
+            abort_event=stop_ev,
         )
         out_dir = tempfile.mkdtemp(prefix=f"benchmark_slot{slot}_")
         summary = []
         t_start = _time.time()
 
+        try:
+            yield from self._run_benchmark_tasks(
+                slot, tasks, tier, limit, max_connections, mod, client,
+                stop_ev, model_tag, entry, out_dir, rows, summary, t_start)
+        finally:
+            # if the browser disconnected (refresh/close) Gradio kills this
+            # generator - make sure the worker threads stop too instead of
+            # keeping the GPU loaded headlessly
+            stop_ev.set()
+            self._bench_active[slot] = False
+
+    def _run_benchmark_tasks(self, slot, tasks, tier, limit, max_connections,
+                             mod, client, stop_ev, model_tag, entry, out_dir,
+                             rows, summary, t_start):
+        import time as _time
         for ti, task in enumerate(tasks):
             prog = {"done": 0, "total": 0, "correct": 0}
             plock = threading.Lock()

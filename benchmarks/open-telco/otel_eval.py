@@ -186,8 +186,9 @@ def load_dataset(task: str, tier: str, limit=None):
 class Client:
     def __init__(self, endpoint, model, api_key="none", temperature=0.0,
                  max_tokens=None, verify=True, timeout=1800, max_retries=6,
-                 extra_body=None, stream=True):
+                 extra_body=None, stream=True, abort_event=None):
         self.stream = stream
+        self.abort_event = abort_event
         self.url = endpoint.rstrip("/") + "/chat/completions"
         self.model = model
         self.temperature = temperature
@@ -220,6 +221,8 @@ class Client:
         delay = 2.0
         last_err = None
         for _ in range(self.max_retries):
+            if self.abort_event is not None and self.abort_event.is_set():
+                raise RuntimeError("aborted by stop request")
             try:
                 if self.stream:
                     return self._chat_stream(body)
@@ -248,6 +251,10 @@ class Client:
             if r.status_code != 200:
                 raise RuntimeError(f"HTTP {r.status_code}: {r.text[:200]}")
             for line in r.iter_lines(decode_unicode=True):
+                if self.abort_event is not None and self.abort_event.is_set():
+                    # closing the streaming connection aborts the generation
+                    # on the vLLM server within seconds
+                    raise RuntimeError("aborted by stop request")
                 if not line or not line.startswith("data:"):
                     continue
                 payload = line[5:].strip()
@@ -326,7 +333,11 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
                           f"acc={correct/done:.3f}", flush=True)
 
     done_rows = [r for r in results if r is not None]
+    if stopped:
+        done_rows = [r for r in done_rows
+                     if not (r["error"] and "abort" in str(r["error"]))]
     n = len(done_rows)
+    correct = sum(1 for r in done_rows if r["correct"])
     acc = correct / n if n else 0.0
     stderr = math.sqrt(acc * (1 - acc) / n) if n else 0.0
     errors = sum(1 for r in done_rows if r["error"])
