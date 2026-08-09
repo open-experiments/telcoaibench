@@ -117,14 +117,38 @@ class Config:
     max_file_chars: int = 3500  # Limit file content size
     max_retry_attempts: int = 5
     
+# ---------------------------------------------------------------------------
+# Mutable-state home. Point SME_STATE_DIR at a persistent volume (e.g. a PVC
+# mounted at /data) and registries, sessions, prompts, metrics archive and
+# benchmark transcripts all survive pod restarts. Defaults to the app dir.
+# ---------------------------------------------------------------------------
+try:
+    _APP_DIR = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    _APP_DIR = os.getcwd()
+STATE_DIR = os.environ.get("SME_STATE_DIR", "").strip() or _APP_DIR
+try:
+    os.makedirs(STATE_DIR, exist_ok=True)
+except Exception as e:
+    print(f"WARN: cannot create SME_STATE_DIR {STATE_DIR}: {e}; falling back to app dir")
+    STATE_DIR = _APP_DIR
+
+
+def state_path(*parts):
+    return os.path.join(STATE_DIR, *parts)
+
+
 # Load system prompts from external file
 def load_system_prompts():
     """Load system prompts from external JSON file"""
-    try:
-        prompts_file = os.path.join(os.path.dirname(__file__), "system_prompts.json")
-    except NameError:
-        # Handle case when __file__ is not defined (e.g., interactive mode)
-        prompts_file = "system_prompts.json"
+    prompts_file = state_path("system_prompts.json")
+    repo_copy = os.path.join(_APP_DIR, "system_prompts.json")
+    if not os.path.exists(prompts_file) and os.path.exists(repo_copy):
+        try:
+            import shutil as _sh
+            _sh.copy(repo_copy, prompts_file)  # seed fresh state dir
+        except Exception:
+            prompts_file = repo_copy
     
     # Default compact prompts as fallback
     default_prompts = {
@@ -157,9 +181,9 @@ SYSTEM_PROMPTS = load_system_prompts()
 class SessionManager:
     """Manages persistent chat sessions"""
     
-    def __init__(self, sessions_dir: str = "sessions"):
-        self.sessions_dir = Path(sessions_dir)
-        self.sessions_dir.mkdir(exist_ok=True)
+    def __init__(self, sessions_dir: str = None):
+        self.sessions_dir = Path(sessions_dir or state_path("sessions"))
+        self.sessions_dir.mkdir(parents=True, exist_ok=True)
         self.session_timeout = 24 * 60 * 60  # 24 hours in seconds
     
     def create_session(self) -> str:
@@ -309,8 +333,8 @@ class MetricsCollector:
         self.lock = threading.Lock()
         
         # Archive settings
-        self.archive_dir = Path("metrics_archive")
-        self.archive_dir.mkdir(exist_ok=True)
+        self.archive_dir = Path(state_path("metrics_archive"))
+        self.archive_dir.mkdir(parents=True, exist_ok=True)
         self.archive_file = self.archive_dir / "metrics_data.json"
         self.last_save_time = time.time()
         self.save_interval = 60  # Save every 60 seconds
@@ -2680,7 +2704,7 @@ class ChatInterface:
             return "❌ Please provide both prompt name and content"
         
         try:
-            prompts_file = os.path.join(os.path.dirname(__file__), "system_prompts.json")
+            prompts_file = state_path("system_prompts.json")
             
             # Load current prompts
             current_prompts = {}
@@ -2712,7 +2736,7 @@ class ChatInterface:
             return "❌ Cannot delete core system prompts"
         
         try:
-            prompts_file = os.path.join(os.path.dirname(__file__), "system_prompts.json")
+            prompts_file = state_path("system_prompts.json")
             
             # Load current prompts
             current_prompts = {}
@@ -3708,7 +3732,9 @@ class ChatInterface:
                 timeout=600, abort_event=stop_ev)
             model_tag += f" | **judge:** `{jentry['model']}`"
             judge_label = jentry['model']
-        out_dir = tempfile.mkdtemp(prefix=f"benchmark_slot{slot}_")
+        _bres = state_path("benchmark-results")
+        os.makedirs(_bres, exist_ok=True)
+        out_dir = tempfile.mkdtemp(prefix=f"slot_{slot}_", dir=_bres)
         summary = []
         t_start = _time.time()
 
@@ -3806,8 +3832,7 @@ class ChatInterface:
         return "No benchmark run in progress in this slot."
 
     # -- model endpoint registry (provision / discover benchmark targets) --
-    BENCH_REGISTRY_FILE = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "benchmark_endpoints.json")
+    BENCH_REGISTRY_FILE = state_path("benchmark_endpoints.json")
     BENCH_SLOTS = 3  # legacy constant (dynamic cards now)
     BENCH_MAX_PARALLEL = 2
 
@@ -3879,8 +3904,7 @@ class ChatInterface:
         self._bench_registry_save()
         return list(self._bench_registry.keys())
 
-    JUDGE_REGISTRY_FILE = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "judge_endpoints.json")
+    JUDGE_REGISTRY_FILE = state_path("judge_endpoints.json")
 
     def _judge_registry_init(self):
         reg = {}

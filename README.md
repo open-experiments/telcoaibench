@@ -55,6 +55,7 @@ python3 otel_eval.py --endpoint https://<model-route>/v1 --model <name>
 | `SME_API_TOKEN` / `SME_USE_TOKEN_AUTH` | bearer auth | `true` |
 | `SME_TLS_VERIFY` | TLS verification | `false` |
 | `SME_ADMIN_USERNAME` / `SME_ADMIN_PASSWORD` | portal login | `admin` / `minad` |
+| `SME_STATE_DIR` | home for all mutable state: endpoint + judge registries, chat sessions, prompt personas, metrics archive, benchmark transcripts. Point it at a persistent volume (e.g. a PVC mounted at `/data`) and everything survives pod restarts. | app dir |
 
 Kubernetes/OpenShift: a minimal Deployment that clones this repo, pip-installs,
 and sets the `SME_*` env vars is all it takes - plus a Service and
