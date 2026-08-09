@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TelcoAIBench - Measure your Telco AI</title>
+<meta name="description" content="An open, self-contained portal and benchmark suite to measure any telco AI model. Chat with it, watch it, benchmark it - datasets embedded, zero external dependencies."/>
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg"/>
+<style>
+  :root{
+    --bg:#0B1120; --bg2:#0F172A; --panel:#111827; --line:#1E293B;
+    --txt:#E2E8F0; --dim:#94A3B8; --faint:#64748B;
+    --violet:#8B5CF6; --cyan:#22D3EE; --amber:#FBBF24; --green:#10B981;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--txt);font-family:Helvetica,Arial,sans-serif;line-height:1.6}
+  a{color:var(--cyan);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  nav{position:sticky;top:0;z-index:10;background:rgba(11,17,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  nav .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--txt)}
+  nav .brand img{height:30px}
+  nav .links{display:flex;gap:22px;font-size:14px}
+  nav .links a{color:var(--dim)}
+  nav .links a:hover{color:var(--txt);text-decoration:none}
+  nav .gh{border:1px solid var(--violet);border-radius:8px;padding:6px 14px;color:var(--txt)!important}
+  nav .gh:hover{background:var(--violet)}
+
+  header{padding:84px 0 40px;text-align:center;
+    background:radial-gradient(ellipse 70% 55% at 50% -10%, rgba(139,92,246,.22), transparent),
+               radial-gradient(ellipse 45% 40% at 80% 0%, rgba(34,211,238,.12), transparent)}
+  header img.logo{width:min(560px,86vw)}
+  header p.tag{margin:26px auto 0;max-width:760px;font-size:20px;color:var(--dim)}
+  header p.tag b{color:var(--txt)}
+  .cta{margin-top:34px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;padding:12px 26px;border-radius:10px;font-size:16px;font-weight:600}
+  .btn.primary{background:linear-gradient(90deg,var(--violet),#6D28D9);color:#fff}
+  .btn.primary:hover{filter:brightness(1.15);text-decoration:none}
+  .btn.ghost{border:1px solid var(--line);color:var(--txt)}
+  .btn.ghost:hover{border-color:var(--cyan);text-decoration:none}
+  .pills{margin-top:30px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:13px}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:5px 14px;color:var(--dim)}
+  .pill b{color:var(--amber)}
+
+  .shot{margin:48px auto 0;max-width:1000px;padding:0 24px}
+  .shot img{width:100%;border-radius:14px;border:1px solid var(--line);
+    box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(139,92,246,.25)}
+
+  section{padding:76px 0 8px}
+  h2{font-size:30px;margin-bottom:10px}
+  h2 span{background:linear-gradient(90deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--faint);max-width:720px;margin-bottom:36px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .card h3{font-size:18px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+  .card p{font-size:14.5px;color:var(--dim)}
+  .card .dot{width:10px;height:10px;border-radius:50%;flex:none}
+
+  .feature{display:grid;grid-template-columns:1fr 1fr;gap:38px;align-items:center;margin-bottom:64px}
+  .feature img{width:100%;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+  .feature h3{font-size:22px;margin-bottom:12px}
+  .feature p{color:var(--dim);font-size:15.5px}
+  .feature ul{margin:14px 0 0 18px;color:var(--dim);font-size:14.5px}
+  .feature li{margin-bottom:6px}
+  @media(max-width:860px){.feature{grid-template-columns:1fr}}
+
+  pre{background:#0A0F1C;border:1px solid var(--line);border-radius:12px;padding:22px;overflow-x:auto;
+      font-family:Menlo,Consolas,monospace;font-size:13.5px;line-height:1.7;color:#CBD5E1}
+  pre .c{color:#475569}
+  pre .g{color:var(--green)}
+  pre .v{color:var(--violet)}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+  th{color:var(--faint);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.6px}
+  td b{color:var(--txt)}
+  td{color:var(--dim)}
+  code{background:#1E293B;border-radius:5px;padding:1.5px 7px;font-family:Menlo,Consolas,monospace;font-size:12.5px;color:#CBD5E1}
+
+  footer{margin-top:90px;border-top:1px solid var(--line);padding:44px 0 60px;text-align:center;color:var(--faint);font-size:14px}
+  footer img{height:44px;margin-bottom:16px;opacity:.9}
+  footer .links{margin-top:8px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><img src="assets/icon.svg" alt=""/>TelcoAIBench</div>
+    <div class="links">
+      <a href="#portal">Portal</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="#judge">Judge Models</a>
+      <a href="#quickstart">Quick Start</a>
+      <a class="gh" href="https://github.com/open-experiments/telcoaibench">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <img class="logo" src="assets/logo.svg" alt="TelcoAIBench"/>
+  <p class="tag">An open, <b>self-contained</b> portal &amp; benchmark suite to measure any telco AI model -
+     <b>chat</b> with it, <b>watch</b> it, <b>benchmark</b> it. Datasets embedded in the repo. Zero external dependencies, ever.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/open-experiments/telcoaibench">Get Started on GitHub</a>
+    <a class="btn ghost" href="https://youtu.be/UQB1T-ThQBk">Watch the Demo</a>
+  </div>
+  <div class="pills">
+    <span class="pill"><b>10</b> telco benchmarks</span>
+    <span class="pill">LLM-as-judge suites</span>
+    <span class="pill">Parity-validated scoring</span>
+    <span class="pill">Any OpenAI-compatible endpoint</span>
+    <span class="pill">MIT licensed</span>
+  </div>
+  <div class="shot"><img src="assets/tab-benchmark-done.png" alt="Two models benchmarked side by side with judged scores"/></div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <h2>Why <span>TelcoAIBench</span>?</h2>
+    <p class="sub">Leaderboard numbers without pinned model revisions, datasets, and harness versions cannot be verified.
+       TelcoAIBench packages everything needed to reproduce a telco AI evaluation - the runner, the datasets, and the receipts - inside one repository.</p>
+    <div class="cards">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--violet)"></span>Portal</h3>
+        <p>Expert telco chat personas, a live model identity strip, prompt engineering, and a real-time vLLM observability dashboard. Point it at any OpenAI-compatible endpoint with two environment variables.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--cyan)"></span>Benchmark Suite</h3>
+        <p>The 8 Open-Telco benchmarks plus 2 LLM-as-judge suites, with every dataset embedded as gzipped JSONL. Run from the UI or the CLI - the engine is identical, single-file, stdlib + requests only.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--amber)"></span>Receipts</h3>
+        <p>Scoring parity-validated against the official GSMA harness (within 1 point on all 7 leaderboard tasks), plus a full leaderboard-claim verification report showing why reproducibility discipline matters.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="portal">
+  <div class="wrap">
+    <h2>The <span>Portal</span></h2>
+    <p class="sub">One Gradio app, four tabs: Chat, Prompt Manager, Observability, Benchmark.</p>
+
+    <div class="feature">
+      <div>
+        <h3>Expert telco chat</h3>
+        <p>Multi-persona conversations - Telco, Network, Cloud, Storage experts or your own - with persistent shareable sessions, auto-streaming for large contexts, and document upload. The live hero strip shows the connected model's status, latency, and context window at all times.</p>
+      </div>
+      <img src="assets/tab-chat.png" alt="Chat tab"/>
+    </div>
+
+    <div class="feature">
+      <img src="assets/tab-observability.png" alt="Observability tab"/>
+      <div>
+        <h3>Live observability</h3>
+        <p>The dashboard polls the model server's metrics endpoint directly: request rates, latency, token throughput, cache utilization, health, and efficiency analysis - with Plotly visualizations and automated collection.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="benchmarks">
+  <div class="wrap">
+    <h2>The <span>Benchmarks</span></h2>
+    <p class="sub">Ten suites, one engine. Provision any number of target models - each gets its own card, two run side by side, and every run can be hard-stopped in seconds.</p>
+    <table>
+      <tr><th>Suite</th><th>Tasks</th><th>Scoring</th></tr>
+      <tr><td><b>Open-Telco</b></td><td><code>teleqna</code> <code>teletables</code> <code>telemath</code> <code>telelogs</code> <code>3gpp</code> <code>oranbench</code> <code>srsranbench</code> <code>6g_bench</code></td><td>Deterministic - ported 1:1 from the official harness, parity-validated</td></tr>
+      <tr><td><b>Telco's Last Exam</b></td><td><code>telcos_last_exam</code> - 10 hardest-questions telecom exam</td><td>LLM-as-judge vs. the official answer key, 0-10 per answer</td></tr>
+      <tr><td><b>Vendor GenAI</b></td><td><code>vendor_genai</code> - vendor-architecture deep-dives</td><td>LLM-as-judge vs. a fixed rubric: accuracy, completeness, depth, honesty</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="judge">
+  <div class="wrap">
+    <h2>Judge <span>Models</span></h2>
+    <p class="sub">Judged suites have no deterministic scorer - a judge model you provision grades every answer and goes on record with the results.</p>
+    <div class="feature">
+      <div>
+        <h3>Provision once, judge everything</h3>
+        <p>The dedicated judge form takes an endpoint URL, API key, and model name - for example <code>api.openai.com</code> with GPT-5, or any frontier-class endpoint. Judge endpoints are stored separately and never become benchmark targets.</p>
+        <ul>
+          <li>Judge recorded alongside every score - runs with different judges are never mixed</li>
+          <li>Per-sample transcripts include the judge's written rationale for auditing</li>
+          <li>Lab models can judge each other - any provisioned target is selectable too</li>
+        </ul>
+      </div>
+      <img src="assets/tab-benchmark-judge.png" alt="Judge model provisioning"/>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <h2>Quick <span>Start</span></h2>
+    <p class="sub">Two environment variables between you and a running portal. No source edits.</p>
+<pre>
+<span class="c"># 1. serve a model anywhere (example: vLLM)</span>
+vllm serve &lt;your-model&gt; --port 8080
+
+<span class="c"># 2. point TelcoAIBench at it</span>
+pip install <span class="g">'gradio&gt;=5,&lt;6'</span> &amp;&amp; pip install -r requirements-v2.txt
+<span class="v">export</span> SME_API_ENDPOINT=<span class="g">"https://my-model-route.apps.mylab"</span>
+<span class="v">export</span> SME_MODEL_NAME=<span class="g">"my-served-model-name"</span>
+python sme-web-ui-v2.py                          <span class="c"># :30180</span>
+
+<span class="c"># 3. or benchmark from the CLI (identical engine)</span>
+cd benchmarks/open-telco
+python3 otel_eval.py --endpoint https://&lt;model-route&gt;/v1 --model &lt;name&gt;
+
+<span class="c"># judged suites: add a judge</span>
+python3 otel_eval.py --tasks telcos_last_exam \
+  --endpoint https://&lt;candidate&gt;/v1 --model &lt;name&gt; \
+  --judge-endpoint https://api.openai.com/v1 --judge-model gpt-5 --judge-key $KEY
+</pre>
+  </div>
+</section>
+
+<footer>
+  <img src="assets/icon.svg" alt=""/>
+  <div>TelcoAIBench - measure your telco AI. MIT licensed.</div>
+  <div class="links">
+    <a href="https://github.com/open-experiments/telcoaibench">GitHub</a>
+    <a href="https://youtu.be/UQB1T-ThQBk">Demo Video</a>
+    <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks">Benchmark Suites</a>
+    <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">Verification Report</a>
+    <a href="https://github.com/open-experiments/Telco-AIX">Telco-AIX</a>
+  </div>
+</footer>
+
+</body>
+</html>
