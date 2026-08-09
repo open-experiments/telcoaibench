@@ -10,7 +10,7 @@
 [![Benchmarks](https://img.shields.io/badge/Benchmarks-10%20telco%20suites-FBBF24.svg)](benchmarks/README.md)
 [![Datasets](https://img.shields.io/badge/Datasets-embedded%2C%20zero%20deps-10B981.svg)](benchmarks/open-telco/datasets/PROVENANCE.md)
 
-<img src="images/icons/icon-video.svg" width="18" align="top"/> [Demo Video](https://youtu.be/UQB1T-ThQBk) &nbsp;|&nbsp; <img src="images/icons/icon-article.svg" width="18" align="top"/> [Article](https://medium.com/open-5g-hypercore/episode-xxix-the-prompt-engineering-how-to-make-a-toddler-act-talk-nice-83e9aab2e3b9) &nbsp;|&nbsp; <img src="images/icons/icon-suite.svg" width="18" align="top"/> [Benchmark Suites](benchmarks/README.md) &nbsp;|&nbsp; <img src="images/icons/icon-report.svg" width="18" align="top"/> [Verification Report](benchmarks/open-telco/reference/)
+<img src="images/icons/icon-portal.svg" width="18" align="top"/> [Landing Page](https://open-experiments.github.io/telcoaibench/) &nbsp;|&nbsp; <img src="images/icons/icon-article.svg" width="18" align="top"/> [Article](https://medium.com/open-5g-hypercore/episode-xxix-the-prompt-engineering-how-to-make-a-toddler-act-talk-nice-83e9aab2e3b9) &nbsp;|&nbsp; <img src="images/icons/icon-suite.svg" width="18" align="top"/> [Benchmark Suites](benchmarks/README.md) &nbsp;|&nbsp; <img src="images/icons/icon-report.svg" width="18" align="top"/> [Verification Report](benchmarks/open-telco/reference/)
 
 <img src="images/tab-benchmark-done.png" alt="Benchmark tab - live results" width="920"/>
 

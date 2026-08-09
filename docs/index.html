@@ -95,6 +95,7 @@
       <a href="#portal">Portal</a>
       <a href="#benchmarks">Benchmarks</a>
       <a href="#judge">Judge Models</a>
+      <a href="#walkthroughs">Walkthroughs</a>
       <a href="#quickstart">Quick Start</a>
       <a class="gh" href="https://github.com/open-experiments/telcoaibench">GitHub</a>
     </div>
@@ -107,7 +108,7 @@
      <b>chat</b> with it, <b>watch</b> it, <b>benchmark</b> it. Datasets embedded in the repo. Zero external dependencies, ever.</p>
   <div class="cta">
     <a class="btn primary" href="https://github.com/open-experiments/telcoaibench">Get Started on GitHub</a>
-    <a class="btn ghost" href="https://youtu.be/UQB1T-ThQBk">Watch the Demo</a>
+    <a class="btn ghost" href="https://github.com/open-experiments/telcoaibench#readme">Read the Docs</a>
   </div>
   <div class="pills">
     <span class="pill"><b>10</b> telco benchmarks</span>
@@ -196,6 +197,39 @@
   </div>
 </section>
 
+<section id="walkthroughs">
+  <div class="wrap">
+    <h2>Narrated <span>Walkthroughs</span></h2>
+    <p class="sub">Four short screen-capture tours with voice-over - the portal, benchmarking, judge models, and the CLI. Around one minute each.</p>
+    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(420px,1fr))">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--violet)"></span>1 - The Portal</h3>
+        <video controls preload="metadata" poster="videos/posters/portal-tour.png" style="width:100%;border-radius:10px;margin-top:10px">
+          <source src="videos/portal-tour.mp4" type="video/mp4"/></video>
+        <p style="margin-top:10px">Live model hero strip, expert telco chat, prompt personas, and the observability dashboard.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--cyan)"></span>2 - Benchmarking</h3>
+        <video controls preload="metadata" poster="videos/posters/benchmarking-101.png" style="width:100%;border-radius:10px;margin-top:10px">
+          <source src="videos/benchmarking-101.mp4" type="video/mp4"/></video>
+        <p style="margin-top:10px">Provision targets, pick suites and tiers, run two models side by side, and hard-stop a live run.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--amber)"></span>3 - Judge Models</h3>
+        <video controls preload="metadata" poster="videos/posters/judge-models.png" style="width:100%;border-radius:10px;margin-top:10px">
+          <source src="videos/judge-models.mp4" type="video/mp4"/></video>
+        <p style="margin-top:10px">Provision a judge endpoint, run the judged suites, and read graded results with the judge on record.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>4 - CLI &amp; Reproducibility</h3>
+        <video controls preload="metadata" poster="videos/posters/cli-reproducibility.png" style="width:100%;border-radius:10px;margin-top:10px">
+          <source src="videos/cli-reproducibility.mp4" type="video/mp4"/></video>
+        <p style="margin-top:10px">The same engine from the command line: embedded datasets, judged runs, provenance, and receipts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="quickstart">
   <div class="wrap">
     <h2>Quick <span>Start</span></h2>
@@ -227,7 +261,6 @@ python3 otel_eval.py --tasks telcos_last_exam \
   <div>TelcoAIBench - measure your telco AI. MIT licensed.</div>
   <div class="links">
     <a href="https://github.com/open-experiments/telcoaibench">GitHub</a>
-    <a href="https://youtu.be/UQB1T-ThQBk">Demo Video</a>
     <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks">Benchmark Suites</a>
     <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">Verification Report</a>
     <a href="https://github.com/open-experiments/Telco-AIX">Telco-AIX</a>
