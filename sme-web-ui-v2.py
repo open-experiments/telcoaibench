@@ -92,7 +92,6 @@ class Config:
         SME_USE_TOKEN_AUTH     true/false (default true)
         SME_ADMIN_USERNAME     portal login user  (default: admin)
         SME_ADMIN_PASSWORD     portal login password
-        SME_EMBEDDINGS_ENDPOINT / SME_EMBEDDINGS_MODEL / SME_EMBEDDINGS_TOKEN
         SME_TLS_VERIFY         true/false (also honored at module level)
     """
     api_endpoint: str = os.environ.get("SME_API_ENDPOINT", "https://api-url")
@@ -117,11 +116,6 @@ class Config:
     auto_stream_threshold: int = 4000  # Auto-enable streaming for large contexts
     max_file_chars: int = 3500  # Limit file content size
     max_retry_attempts: int = 5
-    
-    # Embeddings API Configuration
-    embeddings_api_endpoint: str = os.environ.get("SME_EMBEDDINGS_ENDPOINT", "https://api-url")
-    embeddings_model_name: str = os.environ.get("SME_EMBEDDINGS_MODEL", "model-name")
-    embeddings_api_token: str = os.environ.get("SME_EMBEDDINGS_TOKEN", "your api-key")
     
 # Load system prompts from external file
 def load_system_prompts():
@@ -1582,15 +1576,15 @@ class MetricsCollector:
         """Set the metrics collection interval"""
         self.pull_interval = max(5, seconds)  # Minimum 5 seconds
     
-    def start_collection(self, client, embedding_client=None):
-        """Start automated metrics collection from both chat and embeddings servers"""
+    def start_collection(self, client):
+        """Start automated metrics collection from the chat model server"""
         if self.collection_active:
             return
             
         self.collection_active = True
         self.collection_thread = threading.Thread(
             target=self._collection_loop, 
-            args=(client, embedding_client), 
+            args=(client,), 
             daemon=True
         )
         self.collection_thread.start()
@@ -1601,7 +1595,7 @@ class MetricsCollector:
         if self.collection_thread:
             self.collection_thread.join(timeout=5)
     
-    def _collection_loop(self, client, embedding_client=None):
+    def _collection_loop(self, client):
         """Background thread for collecting metrics from both servers"""
         while self.collection_active:
             try:
@@ -1610,28 +1604,6 @@ class MetricsCollector:
                 if metrics_result.get('success'):
                     self.add_metrics_data(metrics_result.get('data', ''))
                 
-                # Collect metrics from embeddings API server if available
-                if embedding_client:
-                    try:
-                        embedding_metrics_result = embedding_client.get_metrics()
-                        if embedding_metrics_result.get('success'):
-                            # Add prefix to distinguish embedding metrics
-                            embedding_data = embedding_metrics_result.get('data', '')
-                            if embedding_data:
-                                # Prefix embedding metrics with 'embedding_' to distinguish them
-                                prefixed_data = []
-                                for line in embedding_data.split('\n'):
-                                    if line.strip() and not line.startswith('#'):
-                                        if ' ' in line:
-                                            metric_name, value = line.split(' ', 1)
-                                            prefixed_data.append(f"embedding_{metric_name} {value}")
-                                        else:
-                                            prefixed_data.append(f"embedding_{line}")
-                                    else:
-                                        prefixed_data.append(line)
-                                self.add_metrics_data('\n'.join(prefixed_data))
-                    except Exception as e:
-                        print(f"⚠️ Embeddings metrics collection error: {e}")
                     
                 # Periodically save to archive
                 current_time = time.time()
@@ -2380,154 +2352,12 @@ class ChatClient:
         except:
             return False
 
-class EmbeddingClient:
-    """Client for generating embeddings from text using the embedding API"""
-    
-    def __init__(self, config: Config):
-        self.config = config
-        self.session = self._create_session()
-    
-    def _create_session(self) -> requests.Session:
-        """Create HTTP session for embeddings API"""
-        session = requests.Session()
-        session.verify = self.config.verify_ssl
-        
-        headers = {
-            'User-Agent': 'Telco-AIX-Embeddings/1.0',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {self.config.embeddings_api_token}'
-        }
-        
-        session.headers.update(headers)
-        return session
-    
-    def generate_embeddings(self, text: str) -> Dict[str, Any]:
-        """Generate embeddings for the given text"""
-        try:
-            url = f"{self.config.embeddings_api_endpoint}/v1/embeddings"
-            
-            payload = {
-                "model": self.config.embeddings_model_name,
-                "input": text,
-                "encoding_format": "float"
-            }
-            
-            response = self.session.post(
-                url,
-                json=payload,
-                timeout=(self.config.connect_timeout, self.config.read_timeout)
-            )
-            
-            response.raise_for_status()
-            data = response.json()
-            
-            return {
-                'success': True,
-                'embeddings': data.get('data', [{}])[0].get('embedding', []),
-                'model': data.get('model', self.config.embeddings_model_name),
-                'usage': data.get('usage', {}),
-                'dimension': len(data.get('data', [{}])[0].get('embedding', [])),
-                'text_length': len(text)
-            }
-            
-        except requests.exceptions.RequestException as e:
-            return {
-                'success': False,
-                'error': f"API request failed: {str(e)}",
-                'embeddings': [],
-                'dimension': 0
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f"Unexpected error: {str(e)}",
-                'embeddings': [],
-                'dimension': 0
-            }
-    
-    def test_connection(self) -> Dict[str, Any]:
-        """Test the embeddings API connection"""
-        try:
-            result = self.generate_embeddings("test connection")
-            if result['success']:
-                return {
-                    'success': True,
-                    'message': f"✅ Connected to {self.config.embeddings_model_name}",
-                    'dimension': result['dimension']
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': f"❌ Connection failed: {result['error']}"
-                }
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f"❌ Connection test failed: {str(e)}"
-            }
-    
-    def get_metrics(self) -> Dict[str, Any]:
-        """Get embeddings server metrics"""
-        try:
-            response = requests.get(
-                f"{self.config.embeddings_api_endpoint}/metrics",
-                headers={'Authorization': f'Bearer {self.config.embeddings_api_token}'},
-                timeout=5,
-                verify=TLS_VERIFY
-            )
-            if response.status_code == 200:
-                return {
-                    'success': True,
-                    'data': response.text  # Metrics are usually in Prometheus format
-                }
-            else:
-                return {'success': False, 'status': response.status_code, 'error': response.text}
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
-
-    @staticmethod
-    def extract_text_from_pdf(pdf_content: bytes) -> str:
-        """Extract text from PDF bytes"""
-        if not PDF_SUPPORT:
-            raise ValueError("PDF support not available. Please install PyPDF2.")
-        
-        try:
-            pdf_file = io.BytesIO(pdf_content)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            
-            text_content = ""
-            total_pages = len(pdf_reader.pages)
-            
-            for page_num, page in enumerate(pdf_reader.pages):
-                try:
-                    page_text = page.extract_text()
-                    if page_text.strip():  # Only add non-empty pages
-                        text_content += f"\n--- Page {page_num + 1} ---\n"
-                        text_content += page_text + "\n"
-                except Exception as e:
-                    print(f"Warning: Could not extract text from page {page_num + 1}: {e}")
-                    continue
-            
-            if not text_content.strip():
-                raise ValueError("No text could be extracted from the PDF")
-            
-            # Clean up the text
-            text_content = text_content.strip()
-            print(f"📄 Successfully extracted text from PDF ({total_pages} pages, {len(text_content)} characters)")
-            
-            return text_content
-            
-        except Exception as e:
-            raise ValueError(f"Error extracting text from PDF: {str(e)}")
-
 class ChatInterface:
     """Enhanced chat interface with smart processing"""
     
     def __init__(self, config: Config):
         self.config = config
         self.client = ChatClient(config)
-        self.embedding_client = EmbeddingClient(config)  # Add embeddings client for metrics
         self.system_prompts = SYSTEM_PROMPTS.copy()  # Keep a local copy
         self._processing = False  # Flag to prevent double processing
         self.session_manager = SessionManager()  # Add session management
@@ -4459,125 +4289,12 @@ class ChatInterface:
                                 """
                             )
                 
-                with gr.TabItem("Embeddings Generation"):
-                    with gr.Row():
-                        with gr.Column(scale=1):
-                            gr.Markdown("### Text Input")
-                            
-                            # Text input area
-                            embedding_text = gr.Textbox(
-                                label="Text to Embed",
-                                placeholder="Enter the text you want to generate embeddings for...",
-                                lines=8,
-                                max_lines=15,
-                                interactive=True
-                            )
-                            
-                            # File upload
-                            gr.Markdown("### File Upload")
-                            pdf_support_msg = "📄 PDF support enabled" if PDF_SUPPORT else "⚠️ PDF support disabled (install PyPDF2)"
-                            gr.Markdown(f"*{pdf_support_msg}*")
-                            
-                            file_types = [".txt", ".md", ".csv", ".json", ".py"]
-                            if PDF_SUPPORT:
-                                file_types.append(".pdf")
-                            
-                            embedding_file = gr.File(
-                                label="Upload File (Text or PDF)",
-                                file_types=file_types,
-                                type="binary"
-                            )
-                            
-                            # Generate button
-                            generate_embeddings_btn = gr.Button("Generate Embeddings", variant="primary", size="lg")
-                            
-                            # Connection test
-                            test_embedding_connection_btn = gr.Button("Test Connection", variant="secondary")
-                            
-                            # Preview section (moved from right column)
-                            gr.Markdown("### Preview")
-                            embedding_preview = gr.Textbox(
-                                label="Embedding Preview (first 10 dimensions)",
-                                interactive=False,
-                                lines=3,
-                                value="Generate embeddings to see preview..."
-                            )
-                            
-                        with gr.Column(scale=1):
-                            gr.Markdown("### Results & Download")
-                            
-                            # Status and info
-                            embedding_status = gr.Textbox(
-                                label="Status",
-                                interactive=False,
-                                value="Ready to generate embeddings..."
-                            )
-                            
-                            # Embedding info
-                            embedding_info = gr.Markdown(
-                                """
-                                **Embedding Model:** qwen3-embedding-8b  
-                                **API Status:** Not tested  
-                                **Last Generation:** None  
-                                **Vector Dimension:** N/A  
-                                """
-                            )
-                            
-                            # Download section
-                            gr.Markdown("### Download Options")
-                            
-                            with gr.Row():
-                                download_format = gr.Dropdown(
-                                    choices=["JSON", "CSV", "NumPy (.npy)", "Text"],
-                                    value="JSON",
-                                    label="Download Format",
-                                    interactive=True
-                                )
-                            
-                            download_embeddings_btn = gr.Button("Download Embeddings", variant="secondary", interactive=False)
-                            
-                            # File component for download
-                            download_file = gr.File(
-                                label="Download File",
-                                visible=True,
-                                interactive=False
-                            )
-                            
-                            # Semantic Search section
-                            gr.Markdown("### Semantic Search")
-                            gr.Markdown("*Search for answers within generated embeddings*")
-                            
-                            search_query = gr.Textbox(
-                                label="Search Query",
-                                placeholder="Enter your question to search within embeddings...",
-                                lines=2,
-                                interactive=True
-                            )
-                            
-                            with gr.Row():
-                                search_btn = gr.Button("Search", variant="primary", interactive=False)
-                                search_results_count = gr.Dropdown(
-                                    choices=["1", "3", "5", "10"],
-                                    value="3",
-                                    label="Results Count",
-                                    interactive=True
-                                )
-                                clear_collection_btn = gr.Button("Clear All", variant="stop", size="sm")
-                            
-                            search_results = gr.Textbox(
-                                label="Search Results",
-                                interactive=False,
-                                lines=12,
-                                value="Generate embeddings first, then search...",
-                                show_label=True
-                            )
-                
                 with gr.TabItem("Observability"):
                     # Single control panel at the top
                     with gr.Row():
                         with gr.Column(scale=3):
-                            gr.Markdown("### **Dual-API Observability Dashboard**")
-                            gr.Markdown("*Real-time monitoring for Chat API and Embeddings API*")
+                            gr.Markdown("### **Observability Dashboard**")
+                            gr.Markdown("*Real-time monitoring of the model server*")
                         with gr.Column(scale=2):
                             with gr.Row():
                                 refresh_all_btn_2 = gr.Button("Refresh All Data", variant="primary", size="lg")
@@ -4621,40 +4338,34 @@ class ChatInterface:
                                         value="*Click 'Refresh All Data' to load status...*",
                                         elem_id="chat-api-status-2"
                                     )
-                                with gr.Column(scale=1):
-                                    gr.Markdown("#### **Embeddings API Status**")
-                                    embeddings_api_status_2 = gr.Markdown(
-                                        value="*Click 'Refresh All Data' to load status...*",
-                                        elem_id="embeddings-api-status-2"
-                                    )
                             
                             # Visual metrics dashboard
                             with gr.Row():
                                 with gr.Tabs():
                                     with gr.TabItem("Performance Monitor"):
                                         performance_dashboard_2 = gr.HTML(
-                                            label="Real-Time Performance for Both APIs",
+                                            label="Real-Time Performance",
                                             elem_id="performance-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see live performance metrics</div>"
                                         )
                                     
                                     with gr.TabItem("Health & Status"):
                                         health_dashboard_2 = gr.HTML(
-                                            label="System Health for Chat & Embeddings APIs",
+                                            label="System Health",
                                             elem_id="health-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see health status</div>"
                                         )
                                     
                                     with gr.TabItem("Efficiency Analysis"):
                                         efficiency_dashboard_2 = gr.HTML(
-                                            label="Performance Optimization for Dual APIs",
+                                            label="Performance Optimization",
                                             elem_id="efficiency-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see efficiency metrics</div>"
                                         )
                                     
                                     with gr.TabItem("AI Insights"):
                                         insights_dashboard_2 = gr.HTML(
-                                            label="Actionable Insights for Both APIs",
+                                            label="Actionable Insights",
                                             elem_id="insights-dashboard-2",
                                             value="<div style='text-align: center; padding: 40px; color: #666;'>Start collection to see AI insights</div>"
                                         )
@@ -4666,12 +4377,6 @@ class ChatInterface:
                                     chat_capabilities_2 = gr.Markdown(
                                         value="*API capabilities will appear here after refresh...*",
                                         elem_id="chat-capabilities-2"
-                                    )
-                                with gr.Column(scale=1):
-                                    gr.Markdown("#### **Embeddings API Capabilities**")
-                                    embeddings_capabilities_2 = gr.Markdown(
-                                        value="*API capabilities will appear here after refresh...*",
-                                        elem_id="embeddings-capabilities-2"
                                     )
                             
                             # System overview
@@ -4691,7 +4396,7 @@ class ChatInterface:
                                 label="Comprehensive Diagnostics Report",
                                 lines=15,
                                 max_lines=25,
-                                value="Click 'Run Full Diagnostics' to test all Chat and Embeddings API endpoints..."
+                                value="Click 'Run Full Diagnostics' to test all model API endpoints..."
                             )
                         
                         with gr.TabItem("Data Management"):
@@ -4905,7 +4610,7 @@ class ChatInterface:
             def update_param_status(temp, tokens):
                 return f"**Current:** Temp={temp} | Tokens={tokens}"
             
-            # Dual-API Observability Functions
+            # Observability Functions
             def get_chat_api_status():
                 """Get Chat API status and capabilities"""
                 try:
@@ -4915,36 +4620,12 @@ class ChatInterface:
                 except Exception as e:
                     return f"## ❌ **Chat API Error**\n\n```\n{str(e)}\n```"
             
-            def get_embeddings_api_status():
-                """Get Embeddings API status and metrics"""
-                try:
-                    metrics = self.embedding_client.get_metrics()
-                    if metrics.get('success'):
-                        data = metrics.get('data', 'No data')
-                        return f"## ✅ **Embeddings API Connected**\n\n```\n{data[:500]}...\n```"
-                    else:
-                        return f"## ❌ **Embeddings API Error**\n\n```\n{metrics.get('error', 'Unknown error')}\n```"
-                except Exception as e:
-                    return f"## ❌ **Embeddings API Error**\n\n```\n{str(e)}\n```"
-            
             def get_chat_capabilities():
                 """Get Chat API capabilities"""
                 try:
                     return self.get_api_capabilities()
                 except Exception as e:
                     return f"## ❌ **Error Loading Chat API Capabilities**\n\n```\n{str(e)}\n```"
-            
-            def get_embeddings_capabilities():
-                """Get Embeddings API capabilities"""
-                try:
-                    # Try to get model info from embeddings API
-                    capabilities = self.embedding_client.get_metrics()
-                    if capabilities.get('success'):
-                        return f"## ✅ **Embeddings API Capabilities**\n\n- **Model**: {self.config.embeddings_model_name}\n- **Endpoint**: {self.config.embeddings_api_endpoint}\n- **Status**: Connected\n- **Token Auth**: {'✅ Enabled' if self.config.embeddings_api_token else '❌ Disabled'}"
-                    else:
-                        return f"## ⚠️ **Embeddings API Capabilities**\n\n- **Model**: {self.config.embeddings_model_name}\n- **Endpoint**: {self.config.embeddings_api_endpoint}\n- **Status**: {capabilities.get('error', 'Connection failed')}"
-                except Exception as e:
-                    return f"## ❌ **Error Loading Embeddings API Capabilities**\n\n```\n{str(e)}\n```"
             
             def refresh_all_observability_data():
                 """Unified function to refresh all observability data"""
@@ -4953,9 +4634,7 @@ class ChatInterface:
                     
                     # Get all data
                     chat_status = get_chat_api_status()
-                    embeddings_status = get_embeddings_api_status()
                     chat_caps = get_chat_capabilities()
-                    embeddings_caps = get_embeddings_capabilities()
                     overview = self.get_management_overview()
                     
                     # Get plots - always show them if we have data
@@ -4967,9 +4646,7 @@ class ChatInterface:
                     
                     return (
                         chat_status,           # chat_api_status_2
-                        embeddings_status,     # embeddings_api_status_2
                         chat_caps,            # chat_capabilities_2
-                        embeddings_caps,      # embeddings_capabilities_2
                         overview,             # management_overview_2
                         perf_dash,            # performance_dashboard_2
                         health_dash,          # health_dashboard_2
@@ -4981,8 +4658,8 @@ class ChatInterface:
                 except Exception as e:
                     error_msg = f"❌ Error refreshing data: {str(e)}"
                     error_dash = f"<div style='color: red; padding: 20px;'>{error_msg}</div>"
-                    return (error_msg, error_msg, error_msg, error_msg, error_msg, 
-                           error_dash, error_dash, error_dash, error_dash, 
+                    return (error_msg, error_msg, error_msg,
+                           error_dash, error_dash, error_dash, error_dash,
                            datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             
             # Wire up the system dropdown
@@ -5062,7 +4739,7 @@ class ChatInterface:
                 """Start metrics collection with specified interval"""
                 try:
                     self.metrics_collector.set_pull_interval(int(interval))
-                    self.metrics_collector.start_collection(self.client, self.embedding_client)
+                    self.metrics_collector.start_collection(self.client)
                     return "✅ Collection started"
                 except Exception as e:
                     return f"❌ Error starting collection: {str(e)}"
@@ -5390,7 +5067,7 @@ class ChatInterface:
                         archive_msg = f" (📦 Loaded {archived_metrics} archived metrics)"
                     
                     self.metrics_collector.set_pull_interval(30)  # 30 second default
-                    self.metrics_collector.start_collection(self.client, self.embedding_client)
+                    self.metrics_collector.start_collection(self.client)
                     
                     # Generate initial tables
                     dashboards = self.get_metrics_plots()
@@ -5429,9 +5106,7 @@ class ChatInterface:
                 refresh_all_observability_data,
                 outputs=[
                     chat_api_status_2,
-                    embeddings_api_status_2, 
                     chat_capabilities_2,
-                    embeddings_capabilities_2,
                     management_overview_2,
                     performance_dashboard_2,
                     health_dashboard_2, 
@@ -5669,393 +5344,6 @@ class ChatInterface:
                 quick_load_handler,
                 inputs=[session_dropdown],
                 outputs=[chatbot, system_dropdown, custom_system, temperature, max_tokens, session_id_input, context_info]
-            )
-            
-            # Embeddings handlers
-            current_embeddings = {}  # Store current embeddings for download
-            embeddings_collection = []  # Store all embeddings for search
-            
-            def process_file_for_embeddings(file):
-                """Process uploaded file and extract text (supports text files and PDFs)"""
-                if file is None:
-                    return "", "No file uploaded"
-                
-                try:
-                    # Get file name - handle different file types from Gradio
-                    if isinstance(file, str):
-                        # File path from Gradio binary type
-                        file_name = file
-                    else:
-                        # Try to get name attribute, fallback to string representation
-                        file_name = getattr(file, 'name', str(file))
-                    
-                    is_pdf = file_name.lower().endswith('.pdf')
-                    
-                    # Read file content  
-                    if isinstance(file, (str, bytes)):
-                        # Gradio binary type returns file path (str) or bytes
-                        if isinstance(file, str):
-                            # File path - validate it stays inside the upload dir, then read
-                            safe_path = _validate_upload_path(file)
-                            with open(safe_path, 'rb' if is_pdf else 'r', encoding=None if is_pdf else 'utf-8') as f:
-                                file_content = f.read()
-                        else:
-                            # Already bytes
-                            file_content = file
-                    elif hasattr(file, 'read'):
-                        # File-like object from Gradio
-                        file_content = file.read()
-                    else:
-                        # Handle as file path
-                        safe_path = _validate_upload_path(file)
-                        with open(safe_path, 'rb' if is_pdf else 'r', encoding=None if is_pdf else 'utf-8') as f:
-                            file_content = f.read()
-                    
-                    # Handle PDF files
-                    if is_pdf:
-                        if not PDF_SUPPORT:
-                            return "", "❌ PDF support not available. Please install PyPDF2."
-                        
-                        try:
-                            # Extract text from PDF
-                            if isinstance(file_content, bytes):
-                                text_content = self.embedding_client.extract_text_from_pdf(file_content)
-                            else:
-                                return "", "❌ Invalid PDF file format"
-                        except Exception as e:
-                            return "", f"❌ Error extracting text from PDF: {str(e)}"
-                    else:
-                        # Handle text files
-                        if isinstance(file_content, bytes):
-                            try:
-                                text_content = file_content.decode('utf-8')
-                            except UnicodeDecodeError:
-                                try:
-                                    text_content = file_content.decode('latin-1')
-                                except UnicodeDecodeError:
-                                    return "", "❌ Could not decode file. Please ensure it's a valid text file."
-                        else:
-                            text_content = file_content
-                    
-                    # Limit file size
-                    if len(text_content) > self.config.max_file_chars:
-                        text_content = text_content[:self.config.max_file_chars]
-                        file_type = "PDF" if is_pdf else "text file"
-                        status = f"✂️ {file_type} truncated to {self.config.max_file_chars} characters"
-                    else:
-                        file_type = "PDF" if is_pdf else "text file"
-                        status = f"✅ {file_type} loaded ({len(text_content)} characters)"
-                    
-                    return text_content, status
-                    
-                except Exception as e:
-                    return "", f"❌ Error processing file: {str(e)}"
-            
-            def test_embedding_connection():
-                """Test connection to embeddings API"""
-                try:
-                    result = self.embedding_client.test_connection()
-                    if result['success']:
-                        info_text = f"""
-                        **Embedding Model:** {self.config.embeddings_model_name}  
-                        **API Status:** ✅ Connected  
-                        **Vector Dimension:** {result.get('dimension', 'N/A')}  
-                        **Endpoint:** {self.config.embeddings_api_endpoint}  
-                        """
-                        return result['message'], info_text
-                    else:
-                        info_text = f"""
-                        **Embedding Model:** {self.config.embeddings_model_name}  
-                        **API Status:** ❌ Failed  
-                        **Error:** Connection test failed  
-                        **Endpoint:** {self.config.embeddings_api_endpoint}  
-                        """
-                        return result['message'], info_text
-                except Exception as e:
-                    return f"❌ Connection test error: {str(e)}", "**API Status:** ❌ Error"
-            
-            def generate_embeddings_handler(text, file):
-                """Generate embeddings from text or file"""
-                nonlocal current_embeddings
-                
-                try:
-                    # Determine input text
-                    input_text = text
-                    source = "text input"
-                    file_name = None
-                    is_file_source = False
-                    
-                    # If file is provided, use file content
-                    if file is not None:
-                        file_text, file_status = process_file_for_embeddings(file)
-                        if file_text:
-                            input_text = file_text
-                            is_file_source = True
-                            # Get file name for metadata (not full path)
-                            if isinstance(file, str):
-                                file_name = file.split('/')[-1] if '/' in file else file
-                            else:
-                                file_name = getattr(file, 'name', 'uploaded_file')
-                                if '/' in file_name:
-                                    file_name = file_name.split('/')[-1]
-                            source = f"file ({file_name})"
-                    
-                    if not input_text or not input_text.strip():
-                        return "❌ Please provide text input or upload a file", "", gr.update(interactive=False), "", gr.update(interactive=False)
-                    
-                    # Generate embeddings
-                    result = self.embedding_client.generate_embeddings(input_text.strip())
-                    
-                    if result['success']:
-                        embeddings = result['embeddings']
-                        dimension = result['dimension']
-                        
-                        # Store for download
-                        current_embeddings['embeddings'] = embeddings
-                        # For file sources (especially PDFs), store file name instead of full content
-                        if is_file_source and file_name:
-                            current_embeddings['text'] = f"[File: {file_name}]"
-                        else:
-                            current_embeddings['text'] = input_text.strip()
-                        current_embeddings['metadata'] = {
-                            'source': source,
-                            'model': result['model'],
-                            'dimension': dimension,
-                            'text_length': result['text_length'],
-                            'timestamp': datetime.now().isoformat(),
-                            'usage': result.get('usage', {}),
-                            'file_name': file_name if is_file_source else None
-                        }
-                        
-                        # Add to embeddings collection for search
-                        embeddings_collection.append({
-                            'id': len(embeddings_collection),
-                            'embeddings': embeddings,
-                            'text': current_embeddings['text'],
-                            'metadata': current_embeddings['metadata'].copy()
-                        })
-                        
-                        # Create preview (first 10 dimensions)
-                        preview = str(embeddings[:10]) if len(embeddings) >= 10 else str(embeddings)
-                        if len(embeddings) > 10:
-                            preview += f"... ({len(embeddings)} total dimensions)"
-                        
-                        # Update info
-                        info_text = f"""
-                        **Embedding Model:** {result['model']}  
-                        **API Status:** ✅ Success  
-                        **Last Generation:** {datetime.now().strftime('%H:%M:%S')}  
-                        **Vector Dimension:** {dimension}  
-                        **Source:** {source}  
-                        **Text Length:** {result['text_length']} chars
-                        """
-                        
-                        status = f"✅ Generated {dimension}-dimensional embeddings from {source}"
-                        
-                        return status, info_text, gr.update(interactive=True), preview, gr.update(interactive=True)
-                        
-                    else:
-                        error_msg = f"❌ Failed to generate embeddings: {result['error']}"
-                        return error_msg, "**API Status:** ❌ Failed", gr.update(interactive=False), "Generation failed", gr.update(interactive=False)
-                        
-                except Exception as e:
-                    error_msg = f"❌ Error generating embeddings: {str(e)}"
-                    return error_msg, "**API Status:** ❌ Error", gr.update(interactive=False), "Error occurred", gr.update(interactive=False)
-            
-            def download_embeddings_handler(format_choice):
-                """Prepare embeddings for download in specified format"""
-                nonlocal current_embeddings
-                
-                if not current_embeddings or 'embeddings' not in current_embeddings:
-                    return "❌ No embeddings available. Generate embeddings first.", None
-                
-                try:
-                    embeddings = current_embeddings['embeddings']
-                    metadata = current_embeddings['metadata']
-                    
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    
-                    # Create temporary file for download
-                    import tempfile
-                    
-                    if format_choice == "JSON":
-                        import json
-                        data = {
-                            'embeddings': embeddings,
-                            'metadata': metadata,
-                            'text': current_embeddings['text']
-                        }
-                        content = json.dumps(data, indent=2)
-                        filename = f"embeddings_{timestamp}.json"
-                        
-                        # Create temporary file
-                        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
-                        temp_file.write(content)
-                        temp_file.close()
-                        
-                    elif format_choice == "CSV":
-                        content = ",".join(map(str, embeddings))
-                        filename = f"embeddings_{timestamp}.csv"
-                        
-                        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-                        temp_file.write(content)
-                        temp_file.close()
-                        
-                    elif format_choice == "NumPy (.npy)":
-                        try:
-                            import numpy as np
-                            filename = f"embeddings_{timestamp}.npy"
-                            
-                            temp_file = tempfile.NamedTemporaryFile(suffix='.npy', delete=False)
-                            np.save(temp_file.name, np.array(embeddings))
-                            temp_file.close()
-                        except ImportError:
-                            return "❌ NumPy not available. Please choose another format.", None
-                            
-                    elif format_choice == "Text":
-                        content = f"# Embeddings generated at {metadata['timestamp']}\n"
-                        content += f"# Model: {metadata['model']}\n"
-                        content += f"# Dimension: {metadata['dimension']}\n"
-                        content += f"# Source: {metadata['source']}\n\n"
-                        content += "\n".join(map(str, embeddings))
-                        filename = f"embeddings_{timestamp}.txt"
-                        
-                        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False)
-                        temp_file.write(content)
-                        temp_file.close()
-                    
-                    # Return status and file for download
-                    status = f"✅ {format_choice} file prepared for download ({len(embeddings)} dimensions)"
-                    return status, temp_file.name
-                    
-                except Exception as e:
-                    return f"❌ Error preparing download: {str(e)}", None
-            
-            def get_collection_memory_usage():
-                """Calculate approximate memory usage of embeddings collection"""
-                if not embeddings_collection:
-                    return 0
-                # Estimate: each float64 = 8 bytes, typical embedding = 1024 dims
-                total_elements = sum(len(item['embeddings']) for item in embeddings_collection)
-                return total_elements * 8  # bytes
-            
-            def semantic_search_handler(query, results_count):
-                """Perform semantic search within stored embeddings"""
-                nonlocal embeddings_collection
-                
-                if not query or not query.strip():
-                    return "❌ Please enter a search query"
-                
-                if not embeddings_collection:
-                    return "❌ No embeddings available. Generate embeddings first."
-                
-                try:
-                    # Memory check
-                    memory_usage = get_collection_memory_usage()
-                    if memory_usage > 100 * 1024 * 1024:  # 100MB limit
-                        return f"⚠️ Collection too large ({memory_usage/1024/1024:.1f}MB). Consider clearing some embeddings."
-                    
-                    # Generate embedding for search query
-                    query_result = self.embedding_client.generate_embeddings(query.strip())
-                    if not query_result['success']:
-                        return f"❌ Failed to generate query embedding: {query_result['error']}"
-                    
-                    query_embedding = np.array(query_result['embeddings'])
-                    
-                    # Calculate similarities
-                    similarities = []
-                    for i, item in enumerate(embeddings_collection):
-                        doc_embedding = np.array(item['embeddings'])
-                        
-                        # Cosine similarity
-                        dot_product = np.dot(query_embedding, doc_embedding)
-                        norm_query = np.linalg.norm(query_embedding)
-                        norm_doc = np.linalg.norm(doc_embedding)
-                        
-                        if norm_query > 0 and norm_doc > 0:
-                            similarity = dot_product / (norm_query * norm_doc)
-                        else:
-                            similarity = 0
-                        
-                        similarities.append({
-                            'index': i,
-                            'similarity': similarity,
-                            'text': item['text'],
-                            'metadata': item['metadata']
-                        })
-                    
-                    # Sort by similarity (descending)
-                    similarities.sort(key=lambda x: x['similarity'], reverse=True)
-                    
-                    # Format results
-                    num_results = min(int(results_count), len(similarities))
-                    results = []
-                    
-                    for i in range(num_results):
-                        item = similarities[i]
-                        score = item['similarity']
-                        text = item['text']
-                        source = item['metadata'].get('source', 'unknown')
-                        timestamp = item['metadata'].get('timestamp', 'unknown')
-                        
-                        # Truncate long text
-                        display_text = text[:200] + "..." if len(text) > 200 else text
-                        
-                        results.append(f"🔍 **Result {i+1}** (Score: {score:.3f})")
-                        results.append(f"📄 **Source:** {source}")
-                        results.append(f"📝 **Content:** {display_text}")
-                        results.append(f"🕒 **Created:** {timestamp}")
-                        results.append("─" * 50)
-                    
-                    collection_info = f"📊 **Search Info:** Found {len(similarities)} items, showing top {num_results}"
-                    memory_info = f"💾 **Memory Usage:** {memory_usage/1024:.1f} KB"
-                    
-                    final_result = f"{collection_info}\n{memory_info}\n\n" + "\n".join(results)
-                    return final_result
-                    
-                except Exception as e:
-                    return f"❌ Search error: {str(e)}"
-            
-            def clear_embeddings_collection():
-                """Clear all stored embeddings to free memory"""
-                nonlocal embeddings_collection
-                count = len(embeddings_collection)
-                embeddings_collection.clear()
-                return f"✅ Cleared {count} embeddings from memory"
-            
-            # Wire up embeddings handlers
-            embedding_file.change(
-                process_file_for_embeddings,
-                inputs=[embedding_file],
-                outputs=[embedding_text, embedding_status]
-            )
-            
-            test_embedding_connection_btn.click(
-                test_embedding_connection,
-                outputs=[embedding_status, embedding_info]
-            )
-            
-            generate_embeddings_btn.click(
-                generate_embeddings_handler,
-                inputs=[embedding_text, embedding_file],
-                outputs=[embedding_status, embedding_info, download_embeddings_btn, embedding_preview, search_btn]
-            )
-            
-            download_embeddings_btn.click(
-                download_embeddings_handler,
-                inputs=[download_format],
-                outputs=[embedding_status, download_file]
-            )
-            
-            search_btn.click(
-                semantic_search_handler,
-                inputs=[search_query, search_results_count],
-                outputs=[search_results]
-            )
-            
-            clear_collection_btn.click(
-                clear_embeddings_collection,
-                outputs=[search_results]
             )
             
             # Add auto-refresh for Real-Time Performance Monitor (every 10 seconds)

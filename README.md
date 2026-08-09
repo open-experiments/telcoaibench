@@ -25,7 +25,7 @@ with two environment variables, and you get three things:
 
 | <img src="images/icons/icon-portal.svg" width="20" align="top"/> **Portal** | <img src="images/icons/icon-bench.svg" width="20" align="top"/> **Benchmark Suite** | <img src="images/icons/icon-report.svg" width="20" align="top"/> **Receipts** |
 |---|---|---|
-| Expert telco chat personas, embeddings playground, and a live vLLM observability dashboard - persistent sessions, streaming, file upload. | The 8 Open-Telco benchmarks (TeleQnA, TeleTables, TeleMath, TeleLogs, 3GPP-TSG, ORANBench, srsRANBench, 6G-Bench) plus 2 **LLM-as-judge suites** (Telco's Last Exam, Vendor GenAI deep-dives) with **datasets embedded in this repo** - run from the UI or CLI, no external dependencies, ever. | Scoring parity-validated against the official GSMA harness (≤1pp on all 7 leaderboard tasks), plus a full leaderboard-claim verification report showing why pinned, reproducible evals matter. |
+| Expert telco chat personas and a live vLLM observability dashboard - persistent sessions, streaming, file upload. | The 8 Open-Telco benchmarks (TeleQnA, TeleTables, TeleMath, TeleLogs, 3GPP-TSG, ORANBench, srsRANBench, 6G-Bench) plus 2 **LLM-as-judge suites** (Telco's Last Exam, Vendor GenAI deep-dives) with **datasets embedded in this repo** - run from the UI or CLI, no external dependencies, ever. | Scoring parity-validated against the official GSMA harness (≤1pp on all 7 leaderboard tasks), plus a full leaderboard-claim verification report showing why pinned, reproducible evals matter. |
 
 ## Quick Start
 
@@ -55,7 +55,6 @@ python3 otel_eval.py --endpoint https://<model-route>/v1 --model <name>
 | `SME_API_TOKEN` / `SME_USE_TOKEN_AUTH` | bearer auth | `true` |
 | `SME_TLS_VERIFY` | TLS verification | `false` |
 | `SME_ADMIN_USERNAME` / `SME_ADMIN_PASSWORD` | portal login | `admin` / `minad` |
-| `SME_EMBEDDINGS_ENDPOINT` / `SME_EMBEDDINGS_MODEL` / `SME_EMBEDDINGS_TOKEN` | embeddings API | - |
 
 Kubernetes/OpenShift: a minimal Deployment that clones this repo, pip-installs,
 and sets the `SME_*` env vars is all it takes - plus a Service and
@@ -85,16 +84,6 @@ for large contexts, live temperature/token controls, and document upload
 
 Create, edit, and persist system-prompt personas (`system_prompts.json`)
 without touching code - instantly available in Chat.
-</details>
-
-<details>
-<summary><img src="images/icons/icon-embed.svg" width="20" align="top"/> <b>Embeddings Generation</b></summary>
-<br/>
-
-![Embeddings tab](images/tab-embeddings.png)
-
-Generate embeddings against a configured endpoint and experiment with
-in-memory semantic search.
 </details>
 
 <details>
