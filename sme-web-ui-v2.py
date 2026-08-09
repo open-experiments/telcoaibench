@@ -3917,7 +3917,8 @@ class ChatInterface:
         token = (token or "").strip()
         model_name = (model_name or "").strip()
         if not url:
-            return "Enter the judge endpoint base URL (without /v1).", self._judge_choices()
+            return ("Enter the judge endpoint base URL (without /v1).",
+                    self._judge_choices(), [])
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         ids, probe_err = [], None
         try:
@@ -3931,14 +3932,13 @@ class ChatInterface:
             if len(ids) == 1:
                 model_name = ids[0]
             elif ids:
-                sample = ", ".join(f"`{i}`" for i in ids[:8])
-                more = "..." if len(ids) > 8 else ""
-                return (f"Endpoint exposes {len(ids)} models - specify the "
-                        f"judge model name. Found: {sample}{more}"), self._judge_choices()
+                return (f"Endpoint exposes {len(ids)} models - pick the "
+                        "judge from the **Judge model name** dropdown and "
+                        "press Add Judge again."), self._judge_choices(), ids
             else:
                 return (f"Could not discover models at `{url}/v1/models` "
-                        f"({probe_err}) - specify the judge model name "
-                        "explicitly."), self._judge_choices()
+                        f"({probe_err}) - type the judge model name "
+                        "explicitly."), self._judge_choices(), []
         note = ""
         if ids and model_name not in ids:
             note = (f" (warning: `{model_name}` not in the endpoint's "
@@ -3953,7 +3953,7 @@ class ChatInterface:
         self._judge_registry_save()
         auth_note = "with credentials" if token else "no credentials"
         return (f"Judge registered ({auth_note}): `{key}`{note}. It will "
-                "not appear as a benchmark target."), self._judge_choices()
+                "not appear as a benchmark target."), self._judge_choices(), ids
 
     def remove_judge_endpoint(self, key):
         """Remove a judge-only endpoint (targets are managed on their cards)."""
@@ -4602,9 +4602,11 @@ class ChatInterface:
                                 label="API key (if required)",
                                 type="password", scale=2,
                             )
-                            judge_new_model = gr.Textbox(
-                                label="Judge model name",
-                                placeholder="gpt-5", scale=2,
+                            judge_new_model = gr.Dropdown(
+                                label="Judge model name (leave empty to "
+                                      "discover, then pick)",
+                                choices=[], value=None,
+                                allow_custom_value=True, scale=2,
                             )
                             judge_add_btn = gr.Button(
                                 "Add Judge", variant="primary", scale=1)
@@ -4692,9 +4694,12 @@ class ChatInterface:
                         return keys, msg, gr.update(choices=self._judge_choices())
 
                     def _add_judge_ui(url, token, model_name):
-                        msg, choices = self.add_judge_endpoint(url, token,
-                                                               model_name)
-                        return msg, gr.update(choices=choices)
+                        msg, choices, ids = self.add_judge_endpoint(
+                            url, token, model_name)
+                        model_upd = gr.update(choices=ids)
+                        if ids and not model_name and len(ids) > 1:
+                            model_upd = gr.update(choices=ids, value=None)
+                        return msg, gr.update(choices=choices), model_upd
 
                     def _rm_judge_ui(selected):
                         msg, choices = self.remove_judge_endpoint(selected)
@@ -4705,7 +4710,8 @@ class ChatInterface:
                         fn=_add_judge_ui,
                         inputs=[judge_new_url, judge_new_token,
                                 judge_new_model],
-                        outputs=[judge_add_status, bench_judge],
+                        outputs=[judge_add_status, bench_judge,
+                                 judge_new_model],
                     )
                     judge_rm_btn.click(
                         fn=_rm_judge_ui,
