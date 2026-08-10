@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-10 10:47",
+ "generated": "2026-08-10 20:36",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -16,7 +16,7 @@
  "board_judge": "gpt-5.5",
  "ranked": [
   {
-   "key": "gemma4-31b-it-base @ gemma4-31b-it-base-gsma-otel2-test.apps.venice.narlabs.io",
+   "key": "gemma4-31b-it-base",
    "model": "gemma4-31b-it-base",
    "endpoint": "https://gemma4-31b-it-base-gsma-otel2-test.apps.venice.narlabs.io",
    "composite": 0.6459,
@@ -107,7 +107,7 @@
    "ranked": true
   },
   {
-   "key": "otel2-llm-31b-it @ otel2-llm-31b-it-gsma-otel2-test.apps.venice.narlabs.io",
+   "key": "otel2-llm-31b-it",
    "model": "otel2-llm-31b-it",
    "endpoint": "https://otel2-llm-31b-it-gsma-otel2-test.apps.venice.narlabs.io",
    "composite": 0.5993,
@@ -198,5 +198,73 @@
    "ranked": true
   }
  ],
- "unranked": []
+ "unranked": [
+  {
+   "key": "nemotron-3-nano-30b",
+   "model": "nemotron-3-nano-30b",
+   "endpoint": "http://nemotron-3-nano-30b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.4335,
+   "coverage": 0.609,
+   "judge": "-",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.718,
+     "stderr": 0.0142,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "telemath": {
+     "accuracy": 0.62,
+     "stderr": 0.0488,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "telelogs": {
+     "accuracy": 0.0,
+     "stderr": 0.0,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "teletables": {
+     "accuracy": 0.08,
+     "stderr": 0.0273,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "oranbench": {
+     "accuracy": 0.6667,
+     "stderr": 0.0386,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "srsranbench": {
+     "accuracy": 0.7,
+     "stderr": 0.0375,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "3gpp": {
+     "accuracy": 0.25,
+     "stderr": 0.0435,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    }
+   },
+   "ranked": false
+  }
+ ]
 }
