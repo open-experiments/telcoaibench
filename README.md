@@ -121,19 +121,27 @@ auto-cancelled too - no orphaned GPU load.
 
 ![Benchmark tab - two models side by side](images/tab-benchmark-multi.png)
 
-**Judged suites.** `telcos_last_exam` (10 hardest-questions exam graded 0-10
-against an official answer key) and `vendor_genai` (vendor-architecture
-deep-dives graded against a fixed rubric) have no deterministic scorer -
-instead a **judge model** you pick in the UI grades every answer. Use the
+**Judged suites.** `telcos_last_exam` (a 30-question telecom exam across
+8 domains and 3 difficulty tiers, graded against an official answer key
+with per-question grading notes, points-weighted) and `vendor_genai`
+(a 6-vendor x 4-domain deep-dive matrix graded per-criterion: accuracy,
+honesty, completeness, depth - weighted so confident fabrication is
+punished hardest) have no deterministic scorer - a **judge model** you
+provision grades every answer and returns structured JSON. Use the
 dedicated **Provision judge model** form (endpoint URL + API key + model
-name - e.g. `api.openai.com` with your key for GPT-5, or any lab endpoint);
-judge endpoints are stored separately in `judge_endpoints.json` and never
-become benchmark target cards. Select the judge in the **Judge model**
-dropdown and run - a frontier-class judge is recommended for grading
-quality. Results report the judge alongside the scores - numbers from
-different judges are not comparable.
+name - leave the name empty and the endpoint's models are discovered into
+a dropdown); judge endpoints never become benchmark target cards and
+persist on the state volume.
 
 ![Judge model provisioning](images/tab-benchmark-judge.png)
+
+**Breakdowns and failure reports.** Every judged run ends with per-domain,
+per-difficulty, per-vendor and per-criterion breakdowns inline, plus a
+downloadable **run report** (HTML + markdown) listing every question
+worst-first with its score, verdict, what was missed, and the judge's
+written rationale.
+
+![Run report](images/tab-benchmark-report.png)
 </details>
 
 ## Benchmark Suites
@@ -143,8 +151,8 @@ All benchmark assets live under [`benchmarks/`](benchmarks/README.md):
 | Suite | What it is |
 |---|---|
 | [`open-telco/`](benchmarks/open-telco/) | Self-contained Open-Telco eval framework - 8 GSMA telecom benchmarks, lite + full datasets embedded (~4.5MB gzipped JSONL), single-file runner (stdlib + `requests`). Parity-validated; includes leaderboard claim snapshots and the 2026-08 verification report. |
-| [`vendor-genai-tests/`](benchmarks/vendor-genai-tests/) | Vendor GenAI deep-dives (Ericsson / Nokia / Mavenir) - LLM-as-judge, rubric-graded; embedded dataset + historical hand-graded results + Telco5G reports. |
-| [`telcos-last-exam/`](benchmarks/telcos-last-exam/) | Hardest-questions telco exam - LLM-as-judge, graded against the official answer key; embedded dataset + per-model answer sheets. |
+| [`vendor-genai-tests/`](benchmarks/vendor-genai-tests/) | Vendor GenAI matrix - 24 deep-dives across 6 vendors (Ericsson, Nokia, Mavenir, Samsung, Rakuten Symphony, Cisco) x 4 domains; per-criterion LLM-as-judge with fact anchors, fabrication bait, and honesty traps. |
+| [`telcos-last-exam/`](benchmarks/telcos-last-exam/) | Telco's Last Exam - 30 questions, 8 domains, 3 difficulty tiers, 246 points; LLM-as-judge against machine-verified answer keys with grading notes; points-weighted scoring. |
 | [`model-reports/`](benchmarks/model-reports/) | Per-model benchmark answers and performance reports. |
 | [`embeddings/`](benchmarks/embeddings/) | Embeddings model benchmark notes. |
 

@@ -95,6 +95,7 @@
       <a href="#portal">Portal</a>
       <a href="#benchmarks">Benchmarks</a>
       <a href="#judge">Judge Models</a>
+      <a href="#reports">Reports</a>
       <a href="#walkthroughs">Walkthroughs</a>
       <a href="#quickstart">Quick Start</a>
       <a class="gh" href="https://github.com/open-experiments/telcoaibench">GitHub</a>
@@ -113,6 +114,7 @@
   <div class="pills">
     <span class="pill"><b>10</b> telco benchmarks</span>
     <span class="pill">LLM-as-judge suites</span>
+    <span class="pill">Per-question failure reports</span>
     <span class="pill">Parity-validated scoring</span>
     <span class="pill">Any OpenAI-compatible endpoint</span>
     <span class="pill">MIT licensed</span>
@@ -172,8 +174,8 @@
     <table>
       <tr><th>Suite</th><th>Tasks</th><th>Scoring</th></tr>
       <tr><td><b>Open-Telco</b></td><td><code>teleqna</code> <code>teletables</code> <code>telemath</code> <code>telelogs</code> <code>3gpp</code> <code>oranbench</code> <code>srsranbench</code> <code>6g_bench</code></td><td>Deterministic - ported 1:1 from the official harness, parity-validated</td></tr>
-      <tr><td><b>Telco's Last Exam</b></td><td><code>telcos_last_exam</code> - 10 hardest-questions telecom exam</td><td>LLM-as-judge vs. the official answer key, 0-10 per answer</td></tr>
-      <tr><td><b>Vendor GenAI</b></td><td><code>vendor_genai</code> - vendor-architecture deep-dives</td><td>LLM-as-judge vs. a fixed rubric: accuracy, completeness, depth, honesty</td></tr>
+      <tr><td><b>Telco's Last Exam</b></td><td><code>telcos_last_exam</code> - 30 questions, 8 domains, 3 difficulty tiers, 246 points</td><td>LLM-as-judge vs. machine-verified answer keys with grading notes; points-weighted, per-domain breakdowns</td></tr>
+      <tr><td><b>Vendor GenAI</b></td><td><code>vendor_genai</code> - 24 deep-dives: 6 vendors x 4 domains, honesty traps included</td><td>Per-criterion judging (accuracy 0.40, honesty 0.25, completeness 0.20, depth 0.15) with fact anchors and fabrication bait</td></tr>
     </table>
   </div>
 </section>
@@ -187,12 +189,27 @@
         <h3>Provision once, judge everything</h3>
         <p>The dedicated judge form takes an endpoint URL, API key, and model name - for example <code>api.openai.com</code> with GPT-5, or any frontier-class endpoint. Judge endpoints are stored separately and never become benchmark targets.</p>
         <ul>
+          <li>Leave the model name empty and the endpoint's models are discovered into a dropdown</li>
+          <li>Structured JSON grading: exam answers graded against the answer key with what-was-missed lists; vendor answers scored per-criterion</li>
           <li>Judge recorded alongside every score - runs with different judges are never mixed</li>
-          <li>Per-sample transcripts include the judge's written rationale for auditing</li>
           <li>Lab models can judge each other - any provisioned target is selectable too</li>
         </ul>
       </div>
       <img src="assets/tab-benchmark-judge.png" alt="Judge model provisioning"/>
+    </div>
+  </div>
+</section>
+
+<section id="reports">
+  <div class="wrap">
+    <h2>Failure <span>Reports</span></h2>
+    <p class="sub">Every judged run ends with per-domain, per-difficulty, per-vendor and per-criterion breakdowns - and a downloadable report that shows exactly which questions failed, how, and at what level.</p>
+    <div class="feature">
+      <img src="assets/tab-benchmark-report.png" alt="Run report with per-question verdicts"/>
+      <div>
+        <h3>Every question, worst first</h3>
+        <p>The run report (HTML + markdown, saved to the persistent state volume) lists each question with its score, difficulty, verdict, the required elements the candidate missed, and the judge's written rationale - the difference between a number and a diagnosis.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -218,7 +235,7 @@
         <h3><span class="dot" style="background:var(--amber)"></span>3 - Judge Models</h3>
         <video controls preload="metadata" poster="videos/posters/judge-models.png" style="width:100%;border-radius:10px;margin-top:10px">
           <source src="videos/judge-models.mp4" type="video/mp4"/></video>
-        <p style="margin-top:10px">Provision a judge endpoint, run the judged suites, and read graded results with the judge on record.</p>
+        <p style="margin-top:10px">Provision a judge with model discovery, run the judged suites, and read structured graded results, breakdowns, and the downloadable failure report.</p>
       </div>
       <div class="card">
         <h3><span class="dot" style="background:var(--green)"></span>4 - CLI &amp; Reproducibility</h3>
