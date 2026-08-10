@@ -5614,6 +5614,7 @@ def main():
         auth=(config.admin_username, config.admin_password),
         server_name="0.0.0.0",
         server_port=30180,
+        allowed_paths=[STATE_DIR],
         share=False,
         inbrowser=False,
         favicon_path=None,
