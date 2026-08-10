@@ -4071,10 +4071,37 @@ class ChatInterface:
     def _lb_load(self):
         try:
             if os.path.exists(self.LB_FILE):
-                return json.load(open(self.LB_FILE))
+                return self._lb_migrate(json.load(open(self.LB_FILE)))
         except Exception as e:
             print(f"leaderboard load failed: {e}")
         return {"entries": {}}
+
+    def _lb_migrate(self, board):
+        """Merge legacy 'model @ endpoint' keys into per-model keys.
+        The same model benchmarked from different endpoints (external
+        route vs in-cluster service) is one leaderboard identity; per
+        task the newest result wins."""
+        merged, changed = {}, False
+        for key, e in board.get("entries", {}).items():
+            mk = e.get("model", key)
+            if mk not in merged:
+                merged[mk] = e
+                if key != mk:
+                    changed = True
+                continue
+            changed = True
+            tgt = merged[mk]
+            for task, rec in e.get("results", {}).items():
+                cur = tgt["results"].get(task)
+                if cur is None or rec.get("date", "") >= cur.get("date", ""):
+                    tgt["results"][task] = rec
+            tgt["history"] = (tgt.get("history", [])
+                              + e.get("history", []))[-200:]
+            tgt["endpoint"] = e.get("endpoint", tgt.get("endpoint"))
+        board["entries"] = merged
+        if changed:
+            self._lb_save(board)
+        return board
 
     def _lb_save(self, board):
         try:
@@ -4095,7 +4122,7 @@ class ChatInterface:
         if r["n"] < full_n:
             return  # min-samples rule: full set only
         board = self._lb_load()
-        key = f"{entry['model']} @ {entry['endpoint'].split('//')[-1]}"
+        key = entry["model"]   # model IS the identity; endpoint is metadata
         e = board["entries"].setdefault(key, {
             "model": entry["model"], "endpoint": entry["endpoint"],
             "results": {}, "history": []})
