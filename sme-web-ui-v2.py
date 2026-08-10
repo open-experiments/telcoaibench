@@ -3839,13 +3839,39 @@ class ChatInterface:
                   + f"| tier: **{tier}** | temperature 0.0 "
                   + f"| {int(_time.time() - t_start)}s total" + "\n\n"
                   + f"Per-sample transcripts saved to `{out_dir}` (app container).")
+            # judged breakdowns inline
+            for r in summary:
+                bd = r.get("breakdown") or {}
+                if not bd:
+                    continue
+                md += f"\n\n**`{r['task']}` breakdown** - "
+                bits = []
+                for key in ("domain", "difficulty", "vendor"):
+                    if bd.get(key):
+                        bits.append(key + ": " + ", ".join(
+                            f"{k} {v['score']:.2f}"
+                            for k, v in sorted(bd[key].items())))
+                if bd.get("criteria"):
+                    bits.append("criteria: " + ", ".join(
+                        f"{k} {v:g}" for k, v in bd["criteria"].items()))
+                md += " | ".join(bits)
             if error_notes:
                 md += "\n\n" + "\n\n".join(error_notes)
         else:
             md = "No benchmarks completed successfully."
             if error_notes:
                 md += "\n\n" + "\n\n".join(error_notes)
-        yield ("Benchmark run complete", list(rows), md)
+        report_path = None
+        if summary:
+            try:
+                report_path = mod.build_report(out_dir, summary, {
+                    "model": entry["model"], "endpoint": entry["endpoint"],
+                    "judge": judge_label or "-", "tier": tier,
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M")})
+                md += "\n\nDetailed report generated (download below)."
+            except Exception as e:
+                md += f"\n\n(report generation failed: {e})"
+        yield ("Benchmark run complete", list(rows), md, report_path)
 
     def stop_benchmark(self, slot):
         """Request cooperative stop of the benchmark running in a slot."""
@@ -4700,14 +4726,27 @@ class ChatInterface:
                                             label="Results",
                                         )
                                         summary_md = gr.Markdown("")
+                                        report_file = gr.File(
+                                            label="Run report (HTML)",
+                                            interactive=False, visible=False)
 
                                         def _mk_run(k):
                                             def _run(tasks, tier, limit,
                                                      conns, mtok, judge_key):
-                                                yield from self.run_benchmark(
-                                                    k, k, tasks, tier, limit,
-                                                    conns, mtok,
-                                                    judge_key=judge_key)
+                                                for out in self.run_benchmark(
+                                                        k, k, tasks, tier,
+                                                        limit, conns, mtok,
+                                                        judge_key=judge_key):
+                                                    if len(out) == 4:
+                                                        st, tb, md, rp = out
+                                                        yield (st, tb, md,
+                                                               gr.update(
+                                                                   value=rp,
+                                                                   visible=True))
+                                                    else:
+                                                        st, tb, md = out
+                                                        yield (st, tb, md,
+                                                               gr.update())
                                             return _run
 
                                         def _mk_stop(k):
@@ -4727,7 +4766,7 @@ class ChatInterface:
                                                     bench_max_tokens,
                                                     bench_judge],
                                             outputs=[status_md, table,
-                                                     summary_md],
+                                                     summary_md, report_file],
                                         )
                                         stop_btn.click(
                                             fn=_mk_stop(key), inputs=[],

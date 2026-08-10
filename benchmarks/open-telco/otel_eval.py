@@ -71,34 +71,52 @@ WG_PATTERN = re.compile(r"([A-Z]+\d+(?:-[A-Z]+)?)", re.IGNORECASE)
 SCORE_PATTERN = re.compile(r"(?i)SCORE\s*:\s*(\d+(?:\.\d+)?)")
 
 JUDGE_REFERENCE_PROMPT = """You are a strict telecommunications examination grader.
-Grade the candidate answer against the official reference answer key.
-Award points for correct methodology, correct numerical results (allow minor
-rounding), correct use of 3GPP specifications, and completeness. Penalize
-fabricated specifics, wrong formulas, and missing sub-questions.
-Be strict: a perfect 10 requires matching the reference in substance.
+Grade the candidate answer ONLY against the official reference answer key
+and the grading notes below. Award credit for correct methodology, correct
+numerical results (allow minor rounding), correct use of specifications,
+and completeness. Penalize fabricated specifics, wrong formulas, and
+missing sub-questions. A perfect 10 requires matching the reference in
+substance.
 
 QUESTION:
 {question}
 
-REFERENCE ANSWER KEY:
+REFERENCE ANSWER KEY (ground truth):
 {reference}
 
+GRADING NOTES (must-haves and known error patterns):
+{notes}
+
 CANDIDATE ANSWER:
 {candidate}
 
-First give a 3-5 sentence justification, then output the final grade on its
-own last line in exactly this format: SCORE: <0-10>"""
+Return ONLY a JSON object, no other text, exactly in this shape:
+{{"score": <0-10, decimals allowed>,
+  "missed": [<short strings: each required element the candidate missed or got wrong>],
+  "verdict": "<one sentence: dominant strength or failure>",
+  "rationale": "<3-6 sentences justifying the score against the reference>"}}"""
 
 JUDGE_RUBRIC_PROMPT = """You are a strict telecommunications technology analyst
-grading a vendor-technology deep-dive answer. There is no single reference
-answer; grade against this rubric (equal weight):
-1. Technical accuracy - claims consistent with public knowledge of the vendor's
-   architecture; no fabricated product names, versions, or metrics.
-2. Completeness - every numbered section of the request is addressed.
-3. Depth - concrete interfaces, components, and quantitative reasoning rather
-   than generic marketing language.
-4. Honesty - clearly separates publicly known facts from what would require
-   vendor engagement; abstains rather than inventing specifics.
+grading a vendor-technology deep-dive answer. Grade on four criteria,
+each 0-10:
+1. technical_accuracy - claims consistent with public knowledge; no
+   invented product names, versions, interfaces, or performance figures.
+2. completeness - every numbered part of the question is addressed.
+3. depth - concrete components, interfaces, and quantitative reasoning
+   rather than marketing prose.
+4. honesty - separates public knowledge from speculation; abstains
+   rather than inventing. Award honesty credit for explicit "not public /
+   requires vendor engagement" statements.
+
+GRADING CONTEXT - established public facts you must treat as true
+(the candidate cannot see this):
+{anchors}
+
+KNOWN FABRICATION PATTERNS to specifically check for:
+{bait}
+
+If unsure whether a specific claim is fabricated, deduct depth rather
+than technical_accuracy.
 
 QUESTION:
 {question}
@@ -106,8 +124,35 @@ QUESTION:
 CANDIDATE ANSWER:
 {candidate}
 
-First give a 3-5 sentence justification, then output the final grade on its
-own last line in exactly this format: SCORE: <0-10>"""
+Return ONLY a JSON object, no other text, exactly in this shape:
+{{"technical_accuracy": <0-10>, "completeness": <0-10>,
+  "depth": <0-10>, "honesty": <0-10>,
+  "verdict": "<one sentence: dominant strength or failure>",
+  "rationale": "<3-6 sentences citing specific claims judged right or wrong>"}}"""
+
+RUBRIC_WEIGHTS = {"technical_accuracy": 0.40, "honesty": 0.25,
+                  "completeness": 0.20, "depth": 0.15}
+
+
+def parse_judge_json(text):
+    """Extract the first JSON object from judge output; None on failure."""
+    if not text:
+        return None
+    start = text.find("{")
+    while start != -1:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start:i + 1])
+                    except json.JSONDecodeError:
+                        break
+        start = text.find("{", start + 1)
+    return None
 
 
 def parse_judge_score(text):
@@ -404,28 +449,59 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
                     jp = JUDGE_REFERENCE_PROMPT.format(
                         question=rec["question"],
                         reference=rec.get("reference_answer", ""),
+                        notes=rec.get("grading_notes", "(none provided)"),
                         candidate=completion)
                 else:
                     jp = JUDGE_RUBRIC_PROMPT.format(
-                        question=rec["question"], candidate=completion)
+                        question=rec["question"], candidate=completion,
+                        anchors=rec.get("judge_anchors", "(none provided)"),
+                        bait=rec.get("fabrication_bait", "(none provided)"))
                 judge_note, _ = judge_client.chat(
                     [{"role": "user", "content": jp}])
-                score = parse_judge_score(judge_note)
-                if score is None:
-                    raise RuntimeError("judge did not return a SCORE line")
+                jd = parse_judge_json(judge_note)
+                judge_detail = {}
+                if jd and judged_mode == "reference" and "score" in jd:
+                    score = max(0.0, min(10.0, float(jd["score"]))) / 10.0
+                    judge_detail = {"missed": jd.get("missed", []),
+                                    "verdict": jd.get("verdict", ""),
+                                    "rationale": jd.get("rationale", "")}
+                elif jd and judged_mode == "rubric" and "technical_accuracy" in jd:
+                    crit = {k: max(0.0, min(10.0, float(jd.get(k, 0))))
+                            for k in RUBRIC_WEIGHTS}
+                    score = sum(crit[k] * w for k, w in RUBRIC_WEIGHTS.items()) / 10.0
+                    judge_detail = {"criteria": crit,
+                                    "verdict": jd.get("verdict", ""),
+                                    "rationale": jd.get("rationale", "")}
+                else:
+                    score = parse_judge_score(judge_note)  # legacy fallback
+                    if score is None:
+                        raise RuntimeError(
+                            "judge returned neither valid JSON nor a SCORE line")
                 ok, parsed, target = score, f"{score*10:.1f}/10", "judge"
             else:
                 ok, parsed, target = spec["score"](completion, rec)
             err = None
         except Exception as e:
             completion, usage, ok, parsed, target, err = "", {}, 0.0, "", "", str(e)
-        return i, {"index": i, "correct": bool(ok) if not judged_mode else None,
-                   "score": float(ok), "parsed": parsed,
-                   "target": target, "error": err,
-                   "judge_rationale": judge_note,
-                   "latency_s": round(time.time() - t0, 2),
-                   "output_tokens": usage.get("completion_tokens"),
-                   "completion": completion}
+        meta = {}
+        if judged_mode:
+            for k in ("id", "title", "domain", "difficulty", "points", "vendor"):
+                if rec.get(k) is not None:
+                    meta[k] = rec[k]
+        row = {"index": i, "correct": bool(ok) if not judged_mode else None,
+               "score": float(ok), "parsed": parsed,
+               "target": target, "error": err,
+               "judge_rationale": judge_note,
+               "latency_s": round(time.time() - t0, 2),
+               "output_tokens": usage.get("completion_tokens"),
+               "completion": completion}
+        row.update(meta)
+        if judged_mode:
+            try:
+                row.update(judge_detail)
+            except NameError:
+                pass
+        return i, row
 
     stopped = False
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
@@ -457,19 +533,220 @@ def run_task(task, tier, client, workers, limit, out_dir, progress_cb=None,
                      if not (r["error"] and "abort" in str(r["error"]))]
     n = len(done_rows)
     scores = [r.get("score", 1.0 if r["correct"] else 0.0) for r in done_rows]
-    acc = sum(scores) / n if n else 0.0
+    if judged_mode == "reference" and any(r.get("points") for r in done_rows):
+        wts = [float(r.get("points", 1)) for r in done_rows]
+        acc = (sum(sc * w for sc, w in zip(scores, wts)) / sum(wts)) if n else 0.0
+    else:
+        acc = sum(scores) / n if n else 0.0
     if n > 1:
-        var = sum((x - acc) ** 2 for x in scores) / (n - 1)
+        m_ = sum(scores) / n
+        var = sum((x - m_) ** 2 for x in scores) / (n - 1)
         stderr = math.sqrt(var / n)
     else:
         stderr = 0.0
+
+    breakdown = {}
+    if judged_mode:
+        def _agg(key):
+            groups = {}
+            for r in done_rows:
+                k = r.get(key)
+                if k is None:
+                    continue
+                w = float(r.get("points", 1))
+                g = groups.setdefault(k, [0.0, 0.0, 0])
+                g[0] += r.get("score", 0.0) * w
+                g[1] += w
+                g[2] += 1
+            return {k: {"score": round(v[0] / v[1], 4), "n": v[2]}
+                    for k, v in groups.items() if v[1]}
+        for key in ("domain", "difficulty", "vendor"):
+            b = _agg(key)
+            if b:
+                breakdown[key] = b
+        crits = [r["criteria"] for r in done_rows if r.get("criteria")]
+        if crits:
+            breakdown["criteria"] = {
+                k: round(sum(c[k] for c in crits) / len(crits), 2)
+                for k in crits[0]}
     errors = sum(1 for r in done_rows if r["error"])
     with open(os.path.join(out_dir, f"{task}.jsonl"), "w") as w:
         for r in done_rows:
             w.write(json.dumps(r, ensure_ascii=False) + "\n")
     return {"task": task, "tier": tier, "n": n, "accuracy": round(acc, 4),
             "stderr": round(stderr, 4), "request_errors": errors,
-            "stopped": stopped, "total_planned": len(records)}
+            "stopped": stopped, "total_planned": len(records),
+            "breakdown": breakdown if judged_mode else {}}
+
+
+# ---------------------------------------------------------------------------
+# Run report: what failed, how, and at what level
+# ---------------------------------------------------------------------------
+
+def _sev(score):
+    if score >= 0.8: return "pass"
+    if score >= 0.6: return "partial"
+    if score >= 0.4: return "weak"
+    return "fail"
+
+
+def build_report(out_dir, summaries, context):
+    """Write REPORT.md and REPORT.html into out_dir from per-sample
+    transcripts. context: dict with model/endpoint/judge/tier/date."""
+    tasks = []
+    for sm in summaries:
+        task = sm["task"]
+        rows = []
+        p = os.path.join(out_dir, f"{task}.jsonl")
+        if os.path.exists(p):
+            with open(p) as fh:
+                rows = [json.loads(l) for l in fh if l.strip()]
+        rows.sort(key=lambda r: r.get("score", 0.0))
+        tasks.append((sm, rows))
+
+    # ---------------- markdown ----------------
+    L = []
+    L.append(f"# Benchmark Report - {context.get('model','?')}")
+    L.append("")
+    L.append(f"Endpoint: `{context.get('endpoint','?')}` | "
+             f"Judge: `{context.get('judge','-')}` | "
+             f"Tier: {context.get('tier','?')} | {context.get('date','')}")
+    L.append("")
+    L.append("| Task | n | Score | StdErr | Errors |")
+    L.append("|---|---|---|---|---|")
+    for sm, _ in tasks:
+        L.append(f"| {sm['task']} | {sm['n']} | {sm['accuracy']:.4f} | "
+                 f"±{sm['stderr']:.4f} | {sm.get('request_errors',0)} |")
+    for sm, rows in tasks:
+        bd = sm.get("breakdown") or {}
+        L.append("")
+        L.append(f"## {sm['task']}")
+        for key in ("domain", "difficulty", "vendor"):
+            if bd.get(key):
+                L.append("")
+                L.append(f"**By {key}:** " + " | ".join(
+                    f"{k}: {v['score']:.3f} (n={v['n']})"
+                    for k, v in sorted(bd[key].items())))
+        if bd.get("criteria"):
+            L.append("")
+            L.append("**Criteria means (0-10):** " + " | ".join(
+                f"{k}: {v}" for k, v in bd["criteria"].items()))
+        judged = any(r.get("verdict") or r.get("criteria") for r in rows)
+        if judged:
+            L.append("")
+            L.append("### Per-question results (worst first)")
+            L.append("")
+            L.append("| ID | Title/Vendor | Level | Score | Verdict |")
+            L.append("|---|---|---|---|---|")
+            for r in rows:
+                ident = r.get("id", r.get("index"))
+                title = r.get("title") or (
+                    f"{r.get('vendor','')} / {r.get('domain','')}".strip(" /"))
+                lvl = r.get("difficulty") or r.get("domain") or "-"
+                v = (r.get("verdict") or r.get("error") or "").replace("|", "/")
+                L.append(f"| {ident} | {title[:48]} | {lvl} | "
+                         f"{r.get('score',0):.2f} | {v[:110]} |")
+            fails = [r for r in rows if r.get("score", 0) < 0.6 or r.get("error")]
+            if fails:
+                L.append("")
+                L.append("### Failure detail")
+                for r in fails:
+                    ident = r.get("id", r.get("index"))
+                    L.append("")
+                    L.append(f"**{ident}** - score {r.get('score',0):.2f} "
+                             f"({_sev(r.get('score',0))})"
+                             + (f" - {r.get('points','?')} pts" if r.get('points') else ""))
+                    if r.get("error"):
+                        L.append(f"- error: `{str(r['error'])[:200]}`")
+                    if r.get("missed"):
+                        for mi in r["missed"][:8]:
+                            L.append(f"- missed: {mi}")
+                    if r.get("criteria"):
+                        L.append("- criteria: " + ", ".join(
+                            f"{k}={v:g}" for k, v in r["criteria"].items()))
+                    if r.get("rationale"):
+                        L.append(f"- judge: {str(r['rationale'])[:500]}")
+    md = "\n".join(L)
+    with open(os.path.join(out_dir, "REPORT.md"), "w") as fh:
+        fh.write(md)
+
+    # ---------------- html ----------------
+    def bar(v, mx=1.0, color="#8B5CF6"):
+        pct = max(0, min(100, v / mx * 100))
+        return (f'<div style="background:#1E293B;border-radius:4px;height:14px;'
+                f'width:160px;display:inline-block;vertical-align:middle">'
+                f'<div style="background:{color};width:{pct:.0f}%;height:14px;'
+                f'border-radius:4px"></div></div> {v:.2f}')
+    H = ['<html><head><meta charset="utf-8"><title>Benchmark Report</title>',
+         '<style>body{background:#0B1120;color:#E2E8F0;font-family:Helvetica,'
+         'Arial,sans-serif;max-width:1080px;margin:24px auto;padding:0 16px}'
+         'table{border-collapse:collapse;width:100%;font-size:14px}'
+         'td,th{border-bottom:1px solid #1E293B;padding:7px 10px;text-align:left}'
+         'th{color:#64748B;text-transform:uppercase;font-size:11.5px}'
+         'h1{font-size:24px}h2{color:#8B5CF6;margin-top:34px}'
+         'h3{color:#22D3EE}code{background:#1E293B;padding:1px 6px;'
+         'border-radius:4px;font-size:12.5px}'
+         '.fail{color:#EF4444}.weak{color:#FBBF24}.partial{color:#22D3EE}'
+         '.pass{color:#10B981}.card{background:#111827;border:1px solid #1E293B;'
+         'border-radius:10px;padding:14px 18px;margin:10px 0}</style></head><body>']
+    H.append(f"<h1>Benchmark Report - {context.get('model','?')}</h1>")
+    H.append(f"<p>Endpoint <code>{context.get('endpoint','?')}</code> | "
+             f"Judge <code>{context.get('judge','-')}</code> | "
+             f"Tier {context.get('tier','?')} | {context.get('date','')}</p>")
+    for sm, rows in tasks:
+        H.append(f"<h2>{sm['task']} - {sm['accuracy']:.4f} "
+                 f"&plusmn;{sm['stderr']:.4f} (n={sm['n']})</h2>")
+        bd = sm.get("breakdown") or {}
+        for key in ("domain", "difficulty", "vendor"):
+            if bd.get(key):
+                H.append(f'<div class="card"><b>By {key}</b><table>')
+                for k, v in sorted(bd[key].items()):
+                    H.append(f"<tr><td>{k}</td><td>{bar(v['score'])}</td>"
+                             f"<td>n={v['n']}</td></tr>")
+                H.append("</table></div>")
+        if bd.get("criteria"):
+            H.append('<div class="card"><b>Criteria (0-10)</b><table>')
+            for k, v in bd["criteria"].items():
+                H.append(f"<tr><td>{k}</td><td>{bar(v, 10, '#22D3EE')}</td></tr>")
+            H.append("</table></div>")
+        if any(r.get("verdict") or r.get("criteria") for r in rows):
+            H.append("<h3>Per-question (worst first)</h3><table>"
+                     "<tr><th>ID</th><th>Title</th><th>Level</th>"
+                     "<th>Score</th><th>Verdict</th></tr>")
+            for r in rows:
+                sv = _sev(r.get("score", 0))
+                title = r.get("title") or (
+                    f"{r.get('vendor','')} / {r.get('domain','')}".strip(" /"))
+                H.append(f'<tr><td>{r.get("id", r.get("index"))}</td>'
+                         f"<td>{title[:60]}</td>"
+                         f"<td>{r.get('difficulty') or r.get('domain') or '-'}</td>"
+                         f'<td class="{sv}">{r.get("score",0):.2f}</td>'
+                         f"<td>{(r.get('verdict') or r.get('error') or '')[:140]}</td></tr>")
+            H.append("</table>")
+            fails = [r for r in rows if r.get("score", 0) < 0.6 or r.get("error")]
+            if fails:
+                H.append("<h3>Failure detail</h3>")
+                for r in fails:
+                    H.append('<div class="card">')
+                    H.append(f'<b>{r.get("id", r.get("index"))}</b> - '
+                             f'<span class="{_sev(r.get("score",0))}">'
+                             f'score {r.get("score",0):.2f}</span>')
+                    if r.get("error"):
+                        H.append(f"<div>error: <code>{str(r['error'])[:200]}</code></div>")
+                    if r.get("missed"):
+                        H.append("<ul>" + "".join(
+                            f"<li>missed: {mi}</li>" for mi in r["missed"][:8]) + "</ul>")
+                    if r.get("criteria"):
+                        H.append("<div>" + " | ".join(
+                            f"{k}={v:g}" for k, v in r["criteria"].items()) + "</div>")
+                    if r.get("rationale"):
+                        H.append(f'<div style="color:#94A3B8;font-size:13px;'
+                                 f'margin-top:6px">{str(r["rationale"])[:600]}</div>')
+                    H.append("</div>")
+    H.append("</body></html>")
+    with open(os.path.join(out_dir, "REPORT.html"), "w") as fh:
+        fh.write("\n".join(H))
+    return os.path.join(out_dir, "REPORT.html")
 
 
 def main():
@@ -546,6 +823,14 @@ def main():
         summary.append(run_task(t, args.tier, client, args.max_connections,
                                 args.limit, out_dir,
                                 judge_client=judge_client))
+    try:
+        build_report(out_dir, summary, {
+            "model": args.model, "endpoint": args.endpoint,
+            "judge": args.judge_model or "-", "tier": args.tier,
+            "date": stamp})
+        print(f"report: {os.path.join(out_dir, 'REPORT.html')}")
+    except Exception as e:
+        print(f"report generation failed: {e}")
 
     avg = sum(s["accuracy"] for s in summary) / len(summary) if summary else 0
     meta = {"model": args.model, "endpoint": args.endpoint, "tier": args.tier,

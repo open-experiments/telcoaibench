@@ -1,23 +1,29 @@
 # Vendor GenAI Tests
 
-Deep-dive vendor-technology questions (Ericsson, Nokia, Mavenir) probing
-whether a model can reason about real vendor architectures - components,
-interfaces, dimensioning - without inventing product names, versions, or
-metrics.
+Deep-dive vendor-technology questions - a 6-vendor x 4-domain matrix
+(24 questions): Ericsson, Nokia, Mavenir, Samsung Networks, Rakuten
+Symphony, and Cisco, each across RAN, Core, OSS/AI, and Cloud-native.
+Every question follows the same 5-part structure and carries judge
+anchors (durable public facts used as grading context) plus known
+fabrication-bait patterns. Three questions are deliberate honesty
+traps that reward models for saying a vendor does not play in a
+domain.
 
 Originally manual prompt-based tests with hand-graded results, now also a
 **runnable LLM-as-judge benchmark**: the candidate model answers each
-vendor question and a judge model grades against a fixed rubric (technical
-accuracy, completeness, depth, honesty about what is not public), emitting
-a 0-10 score per answer. Scores are reported as a 0-1 average with sample
-stderr.
+vendor question and a judge model returns structured JSON with four 0-10
+criteria - technical_accuracy, completeness, depth, honesty - weighted
+0.40/0.20/0.15/0.25 into the overall score so confident fabrication is
+punished hardest. Runs report per-vendor, per-domain and per-criterion
+breakdowns plus a downloadable per-question failure report.
 
 ## Layout
 
 ```
 vendor-genai-tests/
+├── vendor-genai-v2.md           # v2 source of truth: matrix, anchors, rubric
 ├── datasets/
-│   └── vendor_genai.jsonl.gz    # machine-readable question set, embedded
+│   └── vendor_genai.jsonl.gz    # 24 records: question + judge_anchors + fabrication_bait
 ├── source-tests/                # original question sheets
 │   ├── Ericsson-GenAI-Test.txt
 │   ├── Nokia-GenAI-Test.txt

@@ -1,8 +1,12 @@
 # Telco's Last Exam
 
-A hardest-questions telecommunications exam: 10 deep, multi-part questions
-spanning RF link budgets, 3GPP protocol internals, transport, timing, and
-system design - each with a detailed reference answer key.
+A hardest-questions telecommunications exam: 30 deep questions (10
+legacy + 20 v2) spanning 8 domains - RF/RAN, Core & Protocols,
+Transport & Fronthaul, Timing & Sync, Security, OAM & Performance,
+Cloud-Native, and Economics - across three difficulty tiers
+(foundation / advanced / expert), 246 points total. Each question
+carries a machine-verified reference answer and judge grading notes
+(must-haves, acceptable variations, known error patterns).
 
 Originally a manual exam (models answer, humans grade), it is now also a
 **runnable LLM-as-judge benchmark**: the candidate model answers each
@@ -15,8 +19,9 @@ average with sample stderr.
 
 ```
 telcos-last-exam/
-├── exam.md                      # the 10 questions (source of truth)
-├── answers.md                   # official reference answer key
+├── exam.md                      # legacy 10 questions (kept verbatim)
+├── answers.md                   # legacy answer key
+├── exam-v2.md                   # v2 source of truth: 20 new questions + answers + grading notes
 ├── datasets/
 │   └── telcos_last_exam.jsonl.gz  # machine-readable exam (question + reference), embedded
 └── model-answers/               # historical per-model answer sheets (manual era)
@@ -47,7 +52,10 @@ python3 otel_eval.py \
 ## Grading notes
 
 The judge sees the question, the reference answer key, and the candidate
-answer, and must justify its grade before emitting a final `SCORE: n/10`
-line. Judge choice matters: a stronger judge is stricter and more
+answer, and returns structured JSON: a 0-10 score, the list of required
+elements the candidate missed, a one-line verdict, and a rationale.
+Task scores are points-weighted; runs report per-domain and
+per-difficulty breakdowns plus a downloadable per-question failure
+report (REPORT.md / REPORT.html). Judge choice matters: a stronger judge is stricter and more
 consistent. For comparable numbers across models, always use the same
 judge (same model, same revision) and report it alongside the scores.
