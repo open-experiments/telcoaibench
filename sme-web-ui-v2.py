@@ -4051,7 +4051,9 @@ class ChatInterface:
                           "srsranbench": 1.0, "telemath": 1.0, "telelogs": 1.0,
                           "3gpp": 1.0, "6g_bench": 1.0,
                           "telcos_last_exam": 2.0, "vendor_genai": 1.5}
-    LB_MIN_COVERAGE = 0.70
+    # 0.65 lets full-8-MCQ-suite runs rank (8/11.5 = 69.6% weight) during
+    # the marathon phase where judged suites are reserved for the top-5
+    LB_MIN_COVERAGE = 0.65
 
     def _lb_weights(self):
         try:
