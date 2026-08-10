@@ -4175,6 +4175,22 @@ class ChatInterface:
                          f"{r['coverage']*100:.0f}% (unranked)", r["judge"]]
                         + [f"{r['results'][t]['accuracy']:.3f}"
                            if t in r["results"] else "-" for t in tasks])
+        # marathon live status rows: models being benchmarked / queued.
+        # written by the in-cluster marathon runner to the shared state PVC
+        try:
+            stf = state_path("marathon/status.json")
+            if os.path.exists(stf):
+                mst = json.load(open(stf))
+                on_board = {r[1] for r in rows}
+                pad = ["-"] * len(tasks)
+                for name in mst.get("under_test", []):
+                    if name not in on_board:
+                        rows.append(["Under Test", name, "-", "-", "-"] + pad)
+                for name in mst.get("in_queue", []):
+                    if name not in on_board:
+                        rows.append(["In Queue", name, "-", "-", "-"] + pad)
+        except Exception:
+            pass
         return headers, rows, note
 
     def lb_publish(self):
