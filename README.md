@@ -142,6 +142,16 @@ worst-first with its score, verdict, what was missed, and the judge's
 written rationale.
 
 ![Run report](images/tab-benchmark-report.png)
+
+**Leaderboard.** Every clean, full-set run is recorded automatically into a
+persistent leaderboard (state volume). The **Leaderboard tab** ranks models
+by an importance-weighted composite (judged suites weigh heaviest; weights
+editable in `leaderboard_weights.json`) with three honesty rules: >= 70%
+weight coverage to rank, full-set runs only, and one consistent judge -
+scores from other judges are excluded and flagged. **Publish snapshot**
+exports `leaderboard.json` + `LEADERBOARD.md`; commit them to
+`docs/data/` and the [landing page](https://open-experiments.github.io/telcoaibench/#leaderboard)
+renders the public board from the versioned snapshot.
 </details>
 
 ## Benchmark Suites

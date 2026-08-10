@@ -1,0 +1,19 @@
+{
+ "generated": null,
+ "board_judge": null,
+ "weights": {
+  "teleqna": 1.0,
+  "teletables": 1.0,
+  "oranbench": 1.0,
+  "srsranbench": 1.0,
+  "telemath": 1.0,
+  "telelogs": 1.0,
+  "3gpp": 1.0,
+  "6g_bench": 1.0,
+  "telcos_last_exam": 2.0,
+  "vendor_genai": 1.5
+ },
+ "min_coverage": 0.7,
+ "ranked": [],
+ "unranked": []
+}

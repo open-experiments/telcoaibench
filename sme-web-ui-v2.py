@@ -3809,6 +3809,10 @@ class ChatInterface:
             else:
                 r = holder["result"]
                 summary.append(r)
+                try:
+                    self._lb_record(entry, r, tier, judge_label, mod)
+                except Exception as e:
+                    print(f"leaderboard record failed: {e}")
                 nerr = r.get("request_errors", 0)
                 status = "stopped (partial)" if r.get("stopped") else "done"
                 if nerr:
@@ -4040,6 +4044,176 @@ class ChatInterface:
             return (f"`{key}` is a benchmark target - remove it from its "
                     "target card instead."), self._judge_choices()
         return "Select a provisioned judge to remove.", self._judge_choices()
+
+    LB_FILE = state_path("leaderboard.json")
+    LB_WEIGHTS_FILE = state_path("leaderboard_weights.json")
+    LB_DEFAULT_WEIGHTS = {"teleqna": 1.0, "teletables": 1.0, "oranbench": 1.0,
+                          "srsranbench": 1.0, "telemath": 1.0, "telelogs": 1.0,
+                          "3gpp": 1.0, "6g_bench": 1.0,
+                          "telcos_last_exam": 2.0, "vendor_genai": 1.5}
+    LB_MIN_COVERAGE = 0.70
+
+    def _lb_weights(self):
+        try:
+            if os.path.exists(self.LB_WEIGHTS_FILE):
+                w = json.load(open(self.LB_WEIGHTS_FILE))
+                if w:
+                    return w
+        except Exception:
+            pass
+        try:
+            json.dump(self.LB_DEFAULT_WEIGHTS,
+                      open(self.LB_WEIGHTS_FILE, "w"), indent=2)
+        except Exception:
+            pass
+        return dict(self.LB_DEFAULT_WEIGHTS)
+
+    def _lb_load(self):
+        try:
+            if os.path.exists(self.LB_FILE):
+                return json.load(open(self.LB_FILE))
+        except Exception as e:
+            print(f"leaderboard load failed: {e}")
+        return {"entries": {}}
+
+    def _lb_save(self, board):
+        try:
+            json.dump(board, open(self.LB_FILE, "w"), indent=1)
+        except Exception as e:
+            print(f"leaderboard save failed: {e}")
+
+    def _lb_record(self, entry, task_summary, tier, judge_label, mod):
+        """Auto-record a clean, full-lite-coverage task result."""
+        r = task_summary
+        task = r["task"]
+        if r.get("stopped") or r.get("request_errors", 0) > 0:
+            return  # only clean runs count
+        try:
+            full_n = len(mod.load_dataset(task, tier))
+        except Exception:
+            return
+        if r["n"] < full_n:
+            return  # min-samples rule: full set only
+        board = self._lb_load()
+        key = f"{entry['model']} @ {entry['endpoint'].split('//')[-1]}"
+        e = board["entries"].setdefault(key, {
+            "model": entry["model"], "endpoint": entry["endpoint"],
+            "results": {}, "history": []})
+        rec = {"accuracy": r["accuracy"], "stderr": r["stderr"], "n": r["n"],
+               "tier": tier, "judge": judge_label,
+               "date": datetime.now().strftime("%Y-%m-%d")}
+        prev = e["results"].get(task)
+        e["results"][task] = rec
+        e["history"].append(dict(rec, task=task,
+                                 prev=prev["accuracy"] if prev else None))
+        e["history"] = e["history"][-200:]
+        self._lb_save(board)
+
+    def _lb_compute(self):
+        """Rank entries. Returns (ranked, unranked, board_judge, note)."""
+        board = self._lb_load()
+        weights = self._lb_weights()
+        total_w = sum(weights.values())
+        judged_tasks = {"telcos_last_exam", "vendor_genai"}
+        # board judge = most common judge among judged results
+        from collections import Counter
+        jc = Counter()
+        for e in board["entries"].values():
+            for t, r in e["results"].items():
+                if t in judged_tasks and r.get("judge"):
+                    jc[r["judge"]] += 1
+        board_judge = jc.most_common(1)[0][0] if jc else None
+        rows = []
+        for key, e in board["entries"].items():
+            covered_w, acc_w, flags = 0.0, 0.0, []
+            judges_used = set()
+            for t, w in weights.items():
+                r = e["results"].get(t)
+                if not r:
+                    continue
+                if t in judged_tasks:
+                    if board_judge and r.get("judge") != board_judge:
+                        flags.append(f"{t}: judge `{r.get('judge')}` != board judge - excluded")
+                        continue  # judge segregation
+                    judges_used.add(r.get("judge"))
+                covered_w += w
+                acc_w += r["accuracy"] * w
+            coverage = covered_w / total_w if total_w else 0.0
+            composite = acc_w / covered_w if covered_w else 0.0
+            rows.append({"key": key, "model": e["model"],
+                         "endpoint": e["endpoint"],
+                         "composite": round(composite, 4),
+                         "coverage": round(coverage, 3),
+                         "judge": ", ".join(sorted(j for j in judges_used if j)) or "-",
+                         "results": e["results"], "flags": flags,
+                         "ranked": coverage >= self.LB_MIN_COVERAGE})
+        ranked = sorted([r for r in rows if r["ranked"]],
+                        key=lambda x: -x["composite"])
+        unranked = sorted([r for r in rows if not r["ranked"]],
+                          key=lambda x: -x["coverage"])
+        note = (f"Composite = importance-weighted mean (weights in "
+                f"`leaderboard_weights.json`). Ranked entries need >= "
+                f"{int(self.LB_MIN_COVERAGE*100)}% weight coverage; only "
+                f"clean full-set runs are recorded"
+                + (f"; board judge: `{board_judge}` - judged scores from "
+                   f"other judges are excluded." if board_judge else "."))
+        return ranked, unranked, board_judge, note
+
+    def _lb_table(self):
+        weights = self._lb_weights()
+        tasks = list(weights.keys())
+        ranked, unranked, bj, note = self._lb_compute()
+        headers = ["Rank", "Model", "Composite", "Coverage", "Judge"] + tasks
+        rows = []
+        for i, r in enumerate(ranked, 1):
+            rows.append([i, r["model"], f"{r['composite']:.4f}",
+                         f"{r['coverage']*100:.0f}%", r["judge"]]
+                        + [f"{r['results'][t]['accuracy']:.3f}"
+                           if t in r["results"] else "-" for t in tasks])
+        for r in unranked:
+            rows.append(["-", r["model"], f"{r['composite']:.4f}",
+                         f"{r['coverage']*100:.0f}% (unranked)", r["judge"]]
+                        + [f"{r['results'][t]['accuracy']:.3f}"
+                           if t in r["results"] else "-" for t in tasks])
+        return headers, rows, note
+
+    def lb_publish(self):
+        """Export snapshot files for committing into the repo."""
+        ranked, unranked, bj, note = self._lb_compute()
+        weights = self._lb_weights()
+        out = state_path("leaderboard_export")
+        os.makedirs(out, exist_ok=True)
+        snap = {"generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "weights": weights, "min_coverage": self.LB_MIN_COVERAGE,
+                "board_judge": bj,
+                "ranked": [{k: v for k, v in r.items() if k != "flags"}
+                           for r in ranked],
+                "unranked": [{k: v for k, v in r.items() if k != "flags"}
+                             for r in unranked]}
+        jpath = os.path.join(out, "leaderboard.json")
+        json.dump(snap, open(jpath, "w"), indent=1)
+        tasks = list(weights.keys())
+        L = ["# TelcoAIBench Leaderboard", "",
+             f"Generated {snap['generated']}"
+             + (f" | board judge: `{bj}`" if bj else ""), "", note, "",
+             "| Rank | Model | Composite | Coverage | " +
+             " | ".join(tasks) + " |",
+             "|" + "---|" * (4 + len(tasks))]
+        for i, r in enumerate(ranked, 1):
+            L.append(f"| {i} | {r['model']} | **{r['composite']:.4f}** | "
+                     f"{r['coverage']*100:.0f}% | " +
+                     " | ".join(f"{r['results'][t]['accuracy']:.3f}"
+                                if t in r["results"] else "-"
+                                for t in tasks) + " |")
+        for r in unranked:
+            L.append(f"| - | {r['model']} | {r['composite']:.4f} | "
+                     f"{r['coverage']*100:.0f}% (unranked) | " +
+                     " | ".join(f"{r['results'][t]['accuracy']:.3f}"
+                                if t in r["results"] else "-"
+                                for t in tasks) + " |")
+        mpath = os.path.join(out, "LEADERBOARD.md")
+        open(mpath, "w").write("\n".join(L))
+        return jpath, mpath
 
     def model_hero_html(self):
         """Live model identity strip: name, status dot, latency, endpoint
@@ -4823,6 +4997,47 @@ class ChatInterface:
                         fn=_load_targets_ui, inputs=[],
                         outputs=[bench_targets_state, bench_judge],
                     )
+
+                with gr.TabItem("Leaderboard"):
+                    _h0, _r0, _n0 = self._lb_table()
+                    gr.Markdown(
+                        "Every clean, full-set benchmark run recorded here "
+                        "automatically - persisted on the state volume. "
+                        "Publish exports `leaderboard.json` + `LEADERBOARD.md` "
+                        "snapshots for committing into the repo (the landing "
+                        "page renders the committed snapshot).")
+                    lb_note = gr.Markdown(_n0)
+                    lb_table = gr.Dataframe(headers=_h0, value=_r0,
+                                            interactive=False,
+                                            label="Ranking")
+                    with gr.Row():
+                        lb_refresh_btn = gr.Button("Refresh",
+                                                   variant="secondary")
+                        lb_publish_btn = gr.Button("Publish snapshot",
+                                                   variant="primary")
+                    with gr.Row():
+                        lb_json_file = gr.File(label="leaderboard.json",
+                                               interactive=False,
+                                               visible=False)
+                        lb_md_file = gr.File(label="LEADERBOARD.md",
+                                             interactive=False,
+                                             visible=False)
+
+                    def _lb_refresh():
+                        h, r, n = self._lb_table()
+                        return gr.update(headers=h, value=r), n
+
+                    def _lb_do_publish():
+                        jp, mp = self.lb_publish()
+                        return (gr.update(value=jp, visible=True),
+                                gr.update(value=mp, visible=True))
+
+                    lb_refresh_btn.click(fn=_lb_refresh, inputs=[],
+                                         outputs=[lb_table, lb_note])
+                    lb_publish_btn.click(fn=_lb_do_publish, inputs=[],
+                                         outputs=[lb_json_file, lb_md_file])
+                    interface.load(fn=_lb_refresh, inputs=[],
+                                   outputs=[lb_table, lb_note])
 
             # Event handlers
             def update_system_prompt(selection):

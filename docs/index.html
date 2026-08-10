@@ -95,6 +95,7 @@
       <a href="#portal">Portal</a>
       <a href="#benchmarks">Benchmarks</a>
       <a href="#judge">Judge Models</a>
+      <a href="#leaderboard">Leaderboard</a>
       <a href="#reports">Reports</a>
       <a href="#walkthroughs">Walkthroughs</a>
       <a href="#quickstart">Quick Start</a>
@@ -199,6 +200,39 @@
     </div>
   </div>
 </section>
+
+<section id="leaderboard">
+  <div class="wrap">
+    <h2>Leader<span>board</span></h2>
+    <p class="sub">Every clean, full-set run recorded in the portal can be published here as a versioned snapshot. Composite = importance-weighted mean (judged suites weigh heaviest); ranking requires 70% weight coverage, full-set runs only, and one consistent judge.</p>
+    <div class="card" id="lb-card">
+      <div id="lb-meta" style="color:var(--faint);font-size:13px;margin-bottom:10px"></div>
+      <div style="overflow-x:auto"><table id="lb-table"></table></div>
+    </div>
+  </div>
+</section>
+<script>
+fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
+  const meta=document.getElementById('lb-meta'), tbl=document.getElementById('lb-table');
+  const rows=[...(d.ranked||[]),...(d.unranked||[])];
+  if(!rows.length){
+    meta.textContent='No published snapshot yet - run full benchmarks in the portal and hit Publish snapshot.';
+    return;
+  }
+  meta.textContent='Snapshot '+(d.generated||'')+(d.board_judge?' | judge: '+d.board_judge:'');
+  const tasks=Object.keys(d.weights||{});
+  let h='<tr><th>Rank</th><th>Model</th><th>Composite</th><th>Coverage</th>'+tasks.map(t=>'<th>'+t+'</th>').join('')+'</tr>';
+  let i=0;
+  for(const r of rows){
+    const ranked=(d.ranked||[]).includes(r);
+    h+='<tr><td>'+(ranked?String(++i):'-')+'</td><td><b>'+r.model+'</b></td>'+
+       '<td style="color:var(--amber)"><b>'+r.composite.toFixed(4)+'</b></td>'+
+       '<td>'+(r.coverage*100).toFixed(0)+'%'+(ranked?'':' (unranked)')+'</td>'+
+       tasks.map(t=>'<td>'+(r.results&&r.results[t]?r.results[t].accuracy.toFixed(3):'-')+'</td>').join('')+'</tr>';
+  }
+  tbl.innerHTML=h;
+}).catch(()=>{document.getElementById('lb-meta').textContent='Leaderboard snapshot not available.';});
+</script>
 
 <section id="reports">
   <div class="wrap">
