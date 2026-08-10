@@ -1,6 +1,5 @@
 {
- "generated": null,
- "board_judge": null,
+ "generated": "2026-08-10 10:47",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -14,6 +13,190 @@
   "vendor_genai": 1.5
  },
  "min_coverage": 0.7,
- "ranked": [],
+ "board_judge": "gpt-5.5",
+ "ranked": [
+  {
+   "key": "gemma4-31b-it-base @ gemma4-31b-it-base-gsma-otel2-test.apps.venice.narlabs.io",
+   "model": "gemma4-31b-it-base",
+   "endpoint": "https://gemma4-31b-it-base-gsma-otel2-test.apps.venice.narlabs.io",
+   "composite": 0.6459,
+   "coverage": 1.0,
+   "judge": "gpt-5.5",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.806,
+     "stderr": 0.0125,
+     "n": 1000,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "telemath": {
+     "accuracy": 0.68,
+     "stderr": 0.0469,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "telelogs": {
+     "accuracy": 0.53,
+     "stderr": 0.0502,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "teletables": {
+     "accuracy": 0.39,
+     "stderr": 0.049,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "oranbench": {
+     "accuracy": 0.8267,
+     "stderr": 0.031,
+     "n": 150,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "srsranbench": {
+     "accuracy": 0.82,
+     "stderr": 0.0315,
+     "n": 150,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "3gpp": {
+     "accuracy": 0.47,
+     "stderr": 0.0502,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "6g_bench": {
+     "accuracy": 0.6933,
+     "stderr": 0.0378,
+     "n": 150,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "telcos_last_exam": {
+     "accuracy": 0.662,
+     "stderr": 0.0336,
+     "n": 30,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "vendor_genai": {
+     "accuracy": 0.5921,
+     "stderr": 0.0348,
+     "n": 24,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    }
+   },
+   "ranked": true
+  },
+  {
+   "key": "otel2-llm-31b-it @ otel2-llm-31b-it-gsma-otel2-test.apps.venice.narlabs.io",
+   "model": "otel2-llm-31b-it",
+   "endpoint": "https://otel2-llm-31b-it-gsma-otel2-test.apps.venice.narlabs.io",
+   "composite": 0.5993,
+   "coverage": 1.0,
+   "judge": "gpt-5.5",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.795,
+     "stderr": 0.0128,
+     "n": 1000,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "telemath": {
+     "accuracy": 0.56,
+     "stderr": 0.0499,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "telelogs": {
+     "accuracy": 0.47,
+     "stderr": 0.0502,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "teletables": {
+     "accuracy": 0.29,
+     "stderr": 0.0456,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "oranbench": {
+     "accuracy": 0.7867,
+     "stderr": 0.0336,
+     "n": 150,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "srsranbench": {
+     "accuracy": 0.84,
+     "stderr": 0.03,
+     "n": 150,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "3gpp": {
+     "accuracy": 0.61,
+     "stderr": 0.049,
+     "n": 100,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "6g_bench": {
+     "accuracy": 0.6533,
+     "stderr": 0.039,
+     "n": 150,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "telcos_last_exam": {
+     "accuracy": 0.5869,
+     "stderr": 0.034,
+     "n": 30,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    },
+    "vendor_genai": {
+     "accuracy": 0.4756,
+     "stderr": 0.0444,
+     "n": 24,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-10"
+    }
+   },
+   "ranked": true
+  }
+ ],
  "unranked": []
 }
