@@ -335,33 +335,68 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
 <section id="aigrid">
   <div class="wrap">
     <h2>AI Grid <span>Tier Fitment</span></h2>
-    <p class="sub" style="max-width:860px">Where each benchmarked model belongs on the AI Grid's placement tiers - derived from <b style="color:var(--txt)">measured</b> accuracy, decode speed, verbosity, and VRAM footprint, not from parameter count. Tier 0 (RAN-embedded, &lt;10M params on CPU/NPU) excludes generative LLMs by design.</p>
-    <div class="card"><div id="tf-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div><div id="tf-grid" class="cards" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div></div>
+    <p class="sub" style="max-width:860px">Where each benchmarked model belongs on the AI Grid's placement tiers - derived from <b style="color:var(--txt)">measured</b> accuracy, decode speed, verbosity, and VRAM footprint, not from parameter count. Each model is shown at the <b style="color:var(--txt)">closest-to-the-edge tier it measurably fits</b> - any model can also serve from deeper tiers, so the edge-most viable placement is the decision-relevant one. Tier 0 (RAN-embedded, &lt;10M params on CPU/NPU) excludes generative LLMs by design.</p>
+    <div class="card" style="padding:22px">
+      <div id="tf-meta" style="color:var(--faint);font-size:13px;margin-bottom:16px"></div>
+      <div id="tf-grid" class="tf-grid"></div>
+    </div>
   </div>
 </section>
+<style>
+  .tf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch}
+  @media(max-width:980px){.tf-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.tf-grid{grid-template-columns:1fr}}
+  .tf-col{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;
+    background:var(--bg2);overflow:hidden;min-height:280px}
+  .tf-head{padding:12px 12px 10px;border-top:3px solid var(--line)}
+  .tf-head h3{font-size:13.5px;margin:0 0 2px;letter-spacing:.2px}
+  .tf-head .env{font-size:11px;color:var(--faint);line-height:1.45}
+  .tf-head .cnt{float:right;font-size:11px;color:var(--faint);border:1px solid var(--line);
+    border-radius:9px;padding:0 7px}
+  .tf-body{padding:8px 10px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .tf-m{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--panel)}
+  .tf-m b{font-size:12.5px;color:var(--txt);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tf-m .st{font-size:11px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums;line-height:1.5}
+  .tf-m .comp{color:var(--txt);font-weight:700}
+  .tf-m .note{font-size:10.5px;color:var(--faint);margin-top:3px;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tf-empty{margin:auto;text-align:center;color:var(--faint);font-size:12px;padding:16px 8px}
+</style>
 <script>
 fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
-  const tcol={1:'var(--amber)',2:'var(--cyan)',3:'var(--violet)',4:'var(--green)'};
-  const tname={1:'Tier 1 - User Edge',2:'Tier 2 - Provider Edge',3:'Tier 3 - Region',4:'Tier 4 - Core DC'};
+  const cols=[
+    {t:0,name:'Tier 0 - RAN-Embedded',color:'#2DD4BF',env:'<1ms slot-scale &middot; <10M params &middot; CPU/NPU'},
+    {t:1,name:'Tier 1 - User Edge',color:'var(--amber)',env:'10-50ms TTFT &middot; small models &middot; 1-4 GPUs'},
+    {t:2,name:'Tier 2 - Provider Edge',color:'var(--cyan)',env:'50-150ms &middot; 13-70B &middot; P/D disagg'},
+    {t:3,name:'Tier 3 - Region',color:'var(--violet)',env:'100-300ms &middot; 70-405B &middot; complex tasks'},
+    {t:4,name:'Tier 4 - Core DC',color:'var(--green)',env:'Throughput SLO &middot; 405B+ &middot; frontier'}];
   document.getElementById('tf-meta').textContent=(d.phase||'')+'  |  snapshot '+(d.generated||'');
   const byTier={1:[],2:[],3:[],4:[]};
   for(const [m,v] of Object.entries(d.models||{})) if(v.fit_tier) byTier[v.fit_tier].push([m,v]);
   let h='';
-  for(const t of [1,2,3,4]){
-    const list=byTier[t].sort((a,b)=>(b[1].composite||0)-(a[1].composite||0));
-    h+='<div class="card" style="border-top:3px solid '+tcol[t]+'"><h3 style="font-size:16px">'+tname[t]+'</h3>'
-      +'<p style="font-size:12px;color:var(--faint);margin-bottom:12px">'+(d.tiers[String(t)]||'')+'</p>';
-    if(!list.length){h+='<p style="color:var(--faint);font-size:13px">No fit measured yet.</p></div>';continue;}
-    for(const [m,v] of list){
-      h+='<div style="margin-bottom:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px">'
-        +'<b style="font-size:13.5px;color:var(--txt)">'+m+'</b>'
-        +'<div style="font-size:12px;color:var(--dim);margin-top:3px">composite '+(v.composite!=null?v.composite.toFixed(3):'-')
-        +' &middot; '+(v.params_b||'?')+'B &middot; '+(v.weights_gb||'?')+'GB '+(v.precision||'')
-        +(v.mean_latency_s?' &middot; ~'+v.mean_latency_s+'s/answer':'')+'</div>'
-        +(v.notes?'<div style="font-size:11.5px;color:var(--faint);margin-top:3px">'+v.notes+'</div>':'')
-        +'</div>';
+  for(const c of cols){
+    const list=(byTier[c.t]||[]).sort((a,b)=>(b[1].composite||0)-(a[1].composite||0));
+    h+='<div class="tf-col"><div class="tf-head" style="border-top-color:'+c.color+'">'
+      +'<span class="cnt">'+(c.t===0?'n/a':list.length)+'</span>'
+      +'<h3 style="color:'+c.color+'">'+c.name+'</h3>'
+      +'<div class="env">'+c.env+'</div></div><div class="tf-body">';
+    if(c.t===0){
+      h+='<div class="tf-empty">Generative LLMs excluded by design -<br/>PHY AI/ML (CSI, beam, positioning)<br/>runs inline on CPU/NPU.</div>';
+    } else if(!list.length){
+      h+='<div class="tf-empty">No model measured<br/>into this envelope yet.</div>';
+    } else {
+      for(const [m,v] of list){
+        h+='<div class="tf-m" title="'+(v.notes||'').replace(/"/g,'&quot;')+'">'
+          +'<b>'+m+'</b>'
+          +'<div class="st"><span class="comp">'+(v.composite!=null?v.composite.toFixed(3):'-')+'</span>'
+          +' &middot; '+(v.params_b||'?')+'B &middot; '+(v.weights_gb||'?')+'GB'
+          +'<br/>'+(v.precision||'').split(' ')[0]
+          +(v.mean_latency_s?' &middot; ~'+v.mean_latency_s+'s/ans':'')+'</div>'
+          +(v.notes?'<div class="note">'+v.notes+'</div>':'')
+          +'</div>';
+      }
     }
-    h+='</div>';
+    h+='</div></div>';
   }
   document.getElementById('tf-grid').innerHTML=h;
 }).catch(()=>{document.getElementById('tf-meta').textContent='Tier fitment data not available yet.';});
