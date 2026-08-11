@@ -1,6 +1,6 @@
 # TelcoAIBench Leaderboard
 
-Generated 2026-08-11 13:00 | board judge: `gpt-5.5`
+Generated 2026-08-11 14:50 | board judge: `gpt-5.5`
 
 Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ranked entries need >= 65% weight coverage; only clean full-set runs are recorded; board judge: `gpt-5.5` - judged scores from other judges are excluded.
 
@@ -15,6 +15,7 @@ Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ra
 | 7 | mistral-small-3-2-24b | **0.5654** | 70% | 0.760 | 0.290 | 0.760 | 0.773 | 0.390 | 0.240 | 0.530 | 0.780 | - | - |
 | 8 | qwen3-6-35b-a3b | **0.5303** | 70% | 0.812 | 0.330 | 0.827 | 0.807 | 0.510 | 0.150 | 0.080 | 0.727 | - | - |
 | 9 | glm-4-5-air | **0.5007** | 70% | 0.769 | 0.270 | 0.720 | 0.747 | 0.300 | 0.410 | 0.150 | 0.640 | - | - |
-| 10 | nemotron-3-nano-30b | **0.4535** | 70% | 0.718 | 0.080 | 0.667 | 0.700 | 0.620 | 0.000 | 0.270 | 0.573 | - | - |
-| - | qwen3-6-27b | 0.5134 | 52% (unranked) | 0.814 | 0.320 | 0.800 | 0.827 | 0.270 | 0.050 | - | - | - | - |
-| - | seed-oss-36b | 0.7700 | 9% (unranked) | 0.770 | - | - | - | - | - | - | - | - | - |
+| 10 | qwen3-6-27b | **0.4818** | 70% | 0.814 | 0.320 | 0.800 | 0.827 | 0.270 | 0.050 | 0.080 | 0.693 | - | - |
+| 11 | otel-llm-20b-it | **0.4615** | 70% | 0.712 | 0.270 | 0.747 | 0.713 | 0.030 | 0.270 | 0.270 | 0.680 | - | - |
+| 12 | nemotron-3-nano-30b | **0.4535** | 70% | 0.718 | 0.080 | 0.667 | 0.700 | 0.620 | 0.000 | 0.270 | 0.573 | - | - |
+| - | seed-oss-36b | 0.6791 | 35% (unranked) | 0.770 | 0.380 | 0.753 | 0.813 | - | - | - | - | - | - |

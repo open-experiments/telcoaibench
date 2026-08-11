@@ -206,31 +206,107 @@
     <h2>Leader<span>board</span></h2>
     <p class="sub">Every clean, full-set run recorded in the portal can be published here as a versioned snapshot. Composite = importance-weighted mean (judged suites weigh heaviest); ranking requires 70% weight coverage, full-set runs only, and one consistent judge.</p>
     <div class="card" id="lb-card">
-      <div id="lb-meta" style="color:var(--faint);font-size:13px;margin-bottom:10px"></div>
-      <div style="overflow-x:auto"><table id="lb-table"></table></div>
+      <div id="lb-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div>
+      <div id="lb-board"></div>
+      <div id="lb-legend" style="display:none;align-items:center;gap:10px;margin-top:14px;color:var(--faint);font-size:12px">
+        <span>suite score</span>
+        <span style="display:inline-block;width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(139,92,246,.07),rgba(139,92,246,.85))"></span>
+        <span>0 &rarr; 1</span>
+        <span style="margin-left:18px">composite</span>
+        <span style="display:inline-block;width:26px;height:8px;border-radius:4px;background:linear-gradient(90deg,#8B5CF6,#22D3EE)"></span>
+      </div>
     </div>
   </div>
 </section>
+<style>
+  .lbx{overflow-x:auto}
+  .lbx table{border-collapse:separate;border-spacing:0;width:100%;min-width:900px}
+  .lbx th{position:sticky;top:0;background:var(--panel);color:var(--faint);font-weight:600;
+    font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;white-space:nowrap}
+  .lbx td{padding:9px 10px;border-top:1px solid var(--line);font-size:14px;white-space:nowrap;vertical-align:middle}
+  .lbx tr:hover td{background:rgba(139,92,246,.06)}
+  .lbx .colstick{position:sticky;left:0;background:var(--panel);z-index:2}
+  .lbx tr:hover .colstick{background:#161f33}
+  .lb-rank{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+    border-radius:50%;font-weight:700;font-size:13px;background:var(--line);color:var(--dim)}
+  .lb-rank.r1{background:rgba(251,191,36,.16);color:var(--amber);box-shadow:0 0 0 1px rgba(251,191,36,.45)}
+  .lb-rank.r2{background:rgba(226,232,240,.10);color:var(--txt);box-shadow:0 0 0 1px rgba(226,232,240,.30)}
+  .lb-rank.r3{background:rgba(217,119,6,.14);color:#E8955C;box-shadow:0 0 0 1px rgba(217,119,6,.40)}
+  .lb-model{font-weight:700;color:var(--txt)}
+  .lb-chip{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:9px;font-size:10.5px;
+    font-weight:600;letter-spacing:.3px;vertical-align:1px}
+  .lb-chip.full{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.35)}
+  .lb-chip.mcq{background:rgba(34,211,238,.10);color:var(--cyan);border:1px solid rgba(34,211,238,.30)}
+  .lb-chip.part{background:rgba(148,163,184,.10);color:var(--dim);border:1px solid rgba(148,163,184,.30)}
+  .lb-bar{position:relative;width:170px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+  .lb-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:linear-gradient(90deg,#8B5CF6,#22D3EE)}
+  .lb-comp{display:flex;align-items:center;gap:10px}
+  .lb-comp b{font-variant-numeric:tabular-nums;min-width:56px;color:var(--txt)}
+  .lb-cell{display:inline-block;min-width:46px;text-align:center;padding:3px 7px;border-radius:6px;
+    font-variant-numeric:tabular-nums;font-size:13px;color:var(--txt)}
+  .lb-cell.na{color:var(--faint)}
+</style>
 <script>
 fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
-  const meta=document.getElementById('lb-meta'), tbl=document.getElementById('lb-table');
-  const rows=[...(d.ranked||[]),...(d.unranked||[])];
-  if(!rows.length){
-    meta.textContent='No published snapshot yet - run full benchmarks in the portal and hit Publish snapshot.';
-    return;
-  }
-  meta.textContent='Snapshot '+(d.generated||'')+(d.board_judge?' | judge: '+d.board_judge:'');
+  const meta=document.getElementById('lb-meta'), host=document.getElementById('lb-board');
+  const ranked=d.ranked||[], unranked=d.unranked||[], rows=[...ranked,...unranked];
+  if(!rows.length){ meta.textContent='No published snapshot yet - run full benchmarks in the portal and hit Publish snapshot.'; return; }
+  meta.textContent='Snapshot '+(d.generated||'')+(d.board_judge?'  |  judged suites scored by '+d.board_judge:'')+'  |  '+ranked.length+' ranked';
   const tasks=Object.keys(d.weights||{});
-  let h='<tr><th>Rank</th><th>Model</th><th>Composite</th><th>Coverage</th>'+tasks.map(t=>'<th>'+t+'</th>').join('')+'</tr>';
+  const short={teleqna:'TeleQnA',teletables:'TeleTables',oranbench:'ORAN',srsranbench:'srsRAN',
+    telemath:'TeleMath',telelogs:'TeleLogs','3gpp':'3GPP','6g_bench':'6G',
+    telcos_last_exam:'Last Exam',vendor_genai:'Vendor'};
+  const origin={
+    'telecomgpt-r1':['\u{1F1E6}\u{1F1EA}','UAE'],
+    'falcon-h1-34b':['\u{1F1E6}\u{1F1EA}','UAE'],
+    'gemma4-31b-it-base':['\u{1F1FA}\u{1F1F8}','USA'],
+    'gemma-3-27b-it':['\u{1F1FA}\u{1F1F8}','USA'],
+    'gpt-oss-120b':['\u{1F1FA}\u{1F1F8}','USA'],
+    'gpt-oss-20b':['\u{1F1FA}\u{1F1F8}','USA'],
+    'otel2-llm-31b-it':['\u{1F1FA}\u{1F1F8}','USA'],
+    'otel-llm-20b-it':['\u{1F1FA}\u{1F1F8}','USA'],
+    'nemotron-3-nano-30b':['\u{1F1FA}\u{1F1F8}','USA'],
+    'phi-4-reasoning-plus':['\u{1F1FA}\u{1F1F8}','USA'],
+    'granite-4-0-h-small':['\u{1F1FA}\u{1F1F8}','USA'],
+    'mistral-small-3-2-24b':['\u{1F1EB}\u{1F1F7}','France'],
+    'magistral-small-2509':['\u{1F1EB}\u{1F1F7}','France'],
+    'eurollm-9b':['\u{1F1EA}\u{1F1FA}','EU'],
+    'apertus-8b':['\u{1F1E8}\u{1F1ED}','Switzerland'],
+    'qwen3-6-27b':['\u{1F1E8}\u{1F1F3}','China'],
+    'qwen3-6-35b-a3b':['\u{1F1E8}\u{1F1F3}','China'],
+    'qwq-32b':['\u{1F1E8}\u{1F1F3}','China'],
+    'glm-4-5-air':['\u{1F1E8}\u{1F1F3}','China'],
+    'seed-oss-36b':['\u{1F1E8}\u{1F1F3}','China'],
+    'r1-distill-qwen-32b':['\u{1F1E8}\u{1F1F3}','China'],
+    'kimi-linear-48b':['\u{1F1E8}\u{1F1F3}','China'],
+    'hunyuan-a13b':['\u{1F1E8}\u{1F1F3}','China'],
+    'exaone-4-0-32b':['\u{1F1F0}\u{1F1F7}','S. Korea'],
+    'qwen2-5-bakeneko-32b':['\u{1F1EF}\u{1F1F5}','Japan']};
+  const maxC=Math.max(...rows.map(r=>r.composite||0),0.0001);
+  const heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
+  let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th>Composite</th>';
+  h+=tasks.map(t=>'<th title="'+t+'">'+(short[t]||t)+'</th>').join('')+'</tr>';
   let i=0;
   for(const r of rows){
-    const ranked=(d.ranked||[]).includes(r);
-    h+='<tr><td>'+(ranked?String(++i):'-')+'</td><td><b>'+r.model+'</b></td>'+
-       '<td style="color:var(--amber)"><b>'+r.composite.toFixed(4)+'</b></td>'+
-       '<td>'+(r.coverage*100).toFixed(0)+'%'+(ranked?'':' (unranked)')+'</td>'+
-       tasks.map(t=>'<td>'+(r.results&&r.results[t]?r.results[t].accuracy.toFixed(3):'-')+'</td>').join('')+'</tr>';
+    const isRanked=ranked.includes(r); i+=isRanked?1:0;
+    const rk=isRanked?'<span class="lb-rank r'+i+'">'+i+'</span>':'<span class="lb-rank">&ndash;</span>';
+    const cov=Math.round((r.coverage||0)*100);
+    const chip=cov>=100?'<span class="lb-chip full">FULL + JUDGED</span>'
+      :isRanked?'<span class="lb-chip mcq">MCQ SET</span>'
+      :'<span class="lb-chip part">'+cov+'% &middot; IN PROGRESS</span>';
+    const og=origin[r.model]||['\u{1F310}','\u2013'];
+    h+='<tr><td class="colstick">'+rk+' &nbsp;<span class="lb-model">'+r.model+'</span>'+chip+'</td>';
+    h+='<td><span style="font-size:17px;vertical-align:-2px">'+og[0]+'</span> <span style="color:var(--dim);font-size:13px">'+og[1]+'</span></td>';
+    h+='<td><div class="lb-comp"><b>'+r.composite.toFixed(4)+'</b><span class="lb-bar" title="composite '+r.composite.toFixed(4)+'"><i style="width:'+(100*r.composite/maxC).toFixed(1)+'%"></i></span></div></td>';
+    h+=tasks.map(t=>{
+      const c=r.results&&r.results[t];
+      if(!c) return '<td><span class="lb-cell na">&ndash;</span></td>';
+      return '<td><span class="lb-cell" style="'+heat(c.accuracy)+'" title="'+t+': '+c.accuracy.toFixed(3)+' (n='+c.n+', '+(c.date||'')+')">'+c.accuracy.toFixed(3)+'</span></td>';
+    }).join('')+'</tr>';
   }
-  tbl.innerHTML=h;
+  h+='</table></div>';
+  host.innerHTML=h;
+  document.getElementById('lb-legend').style.display='flex';
 }).catch(()=>{document.getElementById('lb-meta').textContent='Leaderboard snapshot not available.';});
 </script>
 
