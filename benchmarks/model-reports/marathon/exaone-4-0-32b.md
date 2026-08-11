@@ -17,7 +17,7 @@
 | teleqna | **0.742** | 0.0138 | 1000 | lite | 2026-08-11 |
 | teletables | **0.320** | 0.0469 | 100 | lite | 2026-08-11 |
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 2 (Provider Edge)** - 32B params, 64GB bf16, ~Nones/answer, ~None tokens/answer.
 

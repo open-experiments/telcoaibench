@@ -43,7 +43,7 @@
 - **oranbench** dataset index 12: expected `C`, parsed `A` - output: "<think>First, the question is: "Which of the following is NOT a required field for the 'GuRanUeId' object in the provided context?" But there's no provided context given in the query. That might be a problem. Let me read..."
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "<think>First, the question is: "What is the purpose of the lower_phy_controller class?" And there are four options:  A) 1. It provides a start and stop methods for the lower physical layer.  B) 2. It manages the synchron..."
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 4 (Core DC)** - 106B params, 63GB awq-4bit moe(12B act), ~73.4s/answer, ~3123 tokens/answer.
 Notes: verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit moe(12B act))

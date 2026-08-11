@@ -1,6 +1,6 @@
 {
  "generated": "2026-08-11 16:14",
- "phase": "MCQ marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
+ "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
   "1": "User edge - small models, 1-4 GPUs, 10-50ms",
@@ -262,8 +262,8 @@
    "params_b": 36,
    "weights_gb": 72,
    "precision": "bf16",
-   "mean_latency_s": 86.4,
-   "mean_output_tokens": 1718,
+   "mean_latency_s": null,
+   "mean_output_tokens": null,
    "axes": {
     "knowledge": 0.779,
     "protocol": null,
@@ -271,9 +271,9 @@
     "fault": null,
     "structured": 0.38
    },
-   "fit_tier": 3,
+   "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": ""
   }
  }
 }

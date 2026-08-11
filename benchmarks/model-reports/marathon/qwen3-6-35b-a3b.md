@@ -43,7 +43,7 @@
 - **oranbench** dataset index 12: expected `C`, parsed `D` - output: "The user wants to identify which of the given options is NOT a required field for the "GuRanUeId" object in a specific context. The context seems to be related to 5G/NR (New Radio) or 3GPP specifications, specifically re..."
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "The user wants to identify the purpose of the `lower_phy_controller` class from a multiple-choice question. The options are: A) 1. It provides a start and stop methods for the lower physical layer. B) 2. It manages the s..."
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 3 (Region)** - 35B params, 72GB bf16 moe(3B act), ~67.1s/answer, ~4750 tokens/answer.
 Notes: verbose/slow decode - latency envelope only fits a tier up

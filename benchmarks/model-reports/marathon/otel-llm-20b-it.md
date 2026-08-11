@@ -43,7 +43,7 @@
 - **oranbench** dataset index 8: expected `B`, parsed `C` - output: "ANSWER: C"
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "ANSWER: C"
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 2 (Provider Edge)** - 20B params, 42GB bf16 (fp32 ckpt), ~23.2s/answer, ~1457 tokens/answer.
 

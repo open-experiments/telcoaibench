@@ -46,7 +46,7 @@
 - **oranbench** dataset index 11: expected `D`, parsed `B` - output: "The correct answer is based on the behavior defined for RIC Service CONTROL requests in the context of timer expiration. When a valid Call Process ID is received after the Time to Wait timer expires, the E2 Node is unabl..."
 - **srsranbench** dataset index 1: expected `A`, parsed `C` - output: "The function name `generate_ru_sdr_config` suggests that its purpose is to create or generate a configuration related to RU SDR. Among the given options, option C directly aligns with this interpretation, as it involves ..."
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 2 (Provider Edge)** - 31B params, 62GB bf16, ~14.8s/answer, ~314 tokens/answer.
 

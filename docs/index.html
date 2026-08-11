@@ -216,6 +216,17 @@
         <span style="margin-left:18px">composite</span>
         <span style="display:inline-block;width:26px;height:8px;border-radius:4px;background:linear-gradient(90deg,#8B5CF6,#22D3EE)"></span>
       </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.7">
+        <b style="color:var(--dim)">Coverage chips.</b>
+        <span class="lb-chip mcq" style="margin-left:4px">AUTO-SCORED</span> - benchmarked on the 8 objective suites
+        (TeleQnA, TeleTables, ORANBench, srsRANBench, TeleMath, TeleLogs, 3GPP-TSG, 6G-Bench): multiple-choice /
+        exact-answer questions scored by a parity-validated machine parser - no judge model involved, fully reproducible.
+        <span class="lb-chip full" style="margin-left:4px">FULL + JUDGED</span> - additionally completed the two
+        LLM-as-judge suites (Telco's Last Exam, Vendor GenAI deep-dives), where a judge model grades free-form answers
+        against unpublished answer keys; these weigh heaviest in the composite and act as the contamination check.
+        <span class="lb-chip part" style="margin-left:4px">IN PROGRESS</span> - suites still being recorded; unranked
+        until weight coverage reaches the ranking bar.
+      </div>
     </div>
   </div>
 </section>
@@ -293,7 +304,7 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     const rk=isRanked?'<span class="lb-rank r'+i+'">'+i+'</span>':'<span class="lb-rank">&ndash;</span>';
     const cov=Math.round((r.coverage||0)*100);
     const chip=cov>=100?'<span class="lb-chip full">FULL + JUDGED</span>'
-      :isRanked?'<span class="lb-chip mcq">MCQ SET</span>'
+      :isRanked?'<span class="lb-chip mcq">AUTO-SCORED</span>'
       :'<span class="lb-chip part">'+cov+'% &middot; IN PROGRESS</span>';
     const og=origin[r.model]||['\u{1F310}','\u2013'];
     h+='<tr><td class="colstick">'+rk+' &nbsp;<span class="lb-model">'+r.model+'</span>'+chip+'</td>';

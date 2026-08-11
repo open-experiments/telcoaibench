@@ -14,7 +14,7 @@
 | teleqna | **0.770** | 0.0133 | 1000 | lite | 2026-08-11 |
 | teletables | **0.380** | 0.0488 | 100 | lite | 2026-08-11 |
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 3 (Region)** - 36B params, 72GB bf16, ~86.4s/answer, ~1718 tokens/answer.
 Notes: verbose/slow decode - latency envelope only fits a tier up

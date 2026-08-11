@@ -43,7 +43,7 @@
 - **oranbench** dataset index 22: expected `C`, parsed `B` - output: "The user wants to identify the primary goal of the O-RAN ALLIANCE Test and Integration Focus Group (TIFG) from the given options.  1.  **Analyze the question:** The question asks for the primary goal of the O-RAN ALLIANC..."
 - **srsranbench** dataset index 0: expected `A`, parsed `B` - output: "The user wants to identify the purpose of the `lower_phy_controller` class from a multiple-choice question.  1.  **Analyze the question:** "What is the purpose of the lower_phy_controller class?" 2.  **Context:** This lo..."
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 3 (Region)** - 27B params, 56GB bf16, ~192.9s/answer, ~4875 tokens/answer.
 Notes: verbose/slow decode - latency envelope only fits a tier up

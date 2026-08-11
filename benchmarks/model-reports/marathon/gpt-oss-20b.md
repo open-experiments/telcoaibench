@@ -43,7 +43,7 @@
 - **oranbench** dataset index 22: expected `C`, parsed `B` - output: "ANSWER: B"
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "ANSWER: C"
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 2 (Provider Edge)** - 20B params, 13GB mxfp4, ~9.8s/answer, ~1351 tokens/answer.
 Notes: served quantized (mxfp4)

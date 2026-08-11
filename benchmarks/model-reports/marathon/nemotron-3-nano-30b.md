@@ -43,7 +43,7 @@
 - **oranbench** dataset index 12: expected `C`, parsed `` - output: "We need to parse the question: "Which of the following is NOT a required field for the 'GuRanUeId' object in the provided context?" They have options: A) 1. globalGnbId, B) 2. ranUeId, C) 3. plmnId, D) 4. gnbId.  We need..."
 - **srsranbench** dataset index 1: expected `A`, parsed `` - output: "We need to answer a multiple choice about purpose of the `generate_ru_sdr_config` function. The question: "What is the purpose of the `generate_ru_sdr_config` function?" Options: A) To convert a RU SDR application unit c..."
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 3 (Region)** - 30B params, 63GB bf16 moe(3B act), ~58.8s/answer, ~3907 tokens/answer.
 Notes: verbose/slow decode - latency envelope only fits a tier up

@@ -43,7 +43,7 @@
 - **oranbench** dataset index 22: expected `C`, parsed `B` - output: "ANSWER: B"
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "ANSWER: C"
 
-## AI Grid tier fit (measured, MCQ phase)
+## AI Grid tier fit (measured, auto-scored phase)
 
 **Recommended placement: Tier 3 (Region)** - 117B params, 63GB mxfp4, ~6.6s/answer, ~546 tokens/answer.
 Notes: 117B MoE in 63GB MXFP4 - a Tier 3 brain on a single-GPU Tier 2 budget; served quantized (mxfp4)
