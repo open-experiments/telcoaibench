@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-10 23:42",
+ "generated": "2026-08-11 02:34",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -348,6 +348,81 @@
    "ranked": true
   },
   {
+   "key": "glm-4-5-air",
+   "model": "glm-4-5-air",
+   "endpoint": "http://glm-4-5-air-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.5007,
+   "coverage": 0.696,
+   "judge": "-",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.769,
+     "stderr": 0.0133,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "teletables": {
+     "accuracy": 0.27,
+     "stderr": 0.0446,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "oranbench": {
+     "accuracy": 0.72,
+     "stderr": 0.0368,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "srsranbench": {
+     "accuracy": 0.7467,
+     "stderr": 0.0356,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telemath": {
+     "accuracy": 0.3,
+     "stderr": 0.0461,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telelogs": {
+     "accuracy": 0.41,
+     "stderr": 0.0494,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "3gpp": {
+     "accuracy": 0.15,
+     "stderr": 0.0359,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "6g_bench": {
+     "accuracy": 0.64,
+     "stderr": 0.0393,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    }
+   },
+   "ranked": true
+  },
+  {
    "key": "nemotron-3-nano-30b",
    "model": "nemotron-3-nano-30b",
    "endpoint": "http://nemotron-3-nano-30b-predictor.gsma-otel2-test.svc.cluster.local:8080",
@@ -423,33 +498,5 @@
    "ranked": true
   }
  ],
- "unranked": [
-  {
-   "key": "glm-4-5-air",
-   "model": "glm-4-5-air",
-   "endpoint": "http://glm-4-5-air-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.5195,
-   "coverage": 0.174,
-   "judge": "-",
-   "results": {
-    "teleqna": {
-     "accuracy": 0.769,
-     "stderr": 0.0133,
-     "n": 1000,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "teletables": {
-     "accuracy": 0.27,
-     "stderr": 0.0446,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    }
-   },
-   "ranked": false
-  }
- ]
+ "unranked": []
 }
