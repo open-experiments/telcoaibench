@@ -43,5 +43,20 @@
 - **oranbench** dataset index 40: expected `C`, parsed `D` - output: "The question asks about a specific handover scenario where the E2 node must invoke several procedures: Handover Preparation for UE Mobility Management, Bearer Context Modification, UE Context Modification, and RRC Messag..."
 - **srsranbench** dataset index 5: expected `D`, parsed `A` - output: "The user is asking for the functionality of a specific function `amplitude_controller_scaling_impl::process`.  1.  **Analyze the function name:** `amplitude_controller_scaling_impl::process`.     *   `amplitude_controlle..."
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 2 (Provider Edge)** - 27B params, 55GB bf16, ~24.1s/answer, ~623 tokens/answer.
+
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.932 |
+| protocol | 0.620 |
+| math | 0.620 |
+| fault | 0.990 |
+| structured | 0.360 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

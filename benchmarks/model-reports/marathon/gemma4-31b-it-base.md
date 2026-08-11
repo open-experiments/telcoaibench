@@ -46,5 +46,20 @@
 - **oranbench** dataset index 12: expected `C`, parsed `D` - output: "Based on standard 3GPP specifications for the `GuRanUeId` (Global RAN UE Identifier) structure, the object typically consists of the `plmnId`, the `gnbId` (or `globalGnbId`), and the `ranUeId`. However, in the context of..."
 - **srsranbench** dataset index 2: expected `A`, parsed `C` - output: "The `gtpu_demux_ctrl` class is typically designed to act as the control interface for the GTP-U demultiplexer, managing how incoming GTP-U packets are steered or handled based on the Tunnel Endpoint Identifier (TEID).  A..."
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 2 (Provider Edge)** - 31B params, 62GB bf16, ~15.9s/answer, ~334 tokens/answer.
+
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.818 |
+| protocol | 0.582 |
+| math | 0.680 |
+| fault | 0.530 |
+| structured | 0.390 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

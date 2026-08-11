@@ -46,5 +46,20 @@
 - **oranbench** dataset index 11: expected `D`, parsed `B` - output: "The correct answer is based on the behavior defined for RIC Service CONTROL requests in the context of timer expiration. When a valid Call Process ID is received after the Time to Wait timer expires, the E2 Node is unabl..."
 - **srsranbench** dataset index 1: expected `A`, parsed `C` - output: "The function name `generate_ru_sdr_config` suggests that its purpose is to create or generate a configuration related to RU SDR. Among the given options, option C directly aligns with this interpretation, as it involves ..."
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 2 (Provider Edge)** - 31B params, 62GB bf16, ~14.8s/answer, ~314 tokens/answer.
+
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.807 |
+| protocol | 0.632 |
+| math | 0.560 |
+| fault | 0.470 |
+| structured | 0.290 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

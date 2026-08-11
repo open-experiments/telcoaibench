@@ -43,5 +43,20 @@
 - **oranbench** dataset index 8: expected `B`, parsed `C` - output: "ANSWER: C"
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "ANSWER: C"
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 2 (Provider Edge)** - 20B params, 42GB bf16 (fp32 ckpt), ~23.2s/answer, ~1457 tokens/answer.
+
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.724 |
+| protocol | 0.475 |
+| math | 0.030 |
+| fault | 0.270 |
+| structured | 0.270 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

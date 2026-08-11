@@ -43,5 +43,20 @@
 - **oranbench** dataset index 22: expected `C`, parsed `B` - output: "The user wants to identify the primary goal of the O-RAN ALLIANCE Test and Integration Focus Group (TIFG) from the given options.  1.  **Analyze the question:** The question asks for the primary goal of the O-RAN ALLIANC..."
 - **srsranbench** dataset index 0: expected `A`, parsed `B` - output: "The user wants to identify the purpose of the `lower_phy_controller` class from a multiple-choice question.  1.  **Analyze the question:** "What is the purpose of the lower_phy_controller class?" 2.  **Context:** This lo..."
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 3 (Region)** - 27B params, 56GB bf16, ~192.9s/answer, ~4875 tokens/answer.
+Notes: verbose/slow decode - latency envelope only fits a tier up
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.814 |
+| protocol | 0.387 |
+| math | 0.270 |
+| fault | 0.050 |
+| structured | 0.320 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

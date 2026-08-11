@@ -43,5 +43,20 @@
 - **oranbench** dataset index 12: expected `C`, parsed `D` - output: "The user wants to identify which of the given options is NOT a required field for the "GuRanUeId" object in a specific context. The context seems to be related to 5G/NR (New Radio) or 3GPP specifications, specifically re..."
 - **srsranbench** dataset index 0: expected `A`, parsed `C` - output: "The user wants to identify the purpose of the `lower_phy_controller` class from a multiple-choice question. The options are: A) 1. It provides a start and stop methods for the lower physical layer. B) 2. It manages the s..."
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 3 (Region)** - 35B params, 72GB bf16 moe(3B act), ~67.1s/answer, ~4750 tokens/answer.
+Notes: verbose/slow decode - latency envelope only fits a tier up
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.815 |
+| protocol | 0.403 |
+| math | 0.510 |
+| fault | 0.150 |
+| structured | 0.330 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

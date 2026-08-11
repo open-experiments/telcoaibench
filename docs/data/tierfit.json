@@ -1,0 +1,260 @@
+{
+ "generated": "2026-08-11 14:50",
+ "phase": "MCQ marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
+ "tiers": {
+  "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
+  "1": "User edge - small models, 1-4 GPUs, 10-50ms",
+  "2": "Provider edge - 13-70B, 50-150ms",
+  "3": "Region - 70-405B, 100-300ms",
+  "4": "Core DC - 405B+, throughput SLO"
+ },
+ "models": {
+  "telecomgpt-r1": {
+   "composite": 0.7507,
+   "coverage": 0.696,
+   "params_b": 27,
+   "weights_gb": 55,
+   "precision": "bf16",
+   "mean_latency_s": 24.1,
+   "mean_output_tokens": 623,
+   "axes": {
+    "knowledge": 0.932,
+    "protocol": 0.62,
+    "math": 0.62,
+    "fault": 0.99,
+    "structured": 0.36
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "gemma4-31b-it-base": {
+   "composite": 0.6459,
+   "coverage": 1.0,
+   "params_b": 31,
+   "weights_gb": 62,
+   "precision": "bf16",
+   "mean_latency_s": 15.9,
+   "mean_output_tokens": 334,
+   "axes": {
+    "knowledge": 0.818,
+    "protocol": 0.582,
+    "math": 0.68,
+    "fault": 0.53,
+    "structured": 0.39
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "gpt-oss-120b": {
+   "composite": 0.6049,
+   "coverage": 0.696,
+   "params_b": 117,
+   "weights_gb": 63,
+   "precision": "mxfp4",
+   "mean_latency_s": 6.6,
+   "mean_output_tokens": 546,
+   "axes": {
+    "knowledge": 0.816,
+    "protocol": 0.48,
+    "math": 0.66,
+    "fault": 0.48,
+    "structured": 0.29
+   },
+   "fit_tier": 3,
+   "size_band_tier": 3,
+   "notes": "117B MoE in 63GB MXFP4 - a Tier 3 brain on a single-GPU Tier 2 budget; served quantized (mxfp4)"
+  },
+  "otel2-llm-31b-it": {
+   "composite": 0.5993,
+   "coverage": 1.0,
+   "params_b": 31,
+   "weights_gb": 62,
+   "precision": "bf16",
+   "mean_latency_s": 14.8,
+   "mean_output_tokens": 314,
+   "axes": {
+    "knowledge": 0.807,
+    "protocol": 0.632,
+    "math": 0.56,
+    "fault": 0.47,
+    "structured": 0.29
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "magistral-small-2509": {
+   "composite": 0.5753,
+   "coverage": 0.696,
+   "params_b": 24,
+   "weights_gb": 48,
+   "precision": "bf16",
+   "mean_latency_s": null,
+   "mean_output_tokens": null,
+   "axes": {
+    "knowledge": 0.765,
+    "protocol": 0.638,
+    "math": 0.47,
+    "fault": 0.28,
+    "structured": 0.28
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "gpt-oss-20b": {
+   "composite": 0.5747,
+   "coverage": 0.696,
+   "params_b": 20,
+   "weights_gb": 13,
+   "precision": "mxfp4",
+   "mean_latency_s": 9.8,
+   "mean_output_tokens": 1351,
+   "axes": {
+    "knowledge": 0.782,
+    "protocol": 0.47,
+    "math": 0.61,
+    "fault": 0.41,
+    "structured": 0.29
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": "served quantized (mxfp4)"
+  },
+  "mistral-small-3-2-24b": {
+   "composite": 0.5654,
+   "coverage": 0.696,
+   "params_b": 24,
+   "weights_gb": 48,
+   "precision": "bf16",
+   "mean_latency_s": 7.5,
+   "mean_output_tokens": 222,
+   "axes": {
+    "knowledge": 0.764,
+    "protocol": 0.655,
+    "math": 0.39,
+    "fault": 0.24,
+    "structured": 0.29
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "qwen3-6-35b-a3b": {
+   "composite": 0.5303,
+   "coverage": 0.696,
+   "params_b": 35,
+   "weights_gb": 72,
+   "precision": "bf16 moe(3B act)",
+   "mean_latency_s": 67.1,
+   "mean_output_tokens": 4750,
+   "axes": {
+    "knowledge": 0.815,
+    "protocol": 0.403,
+    "math": 0.51,
+    "fault": 0.15,
+    "structured": 0.33
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "glm-4-5-air": {
+   "composite": 0.5007,
+   "coverage": 0.696,
+   "params_b": 106,
+   "weights_gb": 63,
+   "precision": "awq-4bit moe(12B act)",
+   "mean_latency_s": 73.4,
+   "mean_output_tokens": 3123,
+   "axes": {
+    "knowledge": 0.745,
+    "protocol": 0.395,
+    "math": 0.3,
+    "fault": 0.41,
+    "structured": 0.27
+   },
+   "fit_tier": 4,
+   "size_band_tier": 3,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit moe(12B act))"
+  },
+  "qwen3-6-27b": {
+   "composite": 0.4818,
+   "coverage": 0.696,
+   "params_b": 27,
+   "weights_gb": 56,
+   "precision": "bf16",
+   "mean_latency_s": 192.9,
+   "mean_output_tokens": 4875,
+   "axes": {
+    "knowledge": 0.814,
+    "protocol": 0.387,
+    "math": 0.27,
+    "fault": 0.05,
+    "structured": 0.32
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "otel-llm-20b-it": {
+   "composite": 0.4615,
+   "coverage": 0.696,
+   "params_b": 20,
+   "weights_gb": 42,
+   "precision": "bf16 (fp32 ckpt)",
+   "mean_latency_s": 23.2,
+   "mean_output_tokens": 1457,
+   "axes": {
+    "knowledge": 0.724,
+    "protocol": 0.475,
+    "math": 0.03,
+    "fault": 0.27,
+    "structured": 0.27
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "nemotron-3-nano-30b": {
+   "composite": 0.4535,
+   "coverage": 0.696,
+   "params_b": 30,
+   "weights_gb": 63,
+   "precision": "bf16 moe(3B act)",
+   "mean_latency_s": 58.8,
+   "mean_output_tokens": 3907,
+   "axes": {
+    "knowledge": 0.695,
+    "protocol": 0.422,
+    "math": 0.62,
+    "fault": 0.0,
+    "structured": 0.08
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "seed-oss-36b": {
+   "composite": 0.6791,
+   "coverage": 0.348,
+   "params_b": 36,
+   "weights_gb": 72,
+   "precision": "bf16",
+   "mean_latency_s": 86.4,
+   "mean_output_tokens": 1718,
+   "axes": {
+    "knowledge": 0.779,
+    "protocol": null,
+    "math": null,
+    "fault": null,
+    "structured": 0.38
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  }
+ }
+}

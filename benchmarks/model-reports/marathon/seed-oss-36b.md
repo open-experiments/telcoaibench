@@ -35,5 +35,17 @@
 - **teleqna** dataset index 12: expected `B`, parsed `D` - output: "<seed:think> Got it, let's try to work through this question. First, I need to remember what ARP means in the context of 3GPP and positioning. ARP stands for "Absolute Radio Frequency Channel Number"—wait, no, wait, actu..."
 - **teletables** dataset index 1: expected `B`, parsed `E` - output: "<seed:think> Got it, let's try to work through this question. The question is asking which channel bandwidth has the highest ratio of information bits to binary channel bits per slot. First, I need to remember what those..."
 
+## AI Grid tier fit (measured, MCQ phase)
+
+**Recommended placement: Tier 3 (Region)** - 36B params, 72GB bf16, ~86.4s/answer, ~1718 tokens/answer.
+Notes: verbose/slow decode - latency envelope only fits a tier up
+
+| Axis (AIGrid) | Measured accuracy |
+|---|---|
+| knowledge | 0.779 |
+| structured | 0.380 |
+
+*Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
+
 ---
 *Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*

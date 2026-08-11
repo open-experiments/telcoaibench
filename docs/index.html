@@ -96,6 +96,7 @@
       <a href="#benchmarks">Benchmarks</a>
       <a href="#judge">Judge Models</a>
       <a href="#leaderboard">Leaderboard</a>
+      <a href="#aigrid">AI Grid Fit</a>
       <a href="#reports">Reports</a>
       <a href="#walkthroughs">Walkthroughs</a>
       <a href="#quickstart">Quick Start</a>
@@ -308,6 +309,62 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
   host.innerHTML=h;
   document.getElementById('lb-legend').style.display='flex';
 }).catch(()=>{document.getElementById('lb-meta').textContent='Leaderboard snapshot not available.';});
+</script>
+
+<section id="pov">
+  <div class="wrap">
+    <h2>Our Point <span>of View</span></h2>
+    <p class="sub" style="max-width:860px">Telco AI is entering its <b style="color:var(--txt)">AI&nbsp;Grid</b> era: inference is leaving the central cloud and distributing across a five-tier fabric that runs from the radio site to the core data center. Every tier has a different latency envelope, hardware budget, and workload class - and the industry question is no longer <i>"which model is best?"</i> but <i>"which model, at which tier, for which task, under which constraints?"</i></p>
+    <div class="cards">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--violet)"></span>Placement needs measurement</h3>
+        <p>Tier envelopes are illustrative; placement decisions require workload-specific benchmarking. Parameter count alone tells you nothing about whether a model earns its latency budget on 3GPP prose, RAN logs, or link-budget math. TelcoAIBench measures exactly the three axes placement logic needs: <b>accuracy per telco workload class, latency &amp; token economics, and deployment reality</b> (VRAM, precision, serving stack).</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--cyan)"></span>Claims need receipts</h3>
+        <p>Self-reported leaderboard numbers routinely diverge from pinned reproduction - our <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">verification report</a> and the <a href="https://github.com/open-experiments/telcoaibench/blob/main/benchmarks/model-reports/marathon/telecomgpt-r1-claims-review.md">TelecomGPT-R1 claims review</a> document exactly how protocol choices move scores by double digits. Every number here ships with its harness version, prompts, precision, and per-question transcripts.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>One harness, every model</h3>
+        <p>All models run the identical pipeline: same prompts, same greedy decoding, same serving stack, same datasets embedded in this repo. Judged suites built from unpublished questions act as the contamination discriminator that public benchmarks cannot provide. Comparable numbers, or no numbers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="aigrid">
+  <div class="wrap">
+    <h2>AI Grid <span>Tier Fitment</span></h2>
+    <p class="sub" style="max-width:860px">Where each benchmarked model belongs on the AI Grid's placement tiers - derived from <b style="color:var(--txt)">measured</b> accuracy, decode speed, verbosity, and VRAM footprint, not from parameter count. Tier 0 (RAN-embedded, &lt;10M params on CPU/NPU) excludes generative LLMs by design.</p>
+    <div class="card"><div id="tf-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div><div id="tf-grid" class="cards" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div></div>
+  </div>
+</section>
+<script>
+fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
+  const tcol={1:'var(--amber)',2:'var(--cyan)',3:'var(--violet)',4:'var(--green)'};
+  const tname={1:'Tier 1 - User Edge',2:'Tier 2 - Provider Edge',3:'Tier 3 - Region',4:'Tier 4 - Core DC'};
+  document.getElementById('tf-meta').textContent=(d.phase||'')+'  |  snapshot '+(d.generated||'');
+  const byTier={1:[],2:[],3:[],4:[]};
+  for(const [m,v] of Object.entries(d.models||{})) if(v.fit_tier) byTier[v.fit_tier].push([m,v]);
+  let h='';
+  for(const t of [1,2,3,4]){
+    const list=byTier[t].sort((a,b)=>(b[1].composite||0)-(a[1].composite||0));
+    h+='<div class="card" style="border-top:3px solid '+tcol[t]+'"><h3 style="font-size:16px">'+tname[t]+'</h3>'
+      +'<p style="font-size:12px;color:var(--faint);margin-bottom:12px">'+(d.tiers[String(t)]||'')+'</p>';
+    if(!list.length){h+='<p style="color:var(--faint);font-size:13px">No fit measured yet.</p></div>';continue;}
+    for(const [m,v] of list){
+      h+='<div style="margin-bottom:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px">'
+        +'<b style="font-size:13.5px;color:var(--txt)">'+m+'</b>'
+        +'<div style="font-size:12px;color:var(--dim);margin-top:3px">composite '+(v.composite!=null?v.composite.toFixed(3):'-')
+        +' &middot; '+(v.params_b||'?')+'B &middot; '+(v.weights_gb||'?')+'GB '+(v.precision||'')
+        +(v.mean_latency_s?' &middot; ~'+v.mean_latency_s+'s/answer':'')+'</div>'
+        +(v.notes?'<div style="font-size:11.5px;color:var(--faint);margin-top:3px">'+v.notes+'</div>':'')
+        +'</div>';
+    }
+    h+='</div>';
+  }
+  document.getElementById('tf-grid').innerHTML=h;
+}).catch(()=>{document.getElementById('tf-meta').textContent='Tier fitment data not available yet.';});
 </script>
 
 <section id="reports">
