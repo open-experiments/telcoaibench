@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-11 16:14",
+ "generated": "2026-08-11 19:39",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -343,6 +343,81 @@
      "tier": "lite",
      "judge": "gpt-5.5",
      "date": "2026-08-10"
+    }
+   },
+   "ranked": true
+  },
+  {
+   "key": "seed-oss-36b",
+   "model": "seed-oss-36b",
+   "endpoint": "http://seed-oss-36b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.595,
+   "coverage": 0.696,
+   "judge": "-",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.77,
+     "stderr": 0.0133,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "teletables": {
+     "accuracy": 0.38,
+     "stderr": 0.0488,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "oranbench": {
+     "accuracy": 0.7533,
+     "stderr": 0.0353,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "srsranbench": {
+     "accuracy": 0.8133,
+     "stderr": 0.0319,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telemath": {
+     "accuracy": 0.52,
+     "stderr": 0.0502,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telelogs": {
+     "accuracy": 0.54,
+     "stderr": 0.0501,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "3gpp": {
+     "accuracy": 0.31,
+     "stderr": 0.0465,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "6g_bench": {
+     "accuracy": 0.6733,
+     "stderr": 0.0384,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
     }
    },
    "ranked": true
@@ -1023,57 +1098,5 @@
    "ranked": true
   }
  ],
- "unranked": [
-  {
-   "key": "seed-oss-36b",
-   "model": "seed-oss-36b",
-   "endpoint": "http://seed-oss-36b-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.6473,
-   "coverage": 0.435,
-   "judge": "-",
-   "results": {
-    "teleqna": {
-     "accuracy": 0.77,
-     "stderr": 0.0133,
-     "n": 1000,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "teletables": {
-     "accuracy": 0.38,
-     "stderr": 0.0488,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "oranbench": {
-     "accuracy": 0.7533,
-     "stderr": 0.0353,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "srsranbench": {
-     "accuracy": 0.8133,
-     "stderr": 0.0319,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "telemath": {
-     "accuracy": 0.52,
-     "stderr": 0.0502,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    }
-   },
-   "ranked": false
-  }
- ]
+ "unranked": []
 }
