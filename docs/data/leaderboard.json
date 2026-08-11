@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-11 14:50",
+ "generated": "2026-08-11 16:14",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -648,6 +648,81 @@
    "ranked": true
   },
   {
+   "key": "exaone-4-0-32b",
+   "model": "exaone-4-0-32b",
+   "endpoint": "http://exaone-4-0-32b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.5298,
+   "coverage": 0.696,
+   "judge": "-",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.742,
+     "stderr": 0.0138,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "teletables": {
+     "accuracy": 0.32,
+     "stderr": 0.0469,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "oranbench": {
+     "accuracy": 0.76,
+     "stderr": 0.035,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "srsranbench": {
+     "accuracy": 0.8333,
+     "stderr": 0.0305,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telemath": {
+     "accuracy": 0.45,
+     "stderr": 0.05,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telelogs": {
+     "accuracy": 0.18,
+     "stderr": 0.0386,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "3gpp": {
+     "accuracy": 0.28,
+     "stderr": 0.0451,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "6g_bench": {
+     "accuracy": 0.6733,
+     "stderr": 0.0384,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    }
+   },
+   "ranked": true
+  },
+  {
    "key": "glm-4-5-air",
    "model": "glm-4-5-air",
    "endpoint": "http://glm-4-5-air-predictor.gsma-otel2-test.svc.cluster.local:8080",
@@ -953,8 +1028,8 @@
    "key": "seed-oss-36b",
    "model": "seed-oss-36b",
    "endpoint": "http://seed-oss-36b-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.6791,
-   "coverage": 0.348,
+   "composite": 0.6473,
+   "coverage": 0.435,
    "judge": "-",
    "results": {
     "teleqna": {
@@ -985,6 +1060,14 @@
      "accuracy": 0.8133,
      "stderr": 0.0319,
      "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telemath": {
+     "accuracy": 0.52,
+     "stderr": 0.0502,
+     "n": 100,
      "tier": "lite",
      "judge": null,
      "date": "2026-08-11"
