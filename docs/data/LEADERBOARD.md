@@ -1,6 +1,6 @@
 # TelcoAIBench Leaderboard
 
-Generated 2026-08-11 03:09 | board judge: `gpt-5.5`
+Generated 2026-08-11 02:34 | board judge: `gpt-5.5`
 
 Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ranked entries need >= 65% weight coverage; only clean full-set runs are recorded; board judge: `gpt-5.5` - judged scores from other judges are excluded.
 
@@ -12,4 +12,3 @@ Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ra
 | 4 | gpt-oss-20b | **0.5747** | 70% | 0.774 | 0.290 | 0.787 | 0.787 | 0.610 | 0.410 | 0.280 | 0.660 | - | - |
 | 5 | glm-4-5-air | **0.5007** | 70% | 0.769 | 0.270 | 0.720 | 0.747 | 0.300 | 0.410 | 0.150 | 0.640 | - | - |
 | 6 | nemotron-3-nano-30b | **0.4535** | 70% | 0.718 | 0.080 | 0.667 | 0.700 | 0.620 | 0.000 | 0.270 | 0.573 | - | - |
-| - | qwen3-6-35b-a3b | 0.5710 | 17% (unranked) | 0.812 | 0.330 | - | - | - | - | - | - | - | - |
