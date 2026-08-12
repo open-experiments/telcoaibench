@@ -225,7 +225,9 @@
         LLM-as-judge suites (Telco's Last Exam, Vendor GenAI deep-dives), where a judge model grades free-form answers
         against unpublished answer keys; these weigh heaviest in the composite and act as the contamination check.
         <span class="lb-chip part" style="margin-left:4px">IN PROGRESS</span> - suites still being recorded; unranked
-        until weight coverage reaches the ranking bar.
+        until weight coverage reaches the ranking bar. Their composite is marked <b>&#42;</b> and drawn as a hatched,
+        coverage-scaled bar: it averages only the suites recorded so far, so an early easy suite can look deceptively
+        strong. Provisional numbers are not comparable to ranked models.
       </div>
     </div>
   </div>
@@ -252,7 +254,9 @@
   .lb-chip.part{background:rgba(148,163,184,.10);color:var(--dim);border:1px solid rgba(148,163,184,.30)}
   .lb-bar{position:relative;width:170px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
   .lb-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:linear-gradient(90deg,#8B5CF6,#22D3EE)}
+  .lb-bar i.prov{background:repeating-linear-gradient(135deg,rgba(148,163,184,.55) 0 5px,rgba(148,163,184,.22) 5px 10px)}
   .lb-comp{display:flex;align-items:center;gap:10px}
+  .lb-comp b.prov{color:var(--dim);font-weight:600}
   .lb-comp b{font-variant-numeric:tabular-nums;min-width:56px;color:var(--txt)}
   .lb-cell{display:inline-block;min-width:46px;text-align:center;padding:3px 7px;border-radius:6px;
     font-variant-numeric:tabular-nums;font-size:13px;color:var(--txt)}
@@ -294,7 +298,7 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     'hunyuan-a13b':['\u{1F1E8}\u{1F1F3}','China'],
     'exaone-4-0-32b':['\u{1F1F0}\u{1F1F7}','S. Korea'],
     'qwen2-5-bakeneko-32b':['\u{1F1EF}\u{1F1F5}','Japan']};
-  const maxC=Math.max(...rows.map(r=>r.composite||0),0.0001);
+  const maxC=Math.max(...ranked.map(r=>r.composite||0),0.0001);
   const heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
   let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th>Composite</th>';
   h+=tasks.map(t=>'<th title="'+t+'">'+(short[t]||t)+'</th>').join('')+'</tr>';
@@ -309,7 +313,10 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     const og=origin[r.model]||['\u{1F310}','\u2013'];
     h+='<tr><td class="colstick">'+rk+' &nbsp;<span class="lb-model">'+r.model+'</span>'+chip+'</td>';
     h+='<td><span style="font-size:17px;vertical-align:-2px">'+og[0]+'</span> <span style="color:var(--dim);font-size:13px">'+og[1]+'</span></td>';
-    h+='<td><div class="lb-comp"><b>'+r.composite.toFixed(4)+'</b><span class="lb-bar" title="composite '+r.composite.toFixed(4)+'"><i style="width:'+(100*r.composite/maxC).toFixed(1)+'%"></i></span></div></td>';
+    const provW=Math.min(100,100*(r.composite/maxC)*(r.coverage||0)).toFixed(1);
+    h+=isRanked
+      ? '<td><div class="lb-comp"><b>'+r.composite.toFixed(4)+'</b><span class="lb-bar" title="composite '+r.composite.toFixed(4)+'"><i style="width:'+Math.min(100,100*r.composite/maxC).toFixed(1)+'%"></i></span></div></td>'
+      : '<td><div class="lb-comp"><b class="prov">'+r.composite.toFixed(4)+'&#42;</b><span class="lb-bar" title="provisional: partial run, '+cov+'% weight coverage - the score covers only the suites recorded so far and is not comparable to ranked models"><i class="prov" style="width:'+provW+'%"></i></span></div></td>';
     h+=tasks.map(t=>{
       const c=r.results&&r.results[t];
       if(!c) return '<td><span class="lb-cell na">&ndash;</span></td>';
