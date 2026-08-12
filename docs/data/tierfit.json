@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-12 09:41",
+ "generated": "2026-08-12 15:30",
  "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
@@ -237,6 +237,44 @@
    "size_band_tier": 2,
    "notes": ""
   },
+  "r1-distill-qwen-32b": {
+   "composite": 0.5257,
+   "coverage": 0.696,
+   "params_b": 32,
+   "weights_gb": 66,
+   "precision": "bf16",
+   "mean_latency_s": 151.6,
+   "mean_output_tokens": 3064,
+   "axes": {
+    "knowledge": 0.755,
+    "protocol": 0.425,
+    "math": 0.47,
+    "fault": 0.32,
+    "structured": 0.3
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "hunyuan-a13b": {
+   "composite": 0.5221,
+   "coverage": 0.696,
+   "params_b": 80,
+   "weights_gb": 81,
+   "precision": "fp8 moe(13B act)",
+   "mean_latency_s": 86.8,
+   "mean_output_tokens": 2321,
+   "axes": {
+    "knowledge": 0.729,
+    "protocol": 0.43,
+    "math": 0.48,
+    "fault": 0.27,
+    "structured": 0.38
+   },
+   "fit_tier": 4,
+   "size_band_tier": 3,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (fp8 moe(13B act))"
+  },
   "glm-4-5-air": {
    "composite": 0.5007,
    "coverage": 0.696,
@@ -369,6 +407,25 @@
    "fit_tier": 1,
    "size_band_tier": 1,
    "notes": ""
+  },
+  "kimi-linear-48b": {
+   "composite": 0.663,
+   "coverage": 0.087,
+   "params_b": 48,
+   "weights_gb": 49,
+   "precision": "fp8 moe(3B act)",
+   "mean_latency_s": 39.8,
+   "mean_output_tokens": 3655,
+   "axes": {
+    "knowledge": 0.663,
+    "protocol": null,
+    "math": null,
+    "fault": null,
+    "structured": null
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": "served quantized (fp8 moe(3B act))"
   }
  }
 }
