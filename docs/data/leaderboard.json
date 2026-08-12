@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-12 15:30",
+ "generated": "2026-08-12 20:48",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -1548,6 +1548,81 @@
    "ranked": true
   },
   {
+   "key": "eurollm-22b",
+   "model": "eurollm-22b",
+   "endpoint": "http://eurollm-22b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.4515,
+   "coverage": 0.696,
+   "judge": "-",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.682,
+     "stderr": 0.0147,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "teletables": {
+     "accuracy": 0.26,
+     "stderr": 0.0441,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "oranbench": {
+     "accuracy": 0.7067,
+     "stderr": 0.0373,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "srsranbench": {
+     "accuracy": 0.72,
+     "stderr": 0.0368,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "telemath": {
+     "accuracy": 0.2,
+     "stderr": 0.0402,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "telelogs": {
+     "accuracy": 0.14,
+     "stderr": 0.0349,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "3gpp": {
+     "accuracy": 0.21,
+     "stderr": 0.0409,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "6g_bench": {
+     "accuracy": 0.6933,
+     "stderr": 0.0378,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    }
+   },
+   "ranked": true
+  },
+  {
    "key": "apertus-8b",
    "model": "apertus-8b",
    "endpoint": "http://apertus-8b-predictor.gsma-otel2-test.svc.cluster.local:8080",
@@ -1621,20 +1696,95 @@
     }
    },
    "ranked": true
+  },
+  {
+   "key": "eurollm-9b",
+   "model": "eurollm-9b",
+   "endpoint": "http://eurollm-9b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.3653,
+   "coverage": 0.696,
+   "judge": "-",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.496,
+     "stderr": 0.0158,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "teletables": {
+     "accuracy": 0.28,
+     "stderr": 0.0451,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "oranbench": {
+     "accuracy": 0.5533,
+     "stderr": 0.0407,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "srsranbench": {
+     "accuracy": 0.7867,
+     "stderr": 0.0336,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "telemath": {
+     "accuracy": 0.01,
+     "stderr": 0.01,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "3gpp": {
+     "accuracy": 0.23,
+     "stderr": 0.0423,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "6g_bench": {
+     "accuracy": 0.5667,
+     "stderr": 0.0406,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    },
+    "telelogs": {
+     "accuracy": 0.0,
+     "stderr": 0.0,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-12"
+    }
+   },
+   "ranked": true
   }
  ],
  "unranked": [
   {
-   "key": "kimi-linear-48b",
-   "model": "kimi-linear-48b",
-   "endpoint": "http://kimi-linear-48b-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.663,
+   "key": "kimi-dev-72b",
+   "model": "kimi-dev-72b",
+   "endpoint": "http://kimi-dev-72b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.767,
    "coverage": 0.087,
    "judge": "-",
    "results": {
     "teleqna": {
-     "accuracy": 0.663,
-     "stderr": 0.015,
+     "accuracy": 0.767,
+     "stderr": 0.0134,
      "n": 1000,
      "tier": "lite",
      "judge": null,

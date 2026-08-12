@@ -4200,8 +4200,14 @@ class ChatInterface:
                         + [f"{r['results'][t]['accuracy']:.3f}"
                            if t in r["results"] else "-" for t in tasks])
         for r in unranked:
-            rows.append(["-", r["model"], f"{r['composite']:.4f}",
-                         f"{r['coverage']*100:.0f}% (unranked)", r["judge"]]
+            # provisional: the composite averages only the suites recorded
+            # so far, so it is NOT comparable to a ranked model's score.
+            # Mark it in the cell itself - a bare number in a Composite
+            # column reads as a finished result.
+            done_n, all_n = len(r["results"]), len(tasks)
+            rows.append(["partial", r["model"], f"{r['composite']:.4f} *",
+                         f"{r['coverage']*100:.0f}% - {done_n}/{all_n} suites",
+                         r["judge"]]
                         + [f"{r['results'][t]['accuracy']:.3f}"
                            if t in r["results"] else "-" for t in tasks])
         # marathon live status rows: models being benchmarked / queued.
@@ -4220,6 +4226,12 @@ class ChatInterface:
                         rows.append(["In Queue", name, "-", "-", "-"] + pad)
         except Exception:
             pass
+        if any(row[0] == "partial" for row in rows):
+            note = (note + "  \n" if note else "") + (
+                "\\* **provisional** - rows marked `partial` are still being "
+                "benchmarked. Their composite averages only the suites "
+                "recorded so far (an early easy suite can look deceptively "
+                "strong) and is not comparable to a ranked model.")
         return headers, rows, note
 
     def lb_publish(self):
@@ -4251,11 +4263,17 @@ class ChatInterface:
                                 if t in r["results"] else "-"
                                 for t in tasks) + " |")
         for r in unranked:
-            L.append(f"| - | {r['model']} | {r['composite']:.4f} | "
-                     f"{r['coverage']*100:.0f}% (unranked) | " +
+            L.append(f"| partial | {r['model']} | "
+                     f"_{r['composite']:.4f}_ \\* | "
+                     f"{r['coverage']*100:.0f}% - {len(r['results'])}/"
+                     f"{len(tasks)} suites | " +
                      " | ".join(f"{r['results'][t]['accuracy']:.3f}"
                                 if t in r["results"] else "-"
                                 for t in tasks) + " |")
+        if unranked:
+            L += ["", "\\* **provisional** - still being benchmarked; the "
+                  "composite averages only the suites recorded so far and is "
+                  "not comparable to a ranked model."]
         mpath = os.path.join(out, "LEADERBOARD.md")
         open(mpath, "w").write("\n".join(L))
         return jpath, mpath

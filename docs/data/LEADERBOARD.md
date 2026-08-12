@@ -1,6 +1,6 @@
 # TelcoAIBench Leaderboard
 
-Generated 2026-08-12 15:30 | board judge: `gpt-5.5`
+Generated 2026-08-12 20:48 | board judge: `gpt-5.5`
 
 Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ranked entries need >= 65% weight coverage; only clean full-set runs are recorded; board judge: `gpt-5.5` - judged scores from other judges are excluded.
 
@@ -26,5 +26,7 @@ Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ra
 | 18 | phi-4-reasoning-plus | **0.4719** | 70% | 0.722 | 0.310 | 0.760 | 0.793 | 0.000 | 0.380 | 0.090 | 0.720 | - | - |
 | 19 | otel-llm-20b-it | **0.4615** | 70% | 0.712 | 0.270 | 0.747 | 0.713 | 0.030 | 0.270 | 0.270 | 0.680 | - | - |
 | 20 | nemotron-3-nano-30b | **0.4535** | 70% | 0.718 | 0.080 | 0.667 | 0.700 | 0.620 | 0.000 | 0.270 | 0.573 | - | - |
-| 21 | apertus-8b | **0.3854** | 70% | 0.633 | 0.220 | 0.587 | 0.747 | 0.110 | 0.100 | 0.240 | 0.447 | - | - |
-| - | kimi-linear-48b | 0.6630 | 9% (unranked) | 0.663 | - | - | - | - | - | - | - | - | - |
+| 21 | eurollm-22b | **0.4515** | 70% | 0.682 | 0.260 | 0.707 | 0.720 | 0.200 | 0.140 | 0.210 | 0.693 | - | - |
+| 22 | apertus-8b | **0.3854** | 70% | 0.633 | 0.220 | 0.587 | 0.747 | 0.110 | 0.100 | 0.240 | 0.447 | - | - |
+| 23 | eurollm-9b | **0.3653** | 70% | 0.496 | 0.280 | 0.553 | 0.787 | 0.010 | 0.000 | 0.230 | 0.567 | - | - |
+| - | kimi-dev-72b | 0.7670 | 9% (unranked) | 0.767 | - | - | - | - | - | - | - | - | - |

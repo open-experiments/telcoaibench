@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-12 15:30",
+ "generated": "2026-08-12 20:48",
  "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
@@ -389,6 +389,25 @@
    "size_band_tier": 2,
    "notes": "verbose/slow decode - latency envelope only fits a tier up"
   },
+  "eurollm-22b": {
+   "composite": 0.4515,
+   "coverage": 0.696,
+   "params_b": 23,
+   "weights_gb": 46,
+   "precision": "bf16",
+   "mean_latency_s": 13.8,
+   "mean_output_tokens": 396,
+   "axes": {
+    "knowledge": 0.703,
+    "protocol": 0.452,
+    "math": 0.2,
+    "fault": 0.14,
+    "structured": 0.26
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
   "apertus-8b": {
    "composite": 0.3854,
    "coverage": 0.696,
@@ -408,24 +427,43 @@
    "size_band_tier": 1,
    "notes": ""
   },
-  "kimi-linear-48b": {
-   "composite": 0.663,
-   "coverage": 0.087,
-   "params_b": 48,
-   "weights_gb": 49,
-   "precision": "fp8 moe(3B act)",
-   "mean_latency_s": 39.8,
-   "mean_output_tokens": 3655,
+  "eurollm-9b": {
+   "composite": 0.3653,
+   "coverage": 0.696,
+   "params_b": 9,
+   "weights_gb": 18,
+   "precision": "bf16",
+   "mean_latency_s": 2.3,
+   "mean_output_tokens": 160,
    "axes": {
-    "knowledge": 0.663,
+    "knowledge": 0.612,
+    "protocol": 0.398,
+    "math": 0.01,
+    "fault": 0.0,
+    "structured": 0.28
+   },
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "notes": "4096-token context: long-context suites need the answer budget capped at 512 tokens to fit prompt+answer"
+  },
+  "kimi-dev-72b": {
+   "composite": 0.767,
+   "coverage": 0.087,
+   "params_b": 73,
+   "weights_gb": 40,
+   "precision": "awq-4bit",
+   "mean_latency_s": null,
+   "mean_output_tokens": null,
+   "axes": {
+    "knowledge": 0.767,
     "protocol": null,
     "math": null,
     "fault": null,
     "structured": null
    },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": "served quantized (fp8 moe(3B act))"
+   "fit_tier": 3,
+   "size_band_tier": 3,
+   "notes": "served quantized (awq-4bit)"
   }
  }
 }
