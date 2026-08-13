@@ -205,7 +205,7 @@
 <section id="leaderboard">
   <div class="wrap">
     <h2>Leader<span>board</span></h2>
-    <p class="sub">Every clean, full-set run recorded in the portal can be published here as a versioned snapshot. Composite = importance-weighted mean (judged suites weigh heaviest); ranking requires 70% weight coverage, full-set runs only, and one consistent judge.</p>
+    <p class="sub">Every clean, full-set run recorded in the portal can be published here as a versioned snapshot. Composite = importance-weighted mean (judged suites weigh heaviest); ranking requires 65% weight coverage, full-set runs only, and one consistent judge.</p>
     <div class="card" id="lb-card">
       <div id="lb-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div>
       <div id="lb-board"></div>
@@ -213,8 +213,12 @@
         <span>suite score</span>
         <span style="display:inline-block;width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(139,92,246,.07),rgba(139,92,246,.85))"></span>
         <span>0 &rarr; 1</span>
-        <span style="margin-left:18px">composite</span>
+        <span style="margin-left:18px">composite (all 10)</span>
         <span style="display:inline-block;width:26px;height:8px;border-radius:4px;background:linear-gradient(90deg,#8B5CF6,#22D3EE)"></span>
+        <span style="margin-left:14px">Auto-8</span>
+        <span style="display:inline-block;width:26px;height:8px;border-radius:4px;background:linear-gradient(90deg,#22D3EE,#67E8F9)"></span>
+        <span style="margin-left:14px">partial &#42;</span>
+        <span style="display:inline-block;width:26px;height:8px;border-radius:4px;background:repeating-linear-gradient(135deg,rgba(148,163,184,.55) 0 5px,rgba(148,163,184,.22) 5px 10px)"></span>
       </div>
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.7">
         <b style="color:var(--dim)">Coverage chips.</b>
@@ -225,9 +229,25 @@
         LLM-as-judge suites (Telco's Last Exam, Vendor GenAI deep-dives), where a judge model grades free-form answers
         against unpublished answer keys; these weigh heaviest in the composite and act as the contamination check.
         <span class="lb-chip part" style="margin-left:4px">IN PROGRESS</span> - suites still being recorded; unranked
-        until weight coverage reaches the ranking bar. Their composite is marked <b>&#42;</b> and drawn as a hatched,
-        coverage-scaled bar: it averages only the suites recorded so far, so an early easy suite can look deceptively
-        strong. Provisional numbers are not comparable to ranked models.
+        until weight coverage reaches the ranking bar.
+        <div style="margin-top:12px">
+          <b style="color:var(--dim)">Two composite columns, and why.</b>
+          A weighted mean is only meaningful against a stated set of suites. <b>Composite</b> covers all 10 and is
+          therefore shown <i>only</i> for models that have completed both judge-graded suites - everywhere else it
+          reads <b>&ndash;</b>, because a 10-suite composite computed from 8 suites is not a lower-confidence version
+          of the same number, it is a different measurement. <b>Auto-8</b> covers the 8 machine-scored suites and is
+          defined for every model here, so that column <i>is</i> comparable from top to bottom. Read down Auto-8 to
+          compare any two models; read across a verified row to see what judging cost that model.
+        </div>
+        <div style="margin-top:10px">
+          <b style="color:var(--dim)">What judging costs.</b>
+          Ordering is <b>verified first</b>, then the rest by Auto-8. That is a deliberate choice, not a score:
+          an unjudged model is untested against unpublished questions, and on the models tested so far judging has
+          moved the composite by <b>-0.24 to +0.05</b>, with the largest drops on telecom-specialised models. Until a
+          model has faced that, we will not rank it above one that has. Models below the judging gate
+          (TeleQnA &lt; 0.700) stay in the provisional band permanently. A number carrying <b>&#42;</b> with a hatched
+          bar covers only part of its column's suite set and is not on the common basis.
+        </div>
       </div>
     </div>
   </div>
@@ -257,6 +277,10 @@
   .lb-bar i.prov{background:repeating-linear-gradient(135deg,rgba(148,163,184,.55) 0 5px,rgba(148,163,184,.22) 5px 10px)}
   .lb-comp{display:flex;align-items:center;gap:10px}
   .lb-comp b.prov{color:var(--dim);font-weight:600}
+  .lb-sub{display:block;font-size:9.5px;font-weight:500;letter-spacing:.2px;color:var(--faint);text-transform:none;margin-top:2px}
+  .lb-bar i.a8{background:linear-gradient(90deg,#22D3EE,#67E8F9)}
+  .lb-comp b.a8{color:var(--dim);font-weight:600}
+  .lb-band td{padding:9px 12px !important;background:rgba(148,163,184,.05);border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
   .lb-comp b{font-variant-numeric:tabular-nums;min-width:56px;color:var(--txt)}
   .lb-cell{display:inline-block;min-width:46px;text-align:center;padding:3px 7px;border-radius:6px;
     font-variant-numeric:tabular-nums;font-size:13px;color:var(--txt)}
@@ -306,13 +330,32 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     'nemotron-3-5-lightning-30b':['\u{1F1FA}\u{1F1F8}','USA'],
     'nemotron-3-super-120b':['\u{1F1FA}\u{1F1F8}','USA'],
     'lfm2-5-2-6b':['\u{1F1FA}\u{1F1F8}','USA']};
-  const maxC=Math.max(...ranked.map(r=>r.composite||0),0.0001);
+  // Auto-8: weighted mean over the 8 machine-scored suites only. Every model
+  // on the board has all 8, so this column is comparable top to bottom -
+  // unlike the full composite, which only exists once a model has been judged.
+  const JUDGED=['telcos_last_exam','vendor_genai'];
+  const W=d.weights||{};
+  const auto8=r=>{let n=0,dn=0,tot=0;for(const t in W){if(JUDGED.includes(t))continue;
+    tot+=W[t]; const c=r.results&&r.results[t]; if(!c)continue;
+    n+=W[t]*c.accuracy; dn+=W[t];}
+    // full:false means this mean covers fewer than the 8 suites, so it is
+    // NOT on the common basis and must be marked, never shown bare.
+    return dn?{v:n/dn, full:Math.abs(dn-tot)<1e-9, cov:dn/tot}:null;};
+  const maxC=Math.max(...rows.filter(r=>r.verified===true).map(r=>r.composite||0),0.0001);
+  const maxA=Math.max(...rows.map(r=>{const a=auto8(r);return a&&a.full?a.v:0;}),0.0001);
   const heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
-  let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th>Composite</th>';
+  let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th title="importance-weighted mean of all 10 suites - only defined once both judge-graded suites are recorded">Composite<span class="lb-sub">all 10 suites</span></th><th title="importance-weighted mean of the 8 machine-scored suites - defined for every model on the board, so this column IS comparable top to bottom">Auto-8<span class="lb-sub">same basis for all</span></th>';
   h+=tasks.map(t=>'<th title="'+t+'">'+(short[t]||t)+'</th>').join('')+'</tr>';
-  let i=0;
+  let i=0, bandBreak=false;
   for(const r of rows){
     const isRanked=ranked.includes(r); i+=isRanked?1:0;
+    // Verified = both judge-graded suites recorded. Everything below that line
+    // is scored on 8 of 10 suites, missing the two hardest, so its composite
+    // runs HIGH and is not comparable upward. Say so on the page rather than
+    // let the reader infer a sorting bug from the jump at the band boundary.
+    const ver=r.verified===true;
+    if(isRanked && !ver && !bandBreak){ bandBreak=true;
+      h+='<tr class="lb-band"><td colspan="'+(4+tasks.length)+'">Provisional &middot; judged suites not yet run &ndash; ranked on Auto-8 alone</td></tr>'; }
     const rk=isRanked?'<span class="lb-rank r'+i+'">'+i+'</span>':'<span class="lb-rank">&ndash;</span>';
     const cov=Math.round((r.coverage||0)*100);
     const chip=cov>=100?'<span class="lb-chip full">FULL + JUDGED</span>'
@@ -321,10 +364,19 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     const og=origin[r.model]||['\u{1F310}','\u2013'];
     h+='<tr><td class="colstick">'+rk+' &nbsp;<span class="lb-model">'+r.model+'</span>'+chip+'</td>';
     h+='<td><span style="font-size:17px;vertical-align:-2px">'+og[0]+'</span> <span style="color:var(--dim);font-size:13px">'+og[1]+'</span></td>';
-    const provW=Math.min(100,100*(r.composite/maxC)*(r.coverage||0)).toFixed(1);
-    h+=isRanked
-      ? '<td><div class="lb-comp"><b>'+r.composite.toFixed(4)+'</b><span class="lb-bar" title="composite '+r.composite.toFixed(4)+'"><i style="width:'+Math.min(100,100*r.composite/maxC).toFixed(1)+'%"></i></span></div></td>'
-      : '<td><div class="lb-comp"><b class="prov">'+r.composite.toFixed(4)+'&#42;</b><span class="lb-bar" title="provisional: partial run, '+cov+'% weight coverage - the score covers only the suites recorded so far and is not comparable to ranked models"><i class="prov" style="width:'+provW+'%"></i></span></div></td>';
+    // The full composite appears ONLY where all 10 suites exist. Anywhere else
+    // it would be a weighted mean over a different, easier denominator - a
+    // number that looks comparable and is not. Those rows show a dash and
+    // carry their score in Auto-8 instead; for them the two are arithmetically
+    // identical, so the dash hides nothing.
+    const a8=auto8(r);
+    h+=ver
+      ? '<td><div class="lb-comp"><b>'+r.composite.toFixed(4)+'</b><span class="lb-bar" title="full composite over all 10 suites, including both judge-graded sets"><i style="width:'+Math.min(100,100*r.composite/maxC).toFixed(1)+'%"></i></span></div></td>'
+      : '<td><span class="lb-cell na" title="not defined yet - the full composite needs both judge-graded suites; this model\'s score is in the Auto-8 column">&ndash;</span></td>';
+    h+= a8===null ? '<td><span class="lb-cell na">&ndash;</span></td>'
+      : a8.full
+      ? '<td><div class="lb-comp"><b'+(ver?'':' class="a8"')+'>'+a8.v.toFixed(4)+'</b><span class="lb-bar" title="Auto-8: weighted mean of all 8 machine-scored suites - the same basis for every model on this board"><i class="a8" style="width:'+Math.min(100,100*a8.v/maxA).toFixed(1)+'%"></i></span></div></td>'
+      : '<td><div class="lb-comp"><b class="prov">'+a8.v.toFixed(4)+'&#42;</b><span class="lb-bar" title="partial: only '+Math.round(a8.cov*100)+'% of the Auto-8 weight recorded so far - averages a subset of suites, so it is NOT on the common basis"><i class="prov" style="width:'+Math.min(100,100*(a8.v/maxA)*a8.cov).toFixed(1)+'%"></i></span></div></td>';
     h+=tasks.map(t=>{
       const c=r.results&&r.results[t];
       if(!c) return '<td><span class="lb-cell na">&ndash;</span></td>';

@@ -4169,12 +4169,30 @@ class ChatInterface:
                 acc_w += r["accuracy"] * w
             coverage = covered_w / total_w if total_w else 0.0
             composite = acc_w / covered_w if covered_w else 0.0
+            # Auto-8: the same weighted mean restricted to the machine-scored
+            # suites. Every model runs all of them, so THIS is the number that
+            # is comparable across the whole board - the full composite is not,
+            # because it only exists for models that have been judged.
+            a_w = a_acc = a_tot = 0.0
+            for t, w in weights.items():
+                if t in judged_tasks:
+                    continue
+                a_tot += w
+                r = e["results"].get(t)
+                if not r:
+                    continue
+                a_w += w
+                a_acc += r["accuracy"] * w
+            auto8 = (a_acc / a_w) if a_w else None
+            auto8_full = bool(a_w) and abs(a_w - a_tot) < 1e-9
             verified = all(t in e["results"] for t in judged_tasks) \
                 and not flags
             rows.append({"key": key, "model": e["model"],
                          "endpoint": e["endpoint"],
                          "composite": round(composite, 4),
                          "coverage": round(coverage, 3),
+                         "auto8": round(auto8, 4) if auto8 is not None else None,
+                         "auto8_full": auto8_full,
                          "verified": verified,
                          "judge": ", ".join(sorted(j for j in judges_used if j)) or "-",
                          "results": e["results"], "flags": flags,
@@ -4191,13 +4209,20 @@ class ChatInterface:
         unranked = sorted([r for r in rows if not r["ranked"]],
                           key=lambda x: -x["coverage"])
         nver = sum(1 for r in rows if r["ranked"] and r["verified"])
-        note = (f"Composite = importance-weighted mean (weights in "
-                f"`leaderboard_weights.json`). **Ranking is two-band:** the "
-                f"{nver} judge-verified models (all 10 suites incl. the two "
-                f"unpublished judged sets) rank first by full composite; "
-                f"auto-scored-only models follow. A judged composite is "
-                f"measured on a harder basis, so the bands are not directly "
-                f"comparable. Ranked entries need >= "
+        note = (f"**Two composite columns.** A weighted mean is only "
+                f"meaningful against a stated set of suites, so this board "
+                f"reports two. **Composite** covers all 10 suites and is "
+                f"shown only for the {nver} judge-verified models - "
+                f"everywhere else it is `-`, because a 10-suite composite "
+                f"computed from 8 suites is a different measurement, not a "
+                f"lower-confidence version of the same one. **Auto-8** "
+                f"covers the 8 machine-scored suites and is defined for "
+                f"every model here, so that column is comparable top to "
+                f"bottom. Weights in `leaderboard_weights.json`. "
+                f"**Ordering is verified-first**, then the rest by Auto-8: "
+                f"an unjudged model is untested against the unpublished "
+                f"questions, so it is not ranked above one that has faced "
+                f"them. Ranked entries need >= "
                 f"{int(self.LB_MIN_COVERAGE*100)}% weight coverage; only "
                 f"clean full-set runs are recorded"
                 + (f"; board judge: `{board_judge}` - judged scores from "
@@ -4208,10 +4233,26 @@ class ChatInterface:
         weights = self._lb_weights()
         tasks = list(weights.keys())
         ranked, unranked, bj, note = self._lb_compute()
-        headers = ["Rank", "Model", "Composite", "Coverage", "Judge"] + tasks
+        headers = ["Rank", "Model", "Composite (10)", "Auto-8", "Coverage",
+                   "Judge"] + tasks
         rows = []
+
+        def _a8(r):
+            v = r.get("auto8")
+            if v is None:
+                return "-"
+            return f"{v:.4f}" if r.get("auto8_full") else f"{v:.4f} *"
+
+        band_done = False
         for i, r in enumerate(ranked, 1):
-            rows.append([i, r["model"], f"{r['composite']:.4f}",
+            if not r["verified"] and not band_done:
+                band_done = True
+                rows.append(["-", "-- provisional: judged suites not yet run,"
+                             " ranked on Auto-8 alone --", "-", "-", "-",
+                             "-"] + ["-"] * len(tasks))
+            rows.append([i, r["model"],
+                         f"{r['composite']:.4f}" if r["verified"] else "-",
+                         _a8(r),
                          f"{r['coverage']*100:.0f}%", r["judge"]]
                         + [f"{r['results'][t]['accuracy']:.3f}"
                            if t in r["results"] else "-" for t in tasks])
@@ -4221,7 +4262,7 @@ class ChatInterface:
             # Mark it in the cell itself - a bare number in a Composite
             # column reads as a finished result.
             done_n, all_n = len(r["results"]), len(tasks)
-            rows.append(["partial", r["model"], f"{r['composite']:.4f} *",
+            rows.append(["partial", r["model"], "-", _a8(r),
                          f"{r['coverage']*100:.0f}% - {done_n}/{all_n} suites",
                          r["judge"]]
                         + [f"{r['results'][t]['accuracy']:.3f}"
@@ -4236,18 +4277,20 @@ class ChatInterface:
                 pad = ["-"] * len(tasks)
                 for name in mst.get("under_test", []):
                     if name not in on_board:
-                        rows.append(["Under Test", name, "-", "-", "-"] + pad)
+                        rows.append(["Under Test", name, "-", "-", "-", "-"]
+                                    + pad)
                 for name in mst.get("in_queue", []):
                     if name not in on_board:
-                        rows.append(["In Queue", name, "-", "-", "-"] + pad)
+                        rows.append(["In Queue", name, "-", "-", "-", "-"]
+                                    + pad)
         except Exception:
             pass
         if any(row[0] == "partial" for row in rows):
             note = (note + "  \n" if note else "") + (
-                "\\* **provisional** - rows marked `partial` are still being "
-                "benchmarked. Their composite averages only the suites "
-                "recorded so far (an early easy suite can look deceptively "
-                "strong) and is not comparable to a ranked model.")
+                "\\* an Auto-8 value carrying `*` covers only part of the "
+                "8-suite set - it averages the suites recorded so far, so it "
+                "is NOT on the common basis and an early easy suite can make "
+                "it look deceptively strong.")
         return headers, rows, note
 
     def lb_publish(self):
@@ -4266,30 +4309,45 @@ class ChatInterface:
         jpath = os.path.join(out, "leaderboard.json")
         json.dump(snap, open(jpath, "w"), indent=1)
         tasks = list(weights.keys())
+
+        def _a8(r):
+            v = r.get("auto8")
+            if v is None:
+                return "-"
+            return f"{v:.4f}" if r.get("auto8_full") else f"_{v:.4f}_ \\*"
+
+        ncol = 5 + len(tasks)
         L = ["# TelcoAIBench Leaderboard", "",
              f"Generated {snap['generated']}"
              + (f" | board judge: `{bj}`" if bj else ""), "", note, "",
-             "| Rank | Model | Composite | Coverage | " +
+             "| Rank | Model | Composite (10) | Auto-8 | Coverage | " +
              " | ".join(tasks) + " |",
-             "|" + "---|" * (4 + len(tasks))]
+             "|" + "---|" * ncol]
+        band_done = False
         for i, r in enumerate(ranked, 1):
-            L.append(f"| {i} | {r['model']} | **{r['composite']:.4f}** | "
+            if not r["verified"] and not band_done:
+                band_done = True
+                L.append("| | **provisional - judged suites not yet run, "
+                         "ranked on Auto-8 alone** |"
+                         + " |" * (ncol - 2) + "")
+            comp = f"**{r['composite']:.4f}**" if r["verified"] else "-"
+            L.append(f"| {i} | {r['model']} | {comp} | {_a8(r)} | "
                      f"{r['coverage']*100:.0f}% | " +
                      " | ".join(f"{r['results'][t]['accuracy']:.3f}"
                                 if t in r["results"] else "-"
                                 for t in tasks) + " |")
         for r in unranked:
-            L.append(f"| partial | {r['model']} | "
-                     f"_{r['composite']:.4f}_ \\* | "
+            L.append(f"| partial | {r['model']} | - | {_a8(r)} | "
                      f"{r['coverage']*100:.0f}% - {len(r['results'])}/"
                      f"{len(tasks)} suites | " +
                      " | ".join(f"{r['results'][t]['accuracy']:.3f}"
                                 if t in r["results"] else "-"
                                 for t in tasks) + " |")
-        if unranked:
-            L += ["", "\\* **provisional** - still being benchmarked; the "
-                  "composite averages only the suites recorded so far and is "
-                  "not comparable to a ranked model."]
+        if any(not r.get("auto8_full") for r in ranked + unranked):
+            L += ["", "\\* an Auto-8 value in italics with `*` covers only "
+                  "part of the 8-suite set - it averages the suites recorded "
+                  "so far, is NOT on the common basis, and an early easy "
+                  "suite can make it look deceptively strong."]
         mpath = os.path.join(out, "LEADERBOARD.md")
         open(mpath, "w").write("\n".join(L))
         return jpath, mpath
