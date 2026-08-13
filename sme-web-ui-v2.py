@@ -2102,9 +2102,15 @@ class ChatClient:
         messages: List[Dict[str, str]], 
         temperature: float = 0.6,
         max_tokens: int = 2048,
-        force_streaming: bool = False
+        force_streaming: bool = False,
+        target: Optional[Dict[str, str]] = None
     ) -> str:
-        """Smart chat completion with fallback to non-streaming"""
+        """Smart chat completion with fallback to non-streaming.
+
+        `target` optionally overrides the configured endpoint/model for this
+        request only - passing it per call rather than mutating self.config
+        keeps concurrent users on different models from racing each other.
+        """
         
         # Decide on streaming
         use_streaming = force_streaming or self._should_use_streaming(messages, max_tokens)
@@ -2114,28 +2120,31 @@ class ChatClient:
         
         if use_streaming:
             print("🌊 Trying streaming first...")
-            streaming_result = self._stream_completion(messages, temperature, max_tokens)
+            streaming_result = self._stream_completion(messages, temperature, max_tokens, target)
             
             # If streaming failed but didn't return an error message, try direct
             if streaming_result.startswith("❌") and context_size < 8000:
                 print("🔄 Streaming failed, trying direct completion as fallback...")
-                return self._direct_completion(messages, temperature, min(max_tokens, 1000))
+                return self._direct_completion(messages, temperature, min(max_tokens, 1000), target)
             else:
                 return streaming_result
         else:
-            return self._direct_completion(messages, temperature, max_tokens)
+            return self._direct_completion(messages, temperature, max_tokens, target)
     
     def _direct_completion(
         self, 
         messages: List[Dict[str, str]], 
         temperature: float, 
-        max_tokens: int
+        max_tokens: int,
+        target: Optional[Dict[str, str]] = None
     ) -> str:
         """Direct completion for small contexts"""
-        url = f"{self.config.api_endpoint}/v1/chat/completions"
+        ep = (target or {}).get("endpoint") or self.config.api_endpoint
+        mid = (target or {}).get("model") or self.config.model_name
+        url = f"{ep}/v1/chat/completions"
         
         payload = {
-            "model": self.config.model_name,
+            "model": mid,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -2190,13 +2199,16 @@ class ChatClient:
         self, 
         messages: List[Dict[str, str]], 
         temperature: float, 
-        max_tokens: int
+        max_tokens: int,
+        target: Optional[Dict[str, str]] = None
     ) -> str:
         """Debug-enhanced streaming completion with detailed logging"""
-        url = f"{self.config.api_endpoint}/v1/chat/completions"
+        ep = (target or {}).get("endpoint") or self.config.api_endpoint
+        mid = (target or {}).get("model") or self.config.model_name
+        url = f"{ep}/v1/chat/completions"
         
         payload = {
-            "model": self.config.model_name,
+            "model": mid,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -2387,6 +2399,34 @@ class ChatInterface:
         self.session_manager = SessionManager()  # Add session management
         self.metrics_collector = MetricsCollector()  # Add metrics collection
     
+    # ------------------------------------------------------------------
+    # Chat targets. The chat tab used to be hard-wired to SME_API_ENDPOINT,
+    # so users could only converse with one model. Extra models are declared
+    # in SME_CHAT_TARGETS as JSON:
+    #   [{"label":"telecomgpt-r1","endpoint":"https://...","model":"telecomgpt-r1"}]
+    # Config, not code - adding a third model needs no edit here. The default
+    # endpoint is always present and always first.
+    def chat_targets(self):
+        cached = getattr(self, "_chat_targets", None)
+        if cached is not None:
+            return cached
+        default_label = f"{self.config.model_name} (default)"
+        t = {default_label: {"endpoint": self.config.api_endpoint,
+                             "model": self.config.model_name}}
+        try:
+            for e in json.loads(os.environ.get("SME_CHAT_TARGETS", "[]")):
+                lbl = e.get("label") or e.get("model")
+                if not lbl or not e.get("endpoint") or not e.get("model"):
+                    continue
+                if lbl in t:
+                    continue
+                t[lbl] = {"endpoint": e["endpoint"].rstrip("/"),
+                          "model": e["model"]}
+        except Exception as exc:
+            print(f"SME_CHAT_TARGETS parse failed, using default only: {exc}")
+        self._chat_targets = t
+        return t
+
     def process_message(
         self,
         message: str,
@@ -2396,7 +2436,8 @@ class ChatInterface:
         temperature: float,
         max_tokens: int,
         uploaded_file: Optional[Any] = None,
-        session_id: str = None
+        session_id: str = None,
+        chat_target: str = None
     ) -> Tuple[str, List[List[str]], Optional[Any], str]:
         """Enhanced message processing with UI debugging"""
         
@@ -2473,10 +2514,14 @@ class ChatInterface:
             
             # Process with smart completion
             print("Calling chat completion...")
+            target = self.chat_targets().get(chat_target) if chat_target else None
+            if target:
+                print(f"💬 target: {target['model']} @ {target['endpoint']}")
             response = self.client.chat_completion(
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                target=target
             )
             
             print(f"✅ Response received: {len(response)} chars")
@@ -4657,6 +4702,18 @@ class ChatInterface:
                         with gr.Column(scale=1, elem_classes="config-panel"):
                             gr.HTML("<h3 style='color: #333; margin: 10px 0;'>⚙️ Settings</h3>")
                             
+                            # Model selector - which served model answers
+                            with gr.Group():
+                                _ct = list(self.chat_targets().keys())
+                                chat_model_dd = gr.Dropdown(
+                                    choices=_ct, value=_ct[0],
+                                    label="Model",
+                                    info=("which served model answers this "
+                                          "conversation"),
+                                    interactive=len(_ct) > 1,
+                                    scale=1
+                                )
+
                             # System Prompt Section
                             with gr.Group():
                                 system_dropdown = gr.Dropdown(
@@ -5767,7 +5824,8 @@ class ChatInterface:
             msg.submit(
                 self.process_message,
                 inputs=[msg, chatbot, system_dropdown, custom_system, 
-                       temperature, max_tokens, file_upload, session_id_input],
+                       temperature, max_tokens, file_upload, session_id_input,
+                       chat_model_dd],
                 outputs=[msg, chatbot, file_upload, session_id_input],
                 show_progress="minimal"
             )
@@ -5775,7 +5833,8 @@ class ChatInterface:
             submit.click(
                 self.process_message,
                 inputs=[msg, chatbot, system_dropdown, custom_system,
-                       temperature, max_tokens, file_upload, session_id_input],
+                       temperature, max_tokens, file_upload, session_id_input,
+                       chat_model_dd],
                 outputs=[msg, chatbot, file_upload, session_id_input],
                 show_progress="minimal"
             )
