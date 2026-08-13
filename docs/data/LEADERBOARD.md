@@ -1,8 +1,8 @@
 # TelcoAIBench Leaderboard
 
-Generated 2026-08-13 16:11 | board judge: `gpt-5.5`
+Generated 2026-08-13 17:50 | board judge: `gpt-5.5`
 
-**Two composite columns.** A weighted mean is only meaningful against a stated set of suites, so this board reports two. **Composite** covers all 10 suites and is shown only for the 14 judge-verified models - everywhere else it is `-`, because a 10-suite composite computed from 8 suites is a different measurement, not a lower-confidence version of the same one. **Auto-8** covers the 8 machine-scored suites and is defined for every model here, so that column is comparable top to bottom. Weights in `leaderboard_weights.json`. **Ordering is verified-first**, then the rest by Auto-8: an unjudged model is untested against the unpublished questions, so it is not ranked above one that has faced them. Ranked entries need >= 65% weight coverage; only clean full-set runs are recorded; board judge: `gpt-5.5` - judged scores from other judges are excluded.
+**Two composite columns.** A weighted mean is only meaningful against a stated set of suites, so this board reports two. **Composite** covers all 10 suites and is shown only for the 18 judge-verified models - everywhere else it is `-`, because a 10-suite composite computed from 8 suites is a different measurement, not a lower-confidence version of the same one. **Auto-8** covers the 8 machine-scored suites and is defined for every model here, so that column is comparable top to bottom. Weights in `leaderboard_weights.json`. **Ordering is verified-first**, then the rest by Auto-8: an unjudged model is untested against the unpublished questions, so it is not ranked above one that has faced them. Ranked entries need >= 65% weight coverage; only clean full-set runs are recorded; board judge: `gpt-5.5` - judged scores from other judges are excluded.
 
 | Rank | Model | Composite (10) | Auto-8 | Coverage | teleqna | teletables | oranbench | srsranbench | telemath | telelogs | 3gpp | 6g_bench | telcos_last_exam | vendor_genai |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -20,17 +20,17 @@ Generated 2026-08-13 16:11 | board judge: `gpt-5.5`
 | 12 | kimi-dev-72b | **0.5020** | 0.5392 | 100% | 0.767 | 0.320 | 0.740 | 0.820 | 0.420 | 0.340 | 0.300 | 0.607 | 0.445 | 0.379 |
 | 13 | qwen3-6-27b | **0.4983** | 0.4818 | 100% | 0.814 | 0.320 | 0.800 | 0.827 | 0.270 | 0.050 | 0.080 | 0.693 | 0.565 | 0.497 |
 | 14 | glm-4-5-air | **0.4820** | 0.5007 | 100% | 0.769 | 0.270 | 0.720 | 0.747 | 0.300 | 0.410 | 0.150 | 0.640 | 0.479 | 0.387 |
+| 15 | exaone-4-0-32b | **0.4755** | 0.5298 | 100% | 0.742 | 0.320 | 0.760 | 0.833 | 0.450 | 0.180 | 0.280 | 0.673 | 0.400 | 0.287 |
+| 16 | r1-distill-qwen-32b | **0.4754** | 0.5257 | 100% | 0.739 | 0.300 | 0.727 | 0.800 | 0.470 | 0.320 | 0.250 | 0.600 | 0.383 | 0.330 |
+| 17 | hunyuan-a13b | **0.4536** | 0.5221 | 100% | 0.733 | 0.380 | 0.687 | 0.767 | 0.480 | 0.270 | 0.200 | 0.660 | 0.319 | 0.269 |
+| 18 | phi-4-reasoning-plus | **0.4392** | 0.4719 | 100% | 0.722 | 0.310 | 0.760 | 0.793 | 0.000 | 0.380 | 0.090 | 0.720 | 0.398 | 0.319 |
 | | **provisional - judged suites not yet run, ranked on Auto-8 alone** | | | | | | | | | | | | | |
-| 15 | gpt-oss-20b | - | 0.5747 | 70% | 0.774 | 0.290 | 0.787 | 0.787 | 0.610 | 0.410 | 0.280 | 0.660 | - | - |
-| 16 | r1-distill-qwen-32b | - | 0.5257 | 70% | 0.739 | 0.300 | 0.727 | 0.800 | 0.470 | 0.320 | 0.250 | 0.600 | - | - |
-| 17 | hunyuan-a13b | - | 0.5221 | 70% | 0.733 | 0.380 | 0.687 | 0.767 | 0.480 | 0.270 | 0.200 | 0.660 | - | - |
-| 18 | exaone-4-0-32b | - | 0.5298 | 87% | 0.742 | 0.320 | 0.760 | 0.833 | 0.450 | 0.180 | 0.280 | 0.673 | 0.400 | - |
-| 19 | granite-4-0-h-small | - | 0.4925 | 70% | 0.690 | 0.270 | 0.733 | 0.680 | 0.330 | 0.250 | 0.300 | 0.687 | - | - |
-| 20 | lfm2-5-2-6b | - | 0.4751 | 70% | 0.691 | 0.400 | 0.707 | 0.820 | 0.340 | 0.090 | 0.100 | 0.653 | - | - |
-| 21 | phi-4-reasoning-plus | - | 0.4719 | 70% | 0.722 | 0.310 | 0.760 | 0.793 | 0.000 | 0.380 | 0.090 | 0.720 | - | - |
+| 19 | gpt-oss-20b | - | 0.5747 | 70% | 0.774 | 0.290 | 0.787 | 0.787 | 0.610 | 0.410 | 0.280 | 0.660 | - | - |
+| 20 | granite-4-0-h-small | - | 0.4925 | 70% | 0.690 | 0.270 | 0.733 | 0.680 | 0.330 | 0.250 | 0.300 | 0.687 | - | - |
+| 21 | lfm2-5-2-6b | - | 0.4751 | 70% | 0.691 | 0.400 | 0.707 | 0.820 | 0.340 | 0.090 | 0.100 | 0.653 | - | - |
 | 22 | otel-llm-20b-it | - | 0.4615 | 70% | 0.712 | 0.270 | 0.747 | 0.713 | 0.030 | 0.270 | 0.270 | 0.680 | - | - |
-| 23 | nemotron-3-nano-30b | - | 0.4535 | 70% | 0.718 | 0.080 | 0.667 | 0.700 | 0.620 | 0.000 | 0.270 | 0.573 | - | - |
-| 24 | eurollm-22b | - | 0.4515 | 70% | 0.682 | 0.260 | 0.707 | 0.720 | 0.200 | 0.140 | 0.210 | 0.693 | - | - |
+| 23 | eurollm-22b | - | 0.4515 | 70% | 0.682 | 0.260 | 0.707 | 0.720 | 0.200 | 0.140 | 0.210 | 0.693 | - | - |
+| 24 | nemotron-3-nano-30b | - | 0.4535 | 87% | 0.718 | 0.080 | 0.667 | 0.700 | 0.620 | 0.000 | 0.270 | 0.573 | 0.355 | - |
 | 25 | nemotron-3-5-lightning-30b | - | 0.4219 | 70% | 0.442 | 0.200 | 0.687 | 0.700 | 0.490 | 0.250 | 0.080 | 0.527 | - | - |
 | 26 | apertus-8b | - | 0.3854 | 70% | 0.633 | 0.220 | 0.587 | 0.747 | 0.110 | 0.100 | 0.240 | 0.447 | - | - |
 | 27 | kimi-linear-48b-bf16 | - | 0.3727 | 70% | 0.672 | 0.040 | 0.547 | 0.760 | 0.360 | 0.040 | 0.330 | 0.233 | - | - |

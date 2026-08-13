@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-13 16:11",
+ "generated": "2026-08-13 17:50",
  "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
@@ -303,6 +303,90 @@
    "size_band_tier": 4,
    "notes": "served quantized (awq-4bit moe(12B act))"
   },
+  "exaone-4-0-32b": {
+   "composite": 0.4755,
+   "coverage": 1.0,
+   "params_b": 32,
+   "weights_gb": 64,
+   "precision": "bf16",
+   "mean_latency_s": null,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": null,
+   "axes": {
+    "knowledge": 0.778,
+    "protocol": 0.477,
+    "math": 0.45,
+    "fault": 0.18,
+    "structured": 0.32
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "r1-distill-qwen-32b": {
+   "composite": 0.4754,
+   "coverage": 1.0,
+   "params_b": 32,
+   "weights_gb": 66,
+   "precision": "bf16",
+   "mean_latency_s": 151.6,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 3064,
+   "axes": {
+    "knowledge": 0.755,
+    "protocol": 0.425,
+    "math": 0.47,
+    "fault": 0.32,
+    "structured": 0.3
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "hunyuan-a13b": {
+   "composite": 0.4536,
+   "coverage": 1.0,
+   "params_b": 80,
+   "weights_gb": 81,
+   "precision": "fp8 moe(13B act)",
+   "mean_latency_s": 86.8,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 2321,
+   "axes": {
+    "knowledge": 0.729,
+    "protocol": 0.43,
+    "math": 0.48,
+    "fault": 0.27,
+    "structured": 0.38
+   },
+   "fit_tier": 4,
+   "size_band_tier": 3,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (fp8 moe(13B act))"
+  },
+  "phi-4-reasoning-plus": {
+   "composite": 0.4392,
+   "coverage": 1.0,
+   "params_b": 14,
+   "weights_gb": 29,
+   "precision": "bf16",
+   "mean_latency_s": 94.4,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 3912,
+   "axes": {
+    "knowledge": 0.758,
+    "protocol": 0.405,
+    "math": 0.0,
+    "fault": 0.38,
+    "structured": 0.31
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
   "gpt-oss-20b": {
    "composite": 0.5747,
    "coverage": 0.696,
@@ -323,69 +407,6 @@
    "fit_tier": 2,
    "size_band_tier": 2,
    "notes": "served quantized (mxfp4)"
-  },
-  "r1-distill-qwen-32b": {
-   "composite": 0.5257,
-   "coverage": 0.696,
-   "params_b": 32,
-   "weights_gb": 66,
-   "precision": "bf16",
-   "mean_latency_s": 151.6,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 3064,
-   "axes": {
-    "knowledge": 0.755,
-    "protocol": 0.425,
-    "math": 0.47,
-    "fault": 0.32,
-    "structured": 0.3
-   },
-   "fit_tier": 3,
-   "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
-  },
-  "hunyuan-a13b": {
-   "composite": 0.5221,
-   "coverage": 0.696,
-   "params_b": 80,
-   "weights_gb": 81,
-   "precision": "fp8 moe(13B act)",
-   "mean_latency_s": 86.8,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 2321,
-   "axes": {
-    "knowledge": 0.729,
-    "protocol": 0.43,
-    "math": 0.48,
-    "fault": 0.27,
-    "structured": 0.38
-   },
-   "fit_tier": 4,
-   "size_band_tier": 3,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (fp8 moe(13B act))"
-  },
-  "exaone-4-0-32b": {
-   "composite": 0.5038,
-   "coverage": 0.87,
-   "params_b": 32,
-   "weights_gb": 64,
-   "precision": "bf16",
-   "mean_latency_s": null,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": null,
-   "axes": {
-    "knowledge": 0.778,
-    "protocol": 0.477,
-    "math": 0.45,
-    "fault": 0.18,
-    "structured": 0.32
-   },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": ""
   },
   "granite-4-0-h-small": {
    "composite": 0.4925,
@@ -429,27 +450,6 @@
    "size_band_tier": 1,
    "notes": ""
   },
-  "phi-4-reasoning-plus": {
-   "composite": 0.4719,
-   "coverage": 0.696,
-   "params_b": 14,
-   "weights_gb": 29,
-   "precision": "bf16",
-   "mean_latency_s": 94.4,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 3912,
-   "axes": {
-    "knowledge": 0.758,
-    "protocol": 0.405,
-    "math": 0.0,
-    "fault": 0.38,
-    "structured": 0.31
-   },
-   "fit_tier": 3,
-   "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
-  },
   "otel-llm-20b-it": {
    "composite": 0.4615,
    "coverage": 0.696,
@@ -471,27 +471,6 @@
    "size_band_tier": 2,
    "notes": ""
   },
-  "nemotron-3-nano-30b": {
-   "composite": 0.4535,
-   "coverage": 0.696,
-   "params_b": 30,
-   "weights_gb": 63,
-   "precision": "bf16 moe(3B act)",
-   "mean_latency_s": 58.8,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 3907,
-   "axes": {
-    "knowledge": 0.695,
-    "protocol": 0.422,
-    "math": 0.62,
-    "fault": 0.0,
-    "structured": 0.08
-   },
-   "fit_tier": 3,
-   "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
-  },
   "eurollm-22b": {
    "composite": 0.4515,
    "coverage": 0.696,
@@ -512,6 +491,27 @@
    "fit_tier": 2,
    "size_band_tier": 2,
    "notes": ""
+  },
+  "nemotron-3-nano-30b": {
+   "composite": 0.4339,
+   "coverage": 0.87,
+   "params_b": 30,
+   "weights_gb": 63,
+   "precision": "bf16 moe(3B act)",
+   "mean_latency_s": 58.8,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 3907,
+   "axes": {
+    "knowledge": 0.695,
+    "protocol": 0.422,
+    "math": 0.62,
+    "fault": 0.0,
+    "structured": 0.08
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
   },
   "nemotron-3-5-lightning-30b": {
    "composite": 0.4219,
