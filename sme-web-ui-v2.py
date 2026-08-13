@@ -2407,24 +2407,23 @@ class ChatInterface:
     # Config, not code - adding a third model needs no edit here. The default
     # endpoint is always present and always first.
     def chat_targets(self):
-        cached = getattr(self, "_chat_targets", None)
-        if cached is not None:
-            return cached
-        default_label = f"{self.config.model_name} (default)"
-        t = {default_label: {"endpoint": self.config.api_endpoint,
-                             "model": self.config.model_name}}
-        try:
-            for e in json.loads(os.environ.get("SME_CHAT_TARGETS", "[]")):
-                lbl = e.get("label") or e.get("model")
-                if not lbl or not e.get("endpoint") or not e.get("model"):
-                    continue
-                if lbl in t:
-                    continue
-                t[lbl] = {"endpoint": e["endpoint"].rstrip("/"),
-                          "model": e["model"]}
-        except Exception as exc:
-            print(f"SME_CHAT_TARGETS parse failed, using default only: {exc}")
-        self._chat_targets = t
+        """Healthy models from the unified registry, newest state first.
+
+        Reads the same registry the Benchmark and Observability tabs read, so
+        a model provisioned once appears everywhere and can never be listed
+        twice under two different URLs.
+        """
+        t = {}
+        for v in self.models_all().values():
+            if (v.get("health") or {}).get("ok"):
+                t[v["label"]] = {"endpoint": v["endpoint"],
+                                 "model": v["model"],
+                                 "token": v.get("token", "")}
+        if not t:
+            # never leave the chat tab with nothing to talk to
+            t[f"{self.config.model_name} (default)"] = {
+                "endpoint": self.config.api_endpoint,
+                "model": self.config.model_name, "token": ""}
         return t
 
     def process_message(
@@ -3959,25 +3958,227 @@ class ChatInterface:
         return "No benchmark run in progress in this slot."
 
     # -- model endpoint registry (provision / discover benchmark targets) --
+    # ------------------------------------------------------------------
+    # UNIFIED MODEL REGISTRY
+    #
+    # "Which models exist?" used to have three different answers: the Chat tab
+    # read SME_CHAT_TARGETS (env, needs a redeploy), the Benchmark tab read
+    # benchmark_endpoints.json (PVC), and Observability read self.config (one
+    # endpoint, forever). That is why the same model could appear twice, or be
+    # missing from a tab, and why nothing ever knew whether an endpoint was
+    # actually reachable. One file now answers it for every tab.
+    MODEL_REGISTRY_FILE = state_path("model_registry.json")
+
+    @staticmethod
+    def _mk_label(model_id, endpoint):
+        return f"{model_id} @ {endpoint.split('//')[-1].rstrip('/')}"
+
+    @staticmethod
+    def _reg_key(model_id, endpoint):
+        return f"{(model_id or '').strip()}|{(endpoint or '').rstrip('/')}"
+
+    def model_probe(self, endpoint, token="", model_id=""):
+        """Ask an endpoint what it serves. This is the ONLY definition of
+        'healthy' in the portal - a model is offered in the tabs when, and
+        only when, this succeeded."""
+        import time as _time
+        out = {"ok": False, "latency_ms": None, "ctx": None, "error": "",
+               "model_id": model_id,
+               "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        url = (endpoint or "").rstrip("/") + "/v1/models"
+        try:
+            t0 = _time.time()
+            r = requests.get(url,
+                             headers=({"Authorization": f"Bearer {token}"}
+                                      if token else {}),
+                             timeout=8, verify=self.config.verify_ssl)
+            out["latency_ms"] = int((_time.time() - t0) * 1000)
+            if r.status_code != 200:
+                out["error"] = f"HTTP {r.status_code}"
+                return out
+            data = r.json().get("data", []) or []
+            if not data:
+                out["error"] = "endpoint returned no models"
+                return out
+            pick = None
+            for m in data:
+                if model_id and m.get("id") == model_id:
+                    pick = m
+                    break
+            pick = pick or data[0]
+            out["model_id"] = pick.get("id", model_id)
+            out["ctx"] = pick.get("max_model_len")
+            out["ok"] = True
+        except Exception as e:
+            out["error"] = str(e)[:160]
+        return out
+
+    def _models_load(self):
+        try:
+            if os.path.exists(self.MODEL_REGISTRY_FILE):
+                return json.load(open(self.MODEL_REGISTRY_FILE))
+        except Exception as e:
+            print(f"model registry load failed: {e}")
+        return {}
+
+    def _models_save(self, reg):
+        try:
+            os.makedirs(os.path.dirname(self.MODEL_REGISTRY_FILE),
+                        exist_ok=True)
+            json.dump(reg, open(self.MODEL_REGISTRY_FILE, "w"), indent=2)
+        except Exception as e:
+            print(f"model registry save failed: {e}")
+
+    def models_init(self, probe=True):
+        """Load the registry, migrating anything defined the old way exactly
+        once. Migration is additive and de-duplicated on (model, endpoint), so
+        the same model reachable two ways can no longer appear twice."""
+        reg = self._models_load()
+        seeds = []
+        # 1. the configured default endpoint
+        seeds.append((self.config.model_name, self.config.api_endpoint, ""))
+        # 2. chat targets declared in the environment
+        try:
+            for e in json.loads(os.environ.get("SME_CHAT_TARGETS", "[]")):
+                if e.get("endpoint") and e.get("model"):
+                    seeds.append((e["model"], e["endpoint"], ""))
+        except Exception:
+            pass
+        # 3. anything previously provisioned on the Benchmark tab
+        try:
+            if os.path.exists(self.BENCH_REGISTRY_FILE):
+                for v in json.load(open(self.BENCH_REGISTRY_FILE)).values():
+                    if v.get("endpoint") and v.get("model"):
+                        seeds.append((v["model"], v["endpoint"],
+                                      v.get("token", "")))
+        except Exception:
+            pass
+        added = 0
+        for mid, ep, tok in seeds:
+            k = self._reg_key(mid, ep)
+            if k in reg:
+                if tok and not reg[k].get("token"):
+                    reg[k]["token"] = tok
+                continue
+            reg[k] = {"model": mid, "endpoint": (ep or "").rstrip("/"),
+                      "token": tok, "label": self._mk_label(mid, ep),
+                      "added_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                      "health": {"ok": False, "error": "not checked yet",
+                                 "latency_ms": None, "ctx": None,
+                                 "checked_at": ""}}
+            added += 1
+        if probe:
+            for k, v in reg.items():
+                v["health"] = self.model_probe(v["endpoint"], v.get("token", ""),
+                                               v.get("model", ""))
+                if v["health"].get("ok") and v["health"].get("model_id"):
+                    v["model"] = v["health"]["model_id"]
+                    v["label"] = self._mk_label(v["model"], v["endpoint"])
+        if added or probe:
+            self._models_save(reg)
+        self._models = reg
+        return reg
+
+    def models_all(self):
+        return getattr(self, "_models", None) or self.models_init(probe=False)
+
+    def models_healthy(self):
+        """Labels of models the portal can actually reach - what the Chat,
+        Benchmark and Observability selectors offer."""
+        return [v["label"] for v in self.models_all().values()
+                if (v.get("health") or {}).get("ok")]
+
+    def models_get(self, label):
+        for v in self.models_all().values():
+            if v["label"] == label:
+                return v
+        return None
+
+    def models_add(self, endpoint, token="", model_id=""):
+        endpoint = (endpoint or "").strip().rstrip("/")
+        if not endpoint:
+            return "Enter an endpoint base URL (without /v1).", None
+        if not endpoint.startswith(("http://", "https://")):
+            endpoint = "https://" + endpoint
+        h = self.model_probe(endpoint, token, model_id)
+        if not h["ok"]:
+            # refuse rather than register something unreachable: a dead entry
+            # in the selectors is worse than a clear failure here
+            return (f"Could not reach `{endpoint}` - {h['error']}. "
+                    f"Nothing was added."), None
+        mid = h["model_id"]
+        reg = self.models_all()
+        k = self._reg_key(mid, endpoint)
+        dup = k in reg
+        reg[k] = {"model": mid, "endpoint": endpoint, "token": token,
+                  "label": self._mk_label(mid, endpoint),
+                  "added_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                  "health": h}
+        self._models_save(reg)
+        self._models = reg
+        verb = "Updated" if dup else "Added"
+        return (f"{verb} `{mid}` - online, {h['latency_ms']}ms"
+                + (f", ctx {h['ctx']:,}" if h.get("ctx") else "")
+                + (", auth on" if token else ", auth off")), reg[k]["label"]
+
+    def models_remove(self, label):
+        reg = self.models_all()
+        for k, v in list(reg.items()):
+            if v["label"] == label:
+                reg.pop(k)
+                self._models_save(reg)
+                self._models = reg
+                return f"Removed `{label}`."
+        return "Pick a model to remove."
+
+    def models_recheck(self):
+        self.models_init(probe=True)
+        ok = len(self.models_healthy())
+        return f"Re-checked {len(self.models_all())} endpoint(s): {ok} online."
+
+    def models_table(self):
+        rows = []
+        for v in self.models_all().values():
+            h = v.get("health") or {}
+            rows.append([
+                v.get("model", ""),
+                v.get("endpoint", ""),
+                "on" if v.get("token") else "off",
+                "online" if h.get("ok") else "OFFLINE",
+                f"{h['latency_ms']}ms" if h.get("latency_ms") is not None else "-",
+                f"{h['ctx']:,}" if h.get("ctx") else "-",
+                h.get("checked_at", "") or "-",
+                "" if h.get("ok") else (h.get("error", "") or "")[:60],
+            ])
+        rows.sort(key=lambda r: (r[3] != "online", r[0]))
+        return rows
+
+    MODELS_HEADERS = ["Model", "Endpoint", "Auth", "Status", "Latency",
+                      "Context", "Checked", "Error"]
+
     BENCH_REGISTRY_FILE = state_path("benchmark_endpoints.json")
     BENCH_SLOTS = 3  # legacy constant (dynamic cards now)
     BENCH_MAX_PARALLEL = 2
 
     def _bench_registry_init(self):
+        """Benchmark targets ARE the healthy registry models.
+
+        This used to be its own file with its own default-injection, which is
+        how otel2 ended up listed twice - once via its route, once via the
+        cluster service. There is now exactly one place a model is defined.
+        """
         reg = {}
-        default_key = f"{self.config.model_name} @ {self.config.api_endpoint.split('//')[-1]}"
-        reg[default_key] = {
-            "endpoint": self.config.api_endpoint,
-            "model": self.config.model_name,
-            "token": self.config.api_token if self.config.use_token_auth else "",
-        }
-        try:
-            if os.path.exists(self.BENCH_REGISTRY_FILE):
-                with open(self.BENCH_REGISTRY_FILE) as fh:
-                    for k, v in json.load(fh).items():
-                        reg.setdefault(k, v)
-        except Exception as e:
-            print(f"benchmark registry load failed: {e}")
+        for v in self.models_all().values():
+            if (v.get("health") or {}).get("ok"):
+                reg[v["label"]] = {"endpoint": v["endpoint"],
+                                   "model": v["model"],
+                                   "token": v.get("token", "")}
+        if not reg:
+            k = self._mk_label(self.config.model_name, self.config.api_endpoint)
+            reg[k] = {"endpoint": self.config.api_endpoint,
+                      "model": self.config.model_name,
+                      "token": (self.config.api_token
+                                if self.config.use_token_auth else "")}
         self._bench_registry = reg
         return list(reg.keys())
 
@@ -4600,6 +4801,16 @@ class ChatInterface:
 
     def create_interface(self) -> gr.Blocks:
         """Create enhanced Gradio interface"""
+        # Probe every registered endpoint once at startup. Without this the
+        # registry loads with health "not checked yet", nothing counts as
+        # healthy, and every tab silently falls back to the single configured
+        # endpoint - which is the bug this registry exists to remove.
+        try:
+            self.models_init(probe=True)
+            print(f"model registry: {len(self.models_healthy())}/"
+                  f"{len(self.models_all())} endpoint(s) online")
+        except Exception as e:
+            print(f"model registry init failed: {e}")
         
         # Custom CSS for better layout and readability
         custom_css = """
@@ -4795,6 +5006,71 @@ class ChatInterface:
             
             # Main content area with tabs for better organization
             with gr.Tabs():
+                with gr.TabItem("Models"):
+                    gr.Markdown(
+                        "**Every model the portal knows about lives here.** "
+                        "Add an endpoint once - with or without an API key - "
+                        "and it is checked immediately. Models that answer "
+                        "become selectable in Chat, Benchmark and "
+                        "Observability; models that do not are listed here "
+                        "with the reason so you can fix them. Stored on the "
+                        "state volume, so the list survives restarts.")
+                    with gr.Row():
+                        m_url = gr.Textbox(
+                            label="Endpoint base URL (without /v1)",
+                            placeholder="https://my-model.apps.mylab  or  "
+                                        "http://svc.namespace.svc.cluster.local:8080",
+                            scale=4)
+                        m_key = gr.Textbox(label="API key (optional)",
+                                           type="password", scale=2)
+                        m_name = gr.Textbox(
+                            label="Model name (optional - discovered)",
+                            placeholder="leave empty to auto-detect",
+                            scale=2)
+                    with gr.Row():
+                        m_add = gr.Button("Test & Add", variant="primary",
+                                          scale=1)
+                        m_recheck = gr.Button("Re-check all",
+                                              variant="secondary", scale=1)
+                        m_rm_dd = gr.Dropdown(choices=[], value=None,
+                                              label="Remove model", scale=2)
+                        m_rm = gr.Button("Remove", variant="stop", scale=1)
+                    m_status = gr.Markdown("")
+                    m_table = gr.Dataframe(headers=self.MODELS_HEADERS,
+                                           value=self.models_table(),
+                                           interactive=False,
+                                           label="Provisioned endpoints")
+
+                    def _m_labels():
+                        return [v["label"] for v in self.models_all().values()]
+
+                    def _m_add(url, key, name):
+                        msg, _lbl = self.models_add(url, key or "", name or "")
+                        return (msg, gr.update(value=self.models_table()),
+                                gr.update(choices=_m_labels()), "", "", "")
+
+                    def _m_recheck():
+                        return (self.models_recheck(),
+                                gr.update(value=self.models_table()),
+                                gr.update(choices=_m_labels()))
+
+                    def _m_remove(sel):
+                        return (self.models_remove(sel),
+                                gr.update(value=self.models_table()),
+                                gr.update(choices=_m_labels(), value=None))
+
+                    m_add.click(_m_add, inputs=[m_url, m_key, m_name],
+                                outputs=[m_status, m_table, m_rm_dd,
+                                         m_url, m_key, m_name])
+                    m_recheck.click(_m_recheck, inputs=[],
+                                    outputs=[m_status, m_table, m_rm_dd])
+                    m_rm.click(_m_remove, inputs=[m_rm_dd],
+                               outputs=[m_status, m_table, m_rm_dd])
+                    interface.load(
+                        lambda: (gr.update(value=self.models_table()),
+                                 gr.update(choices=_m_labels())),
+                        inputs=[], outputs=[m_table, m_rm_dd])
+
                 with gr.TabItem("Chat"):
                     with gr.Row():
                         # Main chat column - use most of the screen
