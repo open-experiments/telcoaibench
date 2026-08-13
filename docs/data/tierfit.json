@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-12 23:27",
+ "generated": "2026-08-13 00:43",
  "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
@@ -514,8 +514,8 @@
    "notes": "4096-token context: long-context suites need the answer budget capped at 512 tokens to fit prompt+answer"
   },
   "kimi-vl-a3b-thinking": {
-   "composite": 0.3496,
-   "coverage": 0.609,
+   "composite": 0.32,
+   "coverage": 0.696,
    "params_b": 16,
    "weights_gb": 32,
    "precision": "bf16 moe(3B act)",
@@ -525,7 +525,7 @@
    "mean_output_tokens": 6586,
    "axes": {
     "knowledge": 0.649,
-    "protocol": 0.11,
+    "protocol": 0.112,
     "math": 0.21,
     "fault": 0.09,
     "structured": 0.09

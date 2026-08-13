@@ -1,6 +1,6 @@
 # TelcoAIBench Leaderboard
 
-Generated 2026-08-12 23:27 | board judge: `gpt-5.5`
+Generated 2026-08-13 00:43 | board judge: `gpt-5.5`
 
 Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ranked entries need >= 65% weight coverage; only clean full-set runs are recorded; board judge: `gpt-5.5` - judged scores from other judges are excluded.
 
@@ -30,4 +30,4 @@ Composite = importance-weighted mean (weights in `leaderboard_weights.json`). Ra
 | 22 | eurollm-22b | **0.4515** | 70% | 0.682 | 0.260 | 0.707 | 0.720 | 0.200 | 0.140 | 0.210 | 0.693 | - | - |
 | 23 | apertus-8b | **0.3854** | 70% | 0.633 | 0.220 | 0.587 | 0.747 | 0.110 | 0.100 | 0.240 | 0.447 | - | - |
 | 24 | eurollm-9b | **0.3653** | 70% | 0.496 | 0.280 | 0.553 | 0.787 | 0.010 | 0.000 | 0.230 | 0.567 | - | - |
-| - | kimi-vl-a3b-thinking | 0.3496 | 61% (unranked) | 0.647 | 0.090 | 0.627 | 0.673 | 0.210 | 0.090 | 0.110 | - | - | - |
+| 25 | kimi-vl-a3b-thinking | **0.3200** | 70% | 0.647 | 0.090 | 0.627 | 0.673 | 0.210 | 0.090 | 0.110 | 0.113 | - | - |
