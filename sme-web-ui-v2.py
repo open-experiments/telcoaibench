@@ -3787,7 +3787,8 @@ class ChatInterface:
             yield from self._run_benchmark_tasks(
                 slot, tasks, tier, limit, max_connections, mod, client,
                 stop_ev, model_tag, entry, out_dir, rows, summary, t_start,
-                judge_client=judge_client, judge_label=judge_label)
+                judge_client=judge_client, judge_label=judge_label,
+                model_key=model_key)
         finally:
             # if the browser disconnected (refresh/close) Gradio kills this
             # generator - make sure the worker threads stop too instead of
@@ -3798,7 +3799,7 @@ class ChatInterface:
     def _run_benchmark_tasks(self, slot, tasks, tier, limit, max_connections,
                              mod, client, stop_ev, model_tag, entry, out_dir,
                              rows, summary, t_start, judge_client=None,
-                             judge_label=None):
+                             judge_label=None, model_key=None):
         import time as _time
         error_notes = []
         record_notes = []
@@ -3806,7 +3807,9 @@ class ChatInterface:
         # Leaderboard' has something concrete to post rather than re-running.
         if not hasattr(self, "_last_runs"):
             self._last_runs = {}
-        key = model_key
+        # the registry key the Publish button will look up; fall back to the
+        # model name so a direct call without it still stashes something
+        key = model_key or entry.get("model")
 
         def _first_error(_task):
             try:
