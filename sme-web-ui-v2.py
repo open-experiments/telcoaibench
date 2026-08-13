@@ -4169,19 +4169,35 @@ class ChatInterface:
                 acc_w += r["accuracy"] * w
             coverage = covered_w / total_w if total_w else 0.0
             composite = acc_w / covered_w if covered_w else 0.0
+            verified = all(t in e["results"] for t in judged_tasks) \
+                and not flags
             rows.append({"key": key, "model": e["model"],
                          "endpoint": e["endpoint"],
                          "composite": round(composite, 4),
                          "coverage": round(coverage, 3),
+                         "verified": verified,
                          "judge": ", ".join(sorted(j for j in judges_used if j)) or "-",
                          "results": e["results"], "flags": flags,
                          "ranked": coverage >= self.LB_MIN_COVERAGE})
+        # Two-band ordering. A composite is a weighted mean over the suites a
+        # model actually has, so a judged model is scored on a strictly
+        # harder basis than an auto-scored-only one - ranking them in a
+        # single list would punish exactly the models that submitted to the
+        # unpublished suites. Verified models therefore rank first, ordered
+        # by their full composite (judged suites carry the heaviest weight);
+        # auto-scored-only models follow, ordered among themselves.
         ranked = sorted([r for r in rows if r["ranked"]],
-                        key=lambda x: -x["composite"])
+                        key=lambda x: (not x["verified"], -x["composite"]))
         unranked = sorted([r for r in rows if not r["ranked"]],
                           key=lambda x: -x["coverage"])
+        nver = sum(1 for r in rows if r["ranked"] and r["verified"])
         note = (f"Composite = importance-weighted mean (weights in "
-                f"`leaderboard_weights.json`). Ranked entries need >= "
+                f"`leaderboard_weights.json`). **Ranking is two-band:** the "
+                f"{nver} judge-verified models (all 10 suites incl. the two "
+                f"unpublished judged sets) rank first by full composite; "
+                f"auto-scored-only models follow. A judged composite is "
+                f"measured on a harder basis, so the bands are not directly "
+                f"comparable. Ranked entries need >= "
                 f"{int(self.LB_MIN_COVERAGE*100)}% weight coverage; only "
                 f"clean full-set runs are recorded"
                 + (f"; board judge: `{board_judge}` - judged scores from "

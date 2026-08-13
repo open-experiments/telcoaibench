@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-13 00:43",
+ "generated": "2026-08-13 02:29",
  "weights": {
   "teleqna": 1.0,
   "teletables": 1.0,
@@ -19,9 +19,9 @@
    "key": "telecomgpt-r1",
    "model": "telecomgpt-r1",
    "endpoint": "http://telecomgpt-r1-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.7507,
-   "coverage": 0.696,
-   "judge": "-",
+   "composite": 0.6802,
+   "coverage": 1.0,
+   "judge": "gpt-5.5",
    "results": {
     "teleqna": {
      "accuracy": 0.902,
@@ -86,6 +86,22 @@
      "tier": "lite",
      "judge": null,
      "date": "2026-08-11"
+    },
+    "telcos_last_exam": {
+     "accuracy": 0.5948,
+     "stderr": 0.0346,
+     "n": 30,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
+    },
+    "vendor_genai": {
+     "accuracy": 0.4181,
+     "stderr": 0.0161,
+     "n": 24,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
     }
    },
    "ranked": true
@@ -176,81 +192,6 @@
      "n": 24,
      "tier": "lite",
      "judge": "gpt-5.5",
-     "date": "2026-08-10"
-    }
-   },
-   "ranked": true
-  },
-  {
-   "key": "gpt-oss-120b",
-   "model": "gpt-oss-120b",
-   "endpoint": "http://gpt-oss-120b-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.6049,
-   "coverage": 0.696,
-   "judge": "-",
-   "results": {
-    "teleqna": {
-     "accuracy": 0.809,
-     "stderr": 0.0124,
-     "n": 1000,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "teletables": {
-     "accuracy": 0.29,
-     "stderr": 0.0456,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "oranbench": {
-     "accuracy": 0.7933,
-     "stderr": 0.0332,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "srsranbench": {
-     "accuracy": 0.8467,
-     "stderr": 0.0295,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "telemath": {
-     "accuracy": 0.66,
-     "stderr": 0.0476,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "telelogs": {
-     "accuracy": 0.48,
-     "stderr": 0.0502,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "3gpp": {
-     "accuracy": 0.3,
-     "stderr": 0.0461,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-10"
-    },
-    "6g_bench": {
-     "accuracy": 0.66,
-     "stderr": 0.0388,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
      "date": "2026-08-10"
     }
    },
@@ -723,6 +664,97 @@
    "ranked": true
   },
   {
+   "key": "gpt-oss-120b",
+   "model": "gpt-oss-120b",
+   "endpoint": "http://gpt-oss-120b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.5601,
+   "coverage": 1.0,
+   "judge": "gpt-5.5",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.809,
+     "stderr": 0.0124,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "teletables": {
+     "accuracy": 0.29,
+     "stderr": 0.0456,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "oranbench": {
+     "accuracy": 0.7933,
+     "stderr": 0.0332,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "srsranbench": {
+     "accuracy": 0.8467,
+     "stderr": 0.0295,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "telemath": {
+     "accuracy": 0.66,
+     "stderr": 0.0476,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "telelogs": {
+     "accuracy": 0.48,
+     "stderr": 0.0502,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "3gpp": {
+     "accuracy": 0.3,
+     "stderr": 0.0461,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "6g_bench": {
+     "accuracy": 0.66,
+     "stderr": 0.0388,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-10"
+    },
+    "telcos_last_exam": {
+     "accuracy": 0.5566,
+     "stderr": 0.0354,
+     "n": 30,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
+    },
+    "vendor_genai": {
+     "accuracy": 0.3256,
+     "stderr": 0.0197,
+     "n": 24,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
+    }
+   },
+   "ranked": true
+  },
+  {
    "key": "falcon-h1-34b",
    "model": "falcon-h1-34b",
    "endpoint": "http://falcon-h1-34b-predictor.gsma-otel2-test.svc.cluster.local:8080",
@@ -873,81 +905,6 @@
    "ranked": true
   },
   {
-   "key": "qwen3-6-35b-a3b",
-   "model": "qwen3-6-35b-a3b",
-   "endpoint": "http://qwen3-6-35b-a3b-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.5303,
-   "coverage": 0.696,
-   "judge": "-",
-   "results": {
-    "teleqna": {
-     "accuracy": 0.812,
-     "stderr": 0.0124,
-     "n": 1000,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "teletables": {
-     "accuracy": 0.33,
-     "stderr": 0.0473,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "oranbench": {
-     "accuracy": 0.8267,
-     "stderr": 0.031,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "srsranbench": {
-     "accuracy": 0.8067,
-     "stderr": 0.0324,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "telemath": {
-     "accuracy": 0.51,
-     "stderr": 0.0502,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "telelogs": {
-     "accuracy": 0.15,
-     "stderr": 0.0359,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "3gpp": {
-     "accuracy": 0.08,
-     "stderr": 0.0273,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "6g_bench": {
-     "accuracy": 0.7267,
-     "stderr": 0.0365,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    }
-   },
-   "ranked": true
-  },
-  {
    "key": "exaone-4-0-32b",
    "model": "exaone-4-0-32b",
    "endpoint": "http://exaone-4-0-32b-predictor.gsma-otel2-test.svc.cluster.local:8080",
@@ -1018,6 +975,97 @@
      "tier": "lite",
      "judge": null,
      "date": "2026-08-11"
+    }
+   },
+   "ranked": true
+  },
+  {
+   "key": "qwen3-6-35b-a3b",
+   "model": "qwen3-6-35b-a3b",
+   "endpoint": "http://qwen3-6-35b-a3b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.5284,
+   "coverage": 1.0,
+   "judge": "gpt-5.5",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.812,
+     "stderr": 0.0124,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "teletables": {
+     "accuracy": 0.33,
+     "stderr": 0.0473,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "oranbench": {
+     "accuracy": 0.8267,
+     "stderr": 0.031,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "srsranbench": {
+     "accuracy": 0.8067,
+     "stderr": 0.0324,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telemath": {
+     "accuracy": 0.51,
+     "stderr": 0.0502,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telelogs": {
+     "accuracy": 0.15,
+     "stderr": 0.0359,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "3gpp": {
+     "accuracy": 0.08,
+     "stderr": 0.0273,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "6g_bench": {
+     "accuracy": 0.7267,
+     "stderr": 0.0365,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telcos_last_exam": {
+     "accuracy": 0.5639,
+     "stderr": 0.0385,
+     "n": 30,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
+    },
+    "vendor_genai": {
+     "accuracy": 0.4708,
+     "stderr": 0.0281,
+     "n": 24,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
     }
    },
    "ranked": true
@@ -1248,6 +1296,97 @@
    "ranked": true
   },
   {
+   "key": "qwen3-6-27b",
+   "model": "qwen3-6-27b",
+   "endpoint": "http://qwen3-6-27b-predictor.gsma-otel2-test.svc.cluster.local:8080",
+   "composite": 0.4983,
+   "coverage": 1.0,
+   "judge": "gpt-5.5",
+   "results": {
+    "teleqna": {
+     "accuracy": 0.814,
+     "stderr": 0.0123,
+     "n": 1000,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "teletables": {
+     "accuracy": 0.32,
+     "stderr": 0.0469,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "oranbench": {
+     "accuracy": 0.8,
+     "stderr": 0.0328,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "srsranbench": {
+     "accuracy": 0.8267,
+     "stderr": 0.031,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telemath": {
+     "accuracy": 0.27,
+     "stderr": 0.0446,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telelogs": {
+     "accuracy": 0.05,
+     "stderr": 0.0219,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "3gpp": {
+     "accuracy": 0.08,
+     "stderr": 0.0273,
+     "n": 100,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "6g_bench": {
+     "accuracy": 0.6933,
+     "stderr": 0.0378,
+     "n": 150,
+     "tier": "lite",
+     "judge": null,
+     "date": "2026-08-11"
+    },
+    "telcos_last_exam": {
+     "accuracy": 0.5653,
+     "stderr": 0.0358,
+     "n": 30,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
+    },
+    "vendor_genai": {
+     "accuracy": 0.4969,
+     "stderr": 0.0233,
+     "n": 24,
+     "tier": "lite",
+     "judge": "gpt-5.5",
+     "date": "2026-08-13"
+    }
+   },
+   "ranked": true
+  },
+  {
    "key": "granite-4-0-h-small",
    "model": "granite-4-0-h-small",
    "endpoint": "http://granite-4-0-h-small-predictor.gsma-otel2-test.svc.cluster.local:8080",
@@ -1318,81 +1457,6 @@
      "tier": "lite",
      "judge": null,
      "date": "2026-08-12"
-    }
-   },
-   "ranked": true
-  },
-  {
-   "key": "qwen3-6-27b",
-   "model": "qwen3-6-27b",
-   "endpoint": "http://qwen3-6-27b-predictor.gsma-otel2-test.svc.cluster.local:8080",
-   "composite": 0.4818,
-   "coverage": 0.696,
-   "judge": "-",
-   "results": {
-    "teleqna": {
-     "accuracy": 0.814,
-     "stderr": 0.0123,
-     "n": 1000,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "teletables": {
-     "accuracy": 0.32,
-     "stderr": 0.0469,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "oranbench": {
-     "accuracy": 0.8,
-     "stderr": 0.0328,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "srsranbench": {
-     "accuracy": 0.8267,
-     "stderr": 0.031,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "telemath": {
-     "accuracy": 0.27,
-     "stderr": 0.0446,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "telelogs": {
-     "accuracy": 0.05,
-     "stderr": 0.0219,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "3gpp": {
-     "accuracy": 0.08,
-     "stderr": 0.0273,
-     "n": 100,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
-    },
-    "6g_bench": {
-     "accuracy": 0.6933,
-     "stderr": 0.0378,
-     "n": 150,
-     "tier": "lite",
-     "judge": null,
-     "date": "2026-08-11"
     }
    },
    "ranked": true
