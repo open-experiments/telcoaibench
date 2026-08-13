@@ -3801,6 +3801,12 @@ class ChatInterface:
                              judge_label=None):
         import time as _time
         error_notes = []
+        record_notes = []
+        # per-target stash of the last completed run, so 'Publish to
+        # Leaderboard' has something concrete to post rather than re-running.
+        if not hasattr(self, "_last_runs"):
+            self._last_runs = {}
+        key = model_key
 
         def _first_error(_task):
             try:
@@ -3855,9 +3861,17 @@ class ChatInterface:
                 r = holder["result"]
                 summary.append(r)
                 try:
-                    self._lb_record(entry, r, tier, judge_label, mod)
+                    note = self._lb_record(entry, r, tier, judge_label, mod)
+                    if note:
+                        record_notes.append(note)
                 except Exception as e:
                     print(f"leaderboard record failed: {e}")
+                    record_notes.append(f"{task}: record failed ({e})")
+                # stash for the Publish button
+                self._last_runs.setdefault(key, {})
+                self._last_runs[key] = {"entry": entry, "tier": tier,
+                                        "judge_label": judge_label,
+                                        "mod": mod, "summary": summary}
                 nerr = r.get("request_errors", 0)
                 status = "stopped (partial)" if r.get("stopped") else "done"
                 if nerr:
@@ -3888,6 +3902,16 @@ class ChatInterface:
                   + f"| tier: **{tier}** | temperature 0.0 "
                   + f"| {int(_time.time() - t_start)}s total" + "\n\n"
                   + f"Per-sample transcripts saved to `{out_dir}` (app container).")
+            # Leaderboard status, stated explicitly. A run that silently fails
+            # to reach the board is indistinguishable from one that succeeded.
+            if record_notes:
+                md += ("\n\n**Leaderboard:** "
+                       + "; ".join(record_notes)
+                       + ("\n\nUse **Publish to Leaderboard** below to post "
+                          "partial results - they are marked with their sample "
+                          "count and are not comparable to full-set rows."
+                          if any("not recorded -" in n for n in record_notes)
+                          else ""))
             # judged breakdowns inline
             for r in summary:
                 bd = r.get("breakdown") or {}
@@ -4156,32 +4180,131 @@ class ChatInterface:
         except Exception as e:
             print(f"leaderboard save failed: {e}")
 
-    def _lb_record(self, entry, task_summary, tier, judge_label, mod):
-        """Auto-record a clean, full-lite-coverage task result."""
+    def _lb_record(self, entry, task_summary, tier, judge_label, mod,
+                   allow_partial=False):
+        """Record a task result on the board. Returns a short status string.
+
+        Full-set clean runs are recorded automatically. A sample-limited run
+        used to be dropped SILENTLY, which is how a user could finish a run,
+        see "complete", and find nothing on the leaderboard with no
+        explanation. It now either records (when the user explicitly
+        publishes) or returns the reason it did not.
+
+        A partial result is stored with its real `n` and a `partial` flag so
+        the board can mark it: a 25-sample teleqna carries roughly six times
+        the standard error of the full 1000-sample set and must never be
+        displayed as though it were the same measurement.
+        """
         r = task_summary
         task = r["task"]
-        if r.get("stopped") or r.get("request_errors", 0) > 0:
-            return  # only clean runs count
+        if r.get("stopped"):
+            return f"{task}: not recorded (run stopped)"
+        if r.get("request_errors", 0) > 0:
+            return f"{task}: not recorded ({r['request_errors']} request errors)"
         try:
             full_n = len(mod.load_dataset(task, tier))
         except Exception:
-            return
-        if r["n"] < full_n:
-            return  # min-samples rule: full set only
+            return f"{task}: not recorded (dataset size unknown)"
+        partial = r["n"] < full_n
+        if partial and not allow_partial:
+            return (f"{task}: not recorded - {r['n']}/{full_n} samples. "
+                    f"Set 'Sample limit' to 0 for the full set, or use "
+                    f"'Publish to Leaderboard' to post it as partial.")
         board = self._lb_load()
         key = entry["model"]   # model IS the identity; endpoint is metadata
         e = board["entries"].setdefault(key, {
             "model": entry["model"], "endpoint": entry["endpoint"],
             "results": {}, "history": []})
         rec = {"accuracy": r["accuracy"], "stderr": r["stderr"], "n": r["n"],
+               "full_n": full_n, "partial": partial,
                "tier": tier, "judge": judge_label,
                "date": datetime.now().strftime("%Y-%m-%d")}
         prev = e["results"].get(task)
+        # Retention: a re-run only replaces an existing result if it is at
+        # least as good. Two guards make that safe rather than merely
+        # flattering:
+        #   1. BASIS FIRST. A full-set run always replaces a partial one, even
+        #      if it scores lower - otherwise a lucky 25-sample 0.96 would
+        #      permanently block the honest 1000-sample 0.84 from ever
+        #      landing, which is the opposite of measurement.
+        #   2. Same basis -> keep the better score (ties replace, so a re-run
+        #      still refreshes the date).
+        # Note this is a best-of-N policy: repeated runs can only move a score
+        # up, so a row's accuracy is biased high by roughly the run-to-run
+        # noise. `attempts` is recorded so that bias is visible, not hidden.
+        replaced, why = True, ""
+        if prev:
+            prev_partial = bool(prev.get("partial"))
+            if prev_partial and not partial:
+                replaced = True          # full set supersedes partial
+            elif partial and not prev_partial:
+                replaced, why = False, (
+                    f"incumbent is a full-set run ({prev.get('full_n', '?')} "
+                    f"samples); a {r['n']}-sample run cannot replace it")
+            elif r["accuracy"] < prev["accuracy"]:
+                replaced, why = False, (
+                    f"new run {r['accuracy']:.4f} was lower")
+        rec["attempts"] = int((prev or {}).get("attempts", 0)) + 1
+        if not replaced:
+            # keep the incumbent, but count the attempt and log the history
+            prev["attempts"] = rec["attempts"]
+            e["history"].append(dict(rec, task=task,
+                                     prev=prev["accuracy"], kept="previous"))
+            e["history"] = e["history"][-200:]
+            self._lb_save(board)
+            return f"{task}: kept previous {prev['accuracy']:.4f} ({why})"
         e["results"][task] = rec
         e["history"].append(dict(rec, task=task,
                                  prev=prev["accuracy"] if prev else None))
         e["history"] = e["history"][-200:]
         self._lb_save(board)
+        return (f"{task}: recorded ({r['n']}/{full_n}"
+                + (", PARTIAL)" if partial else ")"))
+
+    def publish_last_run(self, model_key):
+        """Post the most recent completed run for a target to the board.
+
+        Partial (sample-limited) results are allowed here - explicitly, on a
+        user action - and are stored flagged so the board can mark them.
+        """
+        st = getattr(self, "_last_runs", {}).get(model_key)
+        if not st or not st.get("summary"):
+            return ("Nothing to publish for this target yet - run a benchmark "
+                    "first.")
+        notes = []
+        for r in st["summary"]:
+            try:
+                notes.append(self._lb_record(st["entry"], r, st["tier"],
+                                             st["judge_label"], st["mod"],
+                                             allow_partial=True))
+            except Exception as e:
+                notes.append(f"{r.get('task')}: failed ({e})")
+        posted = [n for n in notes if ": recorded" in n]
+        part = [n for n in notes if "PARTIAL" in n]
+        head = f"Published {len(posted)}/{len(notes)} result(s) to the Leaderboard."
+        if part:
+            head += (f" {len(part)} marked PARTIAL - fewer samples than the "
+                     f"full set, so not comparable to full-set rows.")
+        return head + "\n\n" + "; ".join(notes)
+
+    def lb_delete_entry(self, model_key):
+        """Remove one model's entire row from the board (state volume)."""
+        if not model_key or model_key == "(select a model)":
+            return "Pick a model to delete."
+        board = self._lb_load()
+        if model_key not in board.get("entries", {}):
+            return f"`{model_key}` is not on the board."
+        n = len(board["entries"][model_key].get("results", {}))
+        board["entries"].pop(model_key)
+        self._lb_save(board)
+        return (f"Deleted `{model_key}` and its {n} suite result(s). "
+                f"Re-run the benchmark to put it back.")
+
+    def lb_entry_keys(self):
+        try:
+            return sorted(self._lb_load().get("entries", {}).keys())
+        except Exception:
+            return []
 
     def _lb_compute(self):
         """Rank entries. Returns (ranked, unranked, board_judge, note)."""
@@ -4288,6 +4411,17 @@ class ChatInterface:
                 return "-"
             return f"{v:.4f}" if r.get("auto8_full") else f"{v:.4f} *"
 
+        def _cell(row, t):
+            rec = (row.get("results") or {}).get(t)
+            if not rec:
+                return "-"
+            # a sample-limited result carries far wider error bars than a
+            # full-set one; show the count so the two are never read alike
+            if rec.get("partial"):
+                return (f"{rec['accuracy']:.3f} ~{rec.get('n','?')}/"
+                        f"{rec.get('full_n','?')}")
+            return f"{rec['accuracy']:.3f}"
+
         band_done = False
         for i, r in enumerate(ranked, 1):
             if not r["verified"] and not band_done:
@@ -4299,8 +4433,7 @@ class ChatInterface:
                          f"{r['composite']:.4f}" if r["verified"] else "-",
                          _a8(r),
                          f"{r['coverage']*100:.0f}%", r["judge"]]
-                        + [f"{r['results'][t]['accuracy']:.3f}"
-                           if t in r["results"] else "-" for t in tasks])
+                        + [_cell(r, t) for t in tasks])
         for r in unranked:
             # provisional: the composite averages only the suites recorded
             # so far, so it is NOT comparable to a ranked model's score.
@@ -4310,8 +4443,7 @@ class ChatInterface:
             rows.append(["partial", r["model"], "-", _a8(r),
                          f"{r['coverage']*100:.0f}% - {done_n}/{all_n} suites",
                          r["judge"]]
-                        + [f"{r['results'][t]['accuracy']:.3f}"
-                           if t in r["results"] else "-" for t in tasks])
+                        + [_cell(r, t) for t in tasks])
         # marathon live status rows: models being benchmarked / queued.
         # written by the in-cluster marathon runner to the shared state PVC
         try:
@@ -5129,6 +5261,11 @@ class ChatInterface:
                                             label="Results",
                                         )
                                         summary_md = gr.Markdown("")
+                                        with gr.Row():
+                                            publish_btn = gr.Button(
+                                                "Publish to Leaderboard",
+                                                variant="secondary", scale=1)
+                                        publish_md = gr.Markdown("")
                                         report_file = gr.File(
                                             label="Run report (HTML)",
                                             interactive=False, visible=False)
@@ -5151,6 +5288,15 @@ class ChatInterface:
                                                         yield (st, tb, md,
                                                                gr.update())
                                             return _run
+
+                                        def _mk_publish(k):
+                                            def _pub():
+                                                return self.publish_last_run(k)
+                                            return _pub
+
+                                        publish_btn.click(
+                                            fn=_mk_publish(key), inputs=[],
+                                            outputs=[publish_md])
 
                                         def _mk_stop(k):
                                             def _stop():
@@ -5250,6 +5396,15 @@ class ChatInterface:
                         lb_publish_btn = gr.Button("Publish snapshot",
                                                    variant="primary")
                     with gr.Row():
+                        lb_del_dd = gr.Dropdown(
+                            choices=self.lb_entry_keys(),
+                            value=None, label="Delete entry",
+                            info="removes this model's row from the board",
+                            interactive=True, scale=3)
+                        lb_del_btn = gr.Button("Delete", variant="stop",
+                                               scale=1)
+                    lb_del_status = gr.Markdown("")
+                    with gr.Row():
                         lb_json_file = gr.File(label="leaderboard.json",
                                                interactive=False,
                                                visible=False)
@@ -5259,7 +5414,15 @@ class ChatInterface:
 
                     def _lb_refresh():
                         h, r, n = self._lb_table()
-                        return gr.update(headers=h, value=r), n
+                        return (gr.update(headers=h, value=r), n,
+                                gr.update(choices=self.lb_entry_keys()))
+
+                    def _lb_do_delete(sel):
+                        msg = self.lb_delete_entry(sel)
+                        h, r, n = self._lb_table()
+                        return (msg, gr.update(headers=h, value=r), n,
+                                gr.update(choices=self.lb_entry_keys(),
+                                          value=None))
 
                     def _lb_do_publish():
                         jp, mp = self.lb_publish()
@@ -5267,11 +5430,15 @@ class ChatInterface:
                                 gr.update(value=mp, visible=True))
 
                     lb_refresh_btn.click(fn=_lb_refresh, inputs=[],
-                                         outputs=[lb_table, lb_note])
+                                         outputs=[lb_table, lb_note,
+                                                  lb_del_dd])
                     lb_publish_btn.click(fn=_lb_do_publish, inputs=[],
                                          outputs=[lb_json_file, lb_md_file])
+                    lb_del_btn.click(fn=_lb_do_delete, inputs=[lb_del_dd],
+                                     outputs=[lb_del_status, lb_table,
+                                              lb_note, lb_del_dd])
                     interface.load(fn=_lb_refresh, inputs=[],
-                                   outputs=[lb_table, lb_note])
+                                   outputs=[lb_table, lb_note, lb_del_dd])
 
             # Event handlers
             def update_system_prompt(selection):
