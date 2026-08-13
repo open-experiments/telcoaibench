@@ -4398,15 +4398,25 @@ class ChatInterface:
         return jpath, mpath
 
     def model_hero_html(self):
-        """Live model identity strip: name, status dot, latency, endpoint
-        details. Polled by a UI timer every 30s."""
+        """Live identity strip for EVERY served model, not just the default.
+
+        The strip used to render self.config only, so a two-model deployment
+        looked like a one-model deployment and a user could not tell whether
+        the second engine was up. It now renders one card per chat target.
+        """
+        cards = [self._hero_card(lbl, t["endpoint"], t["model"])
+                 for lbl, t in self.chat_targets().items()]
+        return ('<div style="display:flex;flex-direction:column;gap:10px">'
+                + "".join(cards) + '</div>')
+
+    def _hero_card(self, label, endpoint, model_name):
         import time as _time
-        model = self.config.model_name
-        host = self.config.api_endpoint.split("//")[-1]
+        model = model_name
+        host = endpoint.split("//")[-1]
         online, latency_ms, ctx = False, None, None
         try:
             t0 = _time.time()
-            r = requests.get(self.config.api_endpoint + "/v1/models",
+            r = requests.get(endpoint + "/v1/models",
                              headers=({"Authorization": f"Bearer {self.config.api_token}"}
                                       if self.config.use_token_auth else {}),
                              timeout=6, verify=self.config.verify_ssl)
@@ -4982,6 +4992,31 @@ class ChatInterface:
                     bench_keys_init = self._bench_registry_init()
                     self._judge_registry_init()
                     bench_targets_state = gr.State(bench_keys_init)
+
+                    # Target picker. The tab renders one run-card per target,
+                    # which is unreadable once a deployment has more than two
+                    # or three endpoints registered. This dropdown filters the
+                    # cards to the selected endpoint - it does not replace the
+                    # card, so the existing run/stop/remove wiring is untouched.
+                    ALL_TARGETS = "All targets"
+                    bench_target_dd = gr.Dropdown(
+                        choices=[ALL_TARGETS] + bench_keys_init,
+                        value=(bench_keys_init[0] if len(bench_keys_init) == 1
+                               else ALL_TARGETS),
+                        label="Benchmark target endpoint",
+                        info="which served model this run is measured against",
+                        interactive=True,
+                    )
+
+                    def _pick_target(sel):
+                        keys = list(self._bench_registry.keys())
+                        if not sel or sel == ALL_TARGETS or sel not in keys:
+                            return keys
+                        return [sel]
+
+                    bench_target_dd.change(
+                        _pick_target, inputs=[bench_target_dd],
+                        outputs=[bench_targets_state])
                     with gr.Accordion("Provision new model endpoint", open=False):
                         with gr.Row():
                             bench_new_url = gr.Textbox(
@@ -5185,11 +5220,16 @@ class ChatInterface:
                     def _load_targets_ui():
                         keys = list(self._bench_registry_init())
                         self._judge_registry_init()
-                        return keys, gr.update(choices=self._judge_choices())
+                        # the dropdown is refreshed alongside the cards so a
+                        # target added in another browser tab still appears
+                        return (keys, gr.update(choices=self._judge_choices()),
+                                gr.update(choices=[ALL_TARGETS] + keys,
+                                          value=ALL_TARGETS))
 
                     interface.load(
                         fn=_load_targets_ui, inputs=[],
-                        outputs=[bench_targets_state, bench_judge],
+                        outputs=[bench_targets_state, bench_judge,
+                                 bench_target_dd],
                     )
 
                 with gr.TabItem("Leaderboard"):
