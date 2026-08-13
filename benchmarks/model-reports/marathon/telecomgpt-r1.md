@@ -12,10 +12,12 @@
 | 6g_bench | **0.720** | 0.0368 | 150 | lite | 2026-08-11 |
 | oranbench | **0.940** | 0.0195 | 150 | lite | 2026-08-11 |
 | srsranbench | **0.953** | 0.0173 | 150 | lite | 2026-08-11 |
+| telcos_last_exam | **0.595** | 0.0346 | 30 | lite | 2026-08-13 |
 | telelogs | **0.990** | 0.01 | 100 | lite | 2026-08-11 |
 | telemath | **0.620** | 0.0488 | 100 | lite | 2026-08-11 |
 | teleqna | **0.902** | 0.0094 | 1000 | lite | 2026-08-11 |
 | teletables | **0.360** | 0.0482 | 100 | lite | 2026-08-11 |
+| vendor_genai | **0.418** | 0.0161 | 24 | lite | 2026-08-13 |
 
 ## Generation behavior
 
@@ -25,10 +27,12 @@
 | 6g_bench | 150 | 24.1 | 629 |
 | oranbench | 150 | 19.2 | 510 |
 | srsranbench | 150 | 21.0 | 559 |
+| telcos_last_exam | 30 | 167.5 | 2551 |
 | telelogs | 100 | 23.0 | 514 |
 | telemath | 100 | 52.6 | 1391 |
 | teleqna | 1000 | 16.5 | 425 |
 | teletables | 100 | 28.4 | 766 |
+| vendor_genai | 24 | 62.6 | 1084 |
 
 ## Sample misses (first per suite, for audit)
 
