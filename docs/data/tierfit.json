@@ -5,8 +5,8 @@
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
   "1": "User edge - small models, 1-4 GPUs, 10-50ms",
   "2": "Provider edge - 13-70B, 50-150ms",
-  "3": "Region - 70-405B, 100-300ms",
-  "4": "Core DC - 405B+, throughput SLO"
+  "3": "Region - 70-100B, 100-300ms",
+  "4": "Core DC - 100B+ or throughput-SLO workloads"
  },
  "models": {
   "telecomgpt-r1": {
@@ -68,9 +68,9 @@
     "fault": 0.48,
     "structured": 0.29
    },
-   "fit_tier": 3,
-   "size_band_tier": 3,
-   "notes": "117B MoE in 63GB MXFP4 - a Tier 3 brain on a single-GPU Tier 2 budget; served quantized (mxfp4)"
+   "fit_tier": 4,
+   "size_band_tier": 4,
+   "notes": "117B places it at Tier 4 on size, but it runs in 63GB MXFP4 on a single GPU and answers in ~6.6s - by far the cheapest and fastest 100B+ model measured; served quantized (mxfp4)"
   },
   "otel2-llm-31b-it": {
    "composite": 0.5993,
@@ -342,8 +342,8 @@
     "structured": 0.27
    },
    "fit_tier": 4,
-   "size_band_tier": 3,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit moe(12B act))"
+   "size_band_tier": 4,
+   "notes": "served quantized (awq-4bit moe(12B act))"
   },
   "granite-4-0-h-small": {
    "composite": 0.4925,
