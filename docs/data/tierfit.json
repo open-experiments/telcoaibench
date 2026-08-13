@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-13 17:50",
+ "generated": "2026-08-13 19:00",
  "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
@@ -387,6 +387,48 @@
    "size_band_tier": 2,
    "notes": "verbose/slow decode - latency envelope only fits a tier up"
   },
+  "otel-llm-20b-it": {
+   "composite": 0.4287,
+   "coverage": 1.0,
+   "params_b": 20,
+   "weights_gb": 42,
+   "precision": "bf16 (fp32 ckpt)",
+   "mean_latency_s": 23.2,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 1457,
+   "axes": {
+    "knowledge": 0.724,
+    "protocol": 0.475,
+    "math": 0.03,
+    "fault": 0.27,
+    "structured": 0.27
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "nemotron-3-nano-30b": {
+   "composite": 0.4252,
+   "coverage": 1.0,
+   "params_b": 30,
+   "weights_gb": 63,
+   "precision": "bf16 moe(3B act)",
+   "mean_latency_s": 58.8,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 3907,
+   "axes": {
+    "knowledge": 0.695,
+    "protocol": 0.422,
+    "math": 0.62,
+    "fault": 0.0,
+    "structured": 0.08
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
   "gpt-oss-20b": {
    "composite": 0.5747,
    "coverage": 0.696,
@@ -450,27 +492,6 @@
    "size_band_tier": 1,
    "notes": ""
   },
-  "otel-llm-20b-it": {
-   "composite": 0.4615,
-   "coverage": 0.696,
-   "params_b": 20,
-   "weights_gb": 42,
-   "precision": "bf16 (fp32 ckpt)",
-   "mean_latency_s": 23.2,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 1457,
-   "axes": {
-    "knowledge": 0.724,
-    "protocol": 0.475,
-    "math": 0.03,
-    "fault": 0.27,
-    "structured": 0.27
-   },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": ""
-  },
   "eurollm-22b": {
    "composite": 0.4515,
    "coverage": 0.696,
@@ -491,27 +512,6 @@
    "fit_tier": 2,
    "size_band_tier": 2,
    "notes": ""
-  },
-  "nemotron-3-nano-30b": {
-   "composite": 0.4339,
-   "coverage": 0.87,
-   "params_b": 30,
-   "weights_gb": 63,
-   "precision": "bf16 moe(3B act)",
-   "mean_latency_s": 58.8,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 3907,
-   "axes": {
-    "knowledge": 0.695,
-    "protocol": 0.422,
-    "math": 0.62,
-    "fault": 0.0,
-    "structured": 0.08
-   },
-   "fit_tier": 3,
-   "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
   },
   "nemotron-3-5-lightning-30b": {
    "composite": 0.4219,

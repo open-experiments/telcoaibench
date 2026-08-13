@@ -919,7 +919,7 @@ Total Budget: 10ms
 2. **Software Stack**
    ```dockerfile
    # Optimized container
-   FROM ubuntu:realtime-kernel
+   FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
    
    # CPU isolation
    RUN echo "isolcpus=2-15" >> /boot/cmdline.txt
