@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-13 11:46",
+ "generated": "2026-08-13 16:11",
  "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
@@ -93,6 +93,69 @@
    "size_band_tier": 4,
    "notes": "117B places it at Tier 4 on size, but it runs in 63GB MXFP4 on a single GPU and answers in ~6.6s - by far the cheapest and fastest 100B+ model measured; served quantized (mxfp4)"
   },
+  "seed-oss-36b": {
+   "composite": 0.5456,
+   "coverage": 1.0,
+   "params_b": 36,
+   "weights_gb": 72,
+   "precision": "bf16",
+   "mean_latency_s": 197.4,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 3652,
+   "axes": {
+    "knowledge": 0.779,
+    "protocol": 0.492,
+    "math": 0.52,
+    "fault": 0.54,
+    "structured": 0.38
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "nemotron-3-super-120b": {
+   "composite": 0.5456,
+   "coverage": 1.0,
+   "params_b": 124,
+   "weights_gb": 124,
+   "precision": "fp8 moe(12B act)",
+   "mean_latency_s": 4.2,
+   "latency_source": "unbatched probe",
+   "probe_tok_per_s": 122.7,
+   "mean_output_tokens": null,
+   "axes": {
+    "knowledge": 0.795,
+    "protocol": 0.412,
+    "math": 0.69,
+    "fault": 0.58,
+    "structured": 0.18
+   },
+   "fit_tier": 4,
+   "size_band_tier": 4,
+   "notes": "served quantized (fp8 moe(12B act))"
+  },
+  "qwq-32b": {
+   "composite": 0.5304,
+   "coverage": 1.0,
+   "params_b": 32,
+   "weights_gb": 66,
+   "precision": "bf16",
+   "mean_latency_s": 180.0,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 3664,
+   "axes": {
+    "knowledge": 0.784,
+    "protocol": 0.41,
+    "math": 0.63,
+    "fault": 0.54,
+    "structured": 0.27
+   },
+   "fit_tier": 3,
+   "size_band_tier": 2,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
   "qwen3-6-35b-a3b": {
    "composite": 0.5284,
    "coverage": 1.0,
@@ -113,6 +176,90 @@
    "fit_tier": 3,
    "size_band_tier": 2,
    "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "mistral-small-3-2-24b": {
+   "composite": 0.5235,
+   "coverage": 1.0,
+   "params_b": 24,
+   "weights_gb": 48,
+   "precision": "bf16",
+   "mean_latency_s": 7.5,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 222,
+   "axes": {
+    "knowledge": 0.764,
+    "protocol": 0.655,
+    "math": 0.39,
+    "fault": 0.24,
+    "structured": 0.29
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "magistral-small-2509": {
+   "composite": 0.5208,
+   "coverage": 1.0,
+   "params_b": 24,
+   "weights_gb": 48,
+   "precision": "bf16",
+   "mean_latency_s": 10.1,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 294,
+   "axes": {
+    "knowledge": 0.765,
+    "protocol": 0.638,
+    "math": 0.47,
+    "fault": 0.28,
+    "structured": 0.28
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "falcon-h1-34b": {
+   "composite": 0.5137,
+   "coverage": 1.0,
+   "params_b": 34,
+   "weights_gb": 67,
+   "precision": "bf16",
+   "mean_latency_s": 10.5,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 199,
+   "axes": {
+    "knowledge": 0.775,
+    "protocol": 0.508,
+    "math": 0.51,
+    "fault": 0.22,
+    "structured": 0.34
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
+  },
+  "kimi-dev-72b": {
+   "composite": 0.502,
+   "coverage": 1.0,
+   "params_b": 73,
+   "weights_gb": 40,
+   "precision": "awq-4bit",
+   "mean_latency_s": 78.4,
+   "latency_source": "suite mean (batched)",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": 2222,
+   "axes": {
+    "knowledge": 0.776,
+    "protocol": 0.453,
+    "math": 0.42,
+    "fault": 0.34,
+    "structured": 0.32
+   },
+   "fit_tier": 4,
+   "size_band_tier": 3,
+   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit)"
   },
   "qwen3-6-27b": {
    "composite": 0.4983,
@@ -135,89 +282,26 @@
    "size_band_tier": 2,
    "notes": "verbose/slow decode - latency envelope only fits a tier up"
   },
-  "seed-oss-36b": {
-   "composite": 0.595,
-   "coverage": 0.696,
-   "params_b": 36,
-   "weights_gb": 72,
-   "precision": "bf16",
-   "mean_latency_s": 197.4,
+  "glm-4-5-air": {
+   "composite": 0.482,
+   "coverage": 1.0,
+   "params_b": 106,
+   "weights_gb": 63,
+   "precision": "awq-4bit moe(12B act)",
+   "mean_latency_s": 73.4,
    "latency_source": "suite mean (batched)",
    "probe_tok_per_s": null,
-   "mean_output_tokens": 3652,
+   "mean_output_tokens": 3123,
    "axes": {
-    "knowledge": 0.779,
-    "protocol": 0.492,
-    "math": 0.52,
-    "fault": 0.54,
-    "structured": 0.38
-   },
-   "fit_tier": 3,
-   "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
-  },
-  "nemotron-3-super-120b": {
-   "composite": 0.5822,
-   "coverage": 0.696,
-   "params_b": 124,
-   "weights_gb": 124,
-   "precision": "fp8 moe(12B act)",
-   "mean_latency_s": 4.2,
-   "latency_source": "unbatched probe",
-   "probe_tok_per_s": 122.7,
-   "mean_output_tokens": null,
-   "axes": {
-    "knowledge": 0.795,
-    "protocol": 0.412,
-    "math": 0.69,
-    "fault": 0.58,
-    "structured": 0.18
+    "knowledge": 0.745,
+    "protocol": 0.395,
+    "math": 0.3,
+    "fault": 0.41,
+    "structured": 0.27
    },
    "fit_tier": 4,
    "size_band_tier": 4,
-   "notes": "served quantized (fp8 moe(12B act))"
-  },
-  "qwq-32b": {
-   "composite": 0.5767,
-   "coverage": 0.696,
-   "params_b": 32,
-   "weights_gb": 66,
-   "precision": "bf16",
-   "mean_latency_s": 180.0,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 3664,
-   "axes": {
-    "knowledge": 0.784,
-    "protocol": 0.41,
-    "math": 0.63,
-    "fault": 0.54,
-    "structured": 0.27
-   },
-   "fit_tier": 3,
-   "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
-  },
-  "magistral-small-2509": {
-   "composite": 0.5753,
-   "coverage": 0.696,
-   "params_b": 24,
-   "weights_gb": 48,
-   "precision": "bf16",
-   "mean_latency_s": 10.1,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 294,
-   "axes": {
-    "knowledge": 0.765,
-    "protocol": 0.638,
-    "math": 0.47,
-    "fault": 0.28,
-    "structured": 0.28
-   },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": ""
+   "notes": "served quantized (awq-4bit moe(12B act))"
   },
   "gpt-oss-20b": {
    "composite": 0.5747,
@@ -239,90 +323,6 @@
    "fit_tier": 2,
    "size_band_tier": 2,
    "notes": "served quantized (mxfp4)"
-  },
-  "mistral-small-3-2-24b": {
-   "composite": 0.5654,
-   "coverage": 0.696,
-   "params_b": 24,
-   "weights_gb": 48,
-   "precision": "bf16",
-   "mean_latency_s": 7.5,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 222,
-   "axes": {
-    "knowledge": 0.764,
-    "protocol": 0.655,
-    "math": 0.39,
-    "fault": 0.24,
-    "structured": 0.29
-   },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": ""
-  },
-  "falcon-h1-34b": {
-   "composite": 0.5514,
-   "coverage": 0.696,
-   "params_b": 34,
-   "weights_gb": 67,
-   "precision": "bf16",
-   "mean_latency_s": 10.5,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 199,
-   "axes": {
-    "knowledge": 0.775,
-    "protocol": 0.508,
-    "math": 0.51,
-    "fault": 0.22,
-    "structured": 0.34
-   },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": ""
-  },
-  "kimi-dev-72b": {
-   "composite": 0.5392,
-   "coverage": 0.696,
-   "params_b": 73,
-   "weights_gb": 40,
-   "precision": "awq-4bit",
-   "mean_latency_s": 78.4,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": 2222,
-   "axes": {
-    "knowledge": 0.776,
-    "protocol": 0.453,
-    "math": 0.42,
-    "fault": 0.34,
-    "structured": 0.32
-   },
-   "fit_tier": 4,
-   "size_band_tier": 3,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit)"
-  },
-  "exaone-4-0-32b": {
-   "composite": 0.5298,
-   "coverage": 0.696,
-   "params_b": 32,
-   "weights_gb": 64,
-   "precision": "bf16",
-   "mean_latency_s": null,
-   "latency_source": "suite mean (batched)",
-   "probe_tok_per_s": null,
-   "mean_output_tokens": null,
-   "axes": {
-    "knowledge": 0.778,
-    "protocol": 0.477,
-    "math": 0.45,
-    "fault": 0.18,
-    "structured": 0.32
-   },
-   "fit_tier": 2,
-   "size_band_tier": 2,
-   "notes": ""
   },
   "r1-distill-qwen-32b": {
    "composite": 0.5257,
@@ -366,26 +366,26 @@
    "size_band_tier": 3,
    "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (fp8 moe(13B act))"
   },
-  "glm-4-5-air": {
-   "composite": 0.5007,
-   "coverage": 0.696,
-   "params_b": 106,
-   "weights_gb": 63,
-   "precision": "awq-4bit moe(12B act)",
-   "mean_latency_s": 73.4,
+  "exaone-4-0-32b": {
+   "composite": 0.5038,
+   "coverage": 0.87,
+   "params_b": 32,
+   "weights_gb": 64,
+   "precision": "bf16",
+   "mean_latency_s": null,
    "latency_source": "suite mean (batched)",
    "probe_tok_per_s": null,
-   "mean_output_tokens": 3123,
+   "mean_output_tokens": null,
    "axes": {
-    "knowledge": 0.745,
-    "protocol": 0.395,
-    "math": 0.3,
-    "fault": 0.41,
-    "structured": 0.27
+    "knowledge": 0.778,
+    "protocol": 0.477,
+    "math": 0.45,
+    "fault": 0.18,
+    "structured": 0.32
    },
-   "fit_tier": 4,
-   "size_band_tier": 4,
-   "notes": "served quantized (awq-4bit moe(12B act))"
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": ""
   },
   "granite-4-0-h-small": {
    "composite": 0.4925,
