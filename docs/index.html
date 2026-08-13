@@ -287,6 +287,7 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     'mistral-small-3-2-24b':['\u{1F1EB}\u{1F1F7}','France'],
     'magistral-small-2509':['\u{1F1EB}\u{1F1F7}','France'],
     'eurollm-9b':['\u{1F1EA}\u{1F1FA}','EU'],
+    'eurollm-22b':['\u{1F1EA}\u{1F1FA}','EU'],
     'apertus-8b':['\u{1F1E8}\u{1F1ED}','Switzerland'],
     'qwen3-6-27b':['\u{1F1E8}\u{1F1F3}','China'],
     'qwen3-6-35b-a3b':['\u{1F1E8}\u{1F1F3}','China'],
@@ -297,7 +298,14 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     'kimi-linear-48b':['\u{1F1E8}\u{1F1F3}','China'],
     'hunyuan-a13b':['\u{1F1E8}\u{1F1F3}','China'],
     'exaone-4-0-32b':['\u{1F1F0}\u{1F1F7}','S. Korea'],
-    'qwen2-5-bakeneko-32b':['\u{1F1EF}\u{1F1F5}','Japan']};
+    'qwen2-5-bakeneko-32b':['\u{1F1EF}\u{1F1F5}','Japan'],
+    'kimi-linear-48b-bf16':['\u{1F1E8}\u{1F1F3}','China'],
+    'kimi-vl-a3b-thinking':['\u{1F1E8}\u{1F1F3}','China'],
+    'kimi-dev-72b':['\u{1F1E8}\u{1F1F3}','China'],
+    'ling-3-0-flash':['\u{1F1E8}\u{1F1F3}','China'],
+    'nemotron-3-5-lightning-30b':['\u{1F1FA}\u{1F1F8}','USA'],
+    'nemotron-3-super-120b':['\u{1F1FA}\u{1F1F8}','USA'],
+    'lfm2-5-2-6b':['\u{1F1FA}\u{1F1F8}','USA']};
   const maxC=Math.max(...ranked.map(r=>r.composite||0),0.0001);
   const heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
   let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th>Composite</th>';
