@@ -3793,7 +3793,22 @@ class ChatInterface:
         spec.loader.exec_module(mod)
         return mod
 
-    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens, judge_key="(none)"):
+    @staticmethod
+    def _thinking_extra_body(mode):
+        """Translate the Reasoning selector into an OpenAI extra_body.
+
+        Left as None for 'model default' so the parity runs on the board are
+        byte-identical to what they were before this control existed - a
+        control that silently changed the default would invalidate every
+        score already published.
+        """
+        if mode == "thinking off":
+            return {"chat_template_kwargs": {"enable_thinking": False}}
+        if mode == "thinking on":
+            return {"chat_template_kwargs": {"enable_thinking": True}}
+        return None
+
+    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens, judge_key="(none)", thinking="model default"):
         """Generator handler for one benchmark slot: runs the selected
         benchmarks against the chosen registry model, yielding
         (status_md, table_rows, summary_md) for real-time UI updates."""
@@ -3855,6 +3870,7 @@ class ChatInterface:
             verify=self.config.verify_ssl,
             timeout=600,
             abort_event=stop_ev,
+            extra_body=self._thinking_extra_body(thinking),
         )
         judge_client = None
         judge_label = None
@@ -4861,7 +4877,7 @@ class ChatInterface:
         tasks = list(weights.keys())
         ranked, unranked, bj, note = self._lb_compute()
         headers = ["Rank", "Model", "Composite (10)", "Auto-8", "Coverage",
-                   "Judge"] + tasks
+                   "Runs", "Judge"] + tasks
         rows = []
 
         def _a8(r):
@@ -4869,6 +4885,20 @@ class ChatInterface:
             if v is None:
                 return "-"
             return f"{v:.4f}" if r.get("auto8_full") else f"{v:.4f} *"
+
+        def _runs(r):
+            """How many times this model was benchmarked.
+
+            Retention keeps the BETTER of two runs for the same model, so a
+            model re-run under several configurations is showing its luckiest
+            result while a model run once is showing its only result. That
+            bias was recorded in `attempts` but never displayed, which made
+            best-of-N indistinguishable from best-of-1 on a board where the
+            whole point is comparability. Show it.
+            """
+            n = max([int((rec or {}).get("attempts", 1))
+                     for rec in (r.get("results") or {}).values()] or [1])
+            return "1" if n <= 1 else f"best of {n}"
 
         def _cell(row, t):
             rec = (row.get("results") or {}).get(t)
@@ -4887,11 +4917,11 @@ class ChatInterface:
                 band_done = True
                 rows.append(["-", "-- provisional: judged suites not yet run,"
                              " ranked on Auto-8 alone --", "-", "-", "-",
-                             "-"] + ["-"] * len(tasks))
+                             "-", "-"] + ["-"] * len(tasks))
             rows.append([i, r["model"],
                          f"{r['composite']:.4f}" if r["verified"] else "-",
                          _a8(r),
-                         f"{r['coverage']*100:.0f}%", r["judge"]]
+                         f"{r['coverage']*100:.0f}%", _runs(r), r["judge"]]
                         + [_cell(r, t) for t in tasks])
         for r in unranked:
             # provisional: the composite averages only the suites recorded
@@ -4901,7 +4931,7 @@ class ChatInterface:
             done_n, all_n = len(r["results"]), len(tasks)
             rows.append(["partial", r["model"], "-", _a8(r),
                          f"{r['coverage']*100:.0f}% - {done_n}/{all_n} suites",
-                         r["judge"]]
+                         _runs(r), r["judge"]]
                         + [_cell(r, t) for t in tasks])
         # marathon live status rows: models being benchmarked / queued.
         # written by the in-cluster marathon runner to the shared state PVC
@@ -4913,12 +4943,12 @@ class ChatInterface:
                 pad = ["-"] * len(tasks)
                 for name in mst.get("under_test", []):
                     if name not in on_board:
-                        rows.append(["Under Test", name, "-", "-", "-", "-"]
-                                    + pad)
+                        rows.append(["Under Test", name, "-", "-", "-", "-",
+                                     "-"] + pad)
                 for name in mst.get("in_queue", []):
                     if name not in on_board:
-                        rows.append(["In Queue", name, "-", "-", "-", "-"]
-                                    + pad)
+                        rows.append(["In Queue", name, "-", "-", "-", "-",
+                                     "-"] + pad)
         except Exception:
             pass
         if any(row[0] == "partial" for row in rows):
@@ -6014,6 +6044,17 @@ class ChatInterface:
                             value=8192, precision=0, interactive=True,
                             label="Max tokens per answer (0 = uncapped)"
                         )
+                        # Reasoning models spend most of their answer budget
+                        # thinking; qwen3-8-27b averages ~3,400 tokens per MCQ
+                        # and a small share never closes the block before the
+                        # cap, scoring 0. This is the switch that tests whether
+                        # the reasoning is earning its cost.
+                        bench_thinking = gr.Radio(
+                            choices=["model default", "thinking off",
+                                     "thinking on"],
+                            value="model default", interactive=True,
+                            label="Reasoning (sent as chat_template_kwargs)"
+                        )
                         bench_judge = gr.Dropdown(
                             choices=self._judge_choices(),
                             value="(none)", interactive=True,
@@ -6093,11 +6134,13 @@ class ChatInterface:
 
                                         def _mk_run(k):
                                             def _run(tasks, tier, limit,
-                                                     conns, mtok, judge_key):
+                                                     conns, mtok, judge_key,
+                                                     thinking):
                                                 for out in self.run_benchmark(
                                                         k, k, tasks, tier,
                                                         limit, conns, mtok,
-                                                        judge_key=judge_key):
+                                                        judge_key=judge_key,
+                                                        thinking=thinking):
                                                     if len(out) == 4:
                                                         st, tb, md, rp = out
                                                         yield (st, tb, md,
@@ -6139,7 +6182,8 @@ class ChatInterface:
                                             inputs=[bench_tasks, bench_tier,
                                                     bench_limit, bench_conns,
                                                     bench_max_tokens,
-                                                    bench_judge],
+                                                    bench_judge,
+                                                    bench_thinking],
                                             outputs=[status_md, table,
                                                      summary_md, report_file],
                                         )
@@ -6148,7 +6192,8 @@ class ChatInterface:
                                             inputs=[bench_tasks, bench_tier,
                                                     bench_limit, bench_conns,
                                                     bench_max_tokens,
-                                                    bench_judge],
+                                                    bench_judge,
+                                                    bench_thinking],
                                             outputs=[status_md, table,
                                                      summary_md, report_file],
                                         )
