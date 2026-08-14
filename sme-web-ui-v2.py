@@ -4141,22 +4141,113 @@ class ChatInterface:
         except Exception as e:
             print(f"model registry save failed: {e}")
 
+    SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount"
+
+    @staticmethod
+    def _is_incluster_host(endpoint):
+        """Does this endpoint address something the cluster owns?
+
+        Two shapes reach the same in-cluster model: the internal service
+        (<isvc>-predictor.<ns>.svc.cluster.local) and the exposed route
+        (<isvc>-<ns>.apps.<domain>). Both are cluster-owned, so discovery
+        is allowed to retire them. Anything else - api.openai.com, a
+        partner endpoint - is manual and is never auto-removed.
+        """
+        host = (endpoint or "").split("//")[-1].split("/")[0].split(":")[0]
+        return host.endswith(".svc.cluster.local") or ".apps." in host
+
+    def cluster_discover(self):
+        """Ask the cluster what is actually serving right now.
+
+        The registry used to be a list somebody typed once and the portal
+        then believed forever: torn-down models kept their cards, and a
+        model that WAS serving (qwen3-8-27b) had no card at all because
+        nobody had typed it. The cluster is the source of truth for
+        in-cluster models; this reads it.
+
+        Returns (ok, {reg_key: entry}). ok is False when we are not running
+        in a pod or the ServiceAccount lacks RBAC - callers MUST NOT retire
+        anything on a False, or one API blip would wipe every card.
+        """
+        try:
+            host = os.environ.get("KUBERNETES_SERVICE_HOST")
+            port = os.environ.get("KUBERNETES_SERVICE_PORT", "443")
+            token_f = os.path.join(self.SA_DIR, "token")
+            if not host or not os.path.exists(token_f):
+                return False, {}
+            token = open(token_f).read().strip()
+            ns = open(os.path.join(self.SA_DIR, "namespace")).read().strip()
+            ca = os.path.join(self.SA_DIR, "ca.crt")
+            r = requests.get(
+                f"https://{host}:{port}/apis/serving.kserve.io/v1beta1"
+                f"/namespaces/{ns}/inferenceservices",
+                headers={"Authorization": f"Bearer {token}"},
+                verify=ca if os.path.exists(ca) else False, timeout=8)
+            if r.status_code != 200:
+                print(f"cluster discovery: HTTP {r.status_code} "
+                      f"(RBAC missing?) - keeping registry as-is")
+                return False, {}
+            found = {}
+            for item in r.json().get("items", []):
+                md = item.get("metadata", {})
+                name = md.get("name")
+                # a model being deleted is not a model you can benchmark
+                if not name or md.get("deletionTimestamp"):
+                    continue
+                ep = f"http://{name}-predictor.{ns}.svc.cluster.local:8080"
+                found[self._reg_key(name, ep)] = {
+                    "model": name, "endpoint": ep, "token": "",
+                    "source": "cluster",
+                    "label": self._mk_label(name, ep),
+                    "added_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "health": {"ok": False, "error": "not checked yet",
+                               "latency_ms": None, "ctx": None,
+                               "checked_at": ""}}
+            return True, found
+        except Exception as e:
+            print(f"cluster discovery failed: {str(e)[:160]}")
+            return False, {}
+
     def models_init(self, probe=True):
-        """Load the registry, migrating anything defined the old way exactly
-        once. Migration is additive and de-duplicated on (model, endpoint), so
-        the same model reachable two ways can no longer appear twice."""
+        """Reconcile the registry against reality, then probe it.
+
+        Order matters: discovery decides which in-cluster models exist, and
+        only then are manual seeds layered on. Seeds pointing at in-cluster
+        addresses are ignored while discovery is healthy - otherwise the
+        env vars would keep resurrecting cards for models that were torn
+        down hours ago, which is exactly the bug this replaces.
+        """
         reg = self._models_load()
+        disc_ok, discovered = self.cluster_discover()
+
+        if disc_ok:
+            # 1. retire cluster-owned entries that no longer exist
+            for k in [k for k, v in reg.items()
+                      if k not in discovered
+                      and (v.get("source") == "cluster"
+                           or self._is_incluster_host(v.get("endpoint")))]:
+                print(f"cluster discovery: retiring '{reg[k].get('model')}' "
+                      f"- no longer deployed")
+                reg.pop(k, None)
+            # 2. adopt anything newly serving
+            for k, v in discovered.items():
+                if k in reg:
+                    reg[k]["source"] = "cluster"
+                else:
+                    print(f"cluster discovery: adopting '{v['model']}'")
+                    reg[k] = v
+
         seeds = []
-        # 1. the configured default endpoint
+        # the configured default endpoint
         seeds.append((self.config.model_name, self.config.api_endpoint, ""))
-        # 2. chat targets declared in the environment
+        # chat targets declared in the environment
         try:
             for e in json.loads(os.environ.get("SME_CHAT_TARGETS", "[]")):
                 if e.get("endpoint") and e.get("model"):
                     seeds.append((e["model"], e["endpoint"], ""))
         except Exception:
             pass
-        # 3. anything previously provisioned on the Benchmark tab
+        # anything previously provisioned on the Benchmark tab
         try:
             if os.path.exists(self.BENCH_REGISTRY_FILE):
                 for v in json.load(open(self.BENCH_REGISTRY_FILE)).values():
@@ -4167,13 +4258,17 @@ class ChatInterface:
             pass
         added = 0
         for mid, ep, tok in seeds:
+            if disc_ok and self._is_incluster_host(ep):
+                continue          # discovery owns in-cluster addresses
             k = self._reg_key(mid, ep)
             if k in reg:
                 if tok and not reg[k].get("token"):
                     reg[k]["token"] = tok
+                reg[k].setdefault("source", "manual")
                 continue
             reg[k] = {"model": mid, "endpoint": (ep or "").rstrip("/"),
                       "token": tok, "label": self._mk_label(mid, ep),
+                      "source": "manual",
                       "added_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
                       "health": {"ok": False, "error": "not checked yet",
                                  "latency_ms": None, "ctx": None,
@@ -4926,7 +5021,8 @@ class ChatInterface:
             st = self._mstate = {}
         m = {"label": label, "ok": False, "error": "", "running": None,
              "waiting": None, "kv": None, "gen_rate": None, "gen_total": None,
-             "ttft": None, "finished": None, "latency_ms": None}
+             "ttft": None, "finished": None, "latency_ms": None,
+             "unsupported": False}
         try:
             t0 = _time.time()
             r = requests.get(endpoint.rstrip("/") + "/metrics",
@@ -4935,7 +5031,13 @@ class ChatInterface:
                              timeout=8, verify=self.config.verify_ssl)
             m["latency_ms"] = int((_time.time() - t0) * 1000)
             if r.status_code != 200:
-                m["error"] = f"HTTP {r.status_code}"
+                # 404/405 is not a fault: hosted APIs simply do not publish a
+                # Prometheus endpoint. Rendering a red "HTTP 404" for
+                # api.openai.com made a healthy model look broken.
+                if r.status_code in (401, 403, 404, 405):
+                    m["unsupported"] = True
+                else:
+                    m["error"] = f"HTTP {r.status_code}"
                 return m
             p = self._parse_prom(r.text)
             m["ok"] = True
@@ -5008,7 +5110,8 @@ class ChatInterface:
         for v in reg:
             m = self.model_metrics(v["label"], v["endpoint"],
                                    v.get("token", ""))
-            dot = "#10B981" if m["ok"] else "#EF4444"
+            dot = ("#10B981" if m["ok"]
+                   else ("#64748B" if m["unsupported"] else "#EF4444"))
             def cell(lbl, val, unit=""):
                 shown = "-" if val is None else (
                     f"{val:,.0f}{unit}" if isinstance(val, float)
@@ -5020,6 +5123,24 @@ class ChatInterface:
                         f"<span style='color:#64748B;font-size:12px'>{lbl}</span>"
                         f"<span style='color:#E2E8F0;font-size:13px;"
                         f"font-variant-numeric:tabular-nums'>{shown}</span></div>")
+            if m["unsupported"]:
+                body = ("<div style='color:#94A3B8;font-size:12px;"
+                        "padding:8px 0;line-height:1.5'>This endpoint does "
+                        "not publish Prometheus metrics, so live serving "
+                        "counters are unavailable. Chat and benchmarking are "
+                        "unaffected.</div>")
+                cards.append(
+                    "<div style='flex:1;min-width:280px;background:#0F172A;"
+                    "border:1px solid #1E293B;border-radius:12px;padding:14px'>"
+                    f"<div style='font-weight:700;color:#E2E8F0;font-size:15px;"
+                    f"margin-bottom:2px'>{v['model']}"
+                    f"<span style='display:inline-block;width:9px;height:9px;"
+                    f"border-radius:50%;background:{dot};margin-left:8px'>"
+                    "</span></div>"
+                    f"<div style='color:#475569;font-size:11px;margin-bottom:8px;"
+                    f"word-break:break-all'>{v['endpoint']}</div>"
+                    + body + "</div>")
+                continue
             body = "".join([
                 cell("requests running", m["running"]),
                 cell("requests waiting", m["waiting"]),
@@ -5064,6 +5185,7 @@ class ChatInterface:
         model = model_name
         host = endpoint.split("//")[-1]
         online, latency_ms, ctx = False, None, None
+        engine = ""
         try:
             t0 = _time.time()
             # Use THIS model's key, not the portal-wide one. A credentialed
@@ -5086,9 +5208,23 @@ class ChatInterface:
                         break
         except Exception:
             pass
+        if online:
+            # Do not assert an engine we have not seen. Every card used to
+            # print "vLLM / OpenAI-compatible" as a literal, so api.openai.com
+            # was labelled vLLM. Ask /version; say only what answers.
+            try:
+                v = requests.get(endpoint + "/version", timeout=4,
+                                 headers=({"Authorization": f"Bearer {token}"}
+                                          if token else {}),
+                                 verify=self.config.verify_ssl)
+                if v.status_code == 200:
+                    engine = f"vLLM {v.json().get('version', '')}".strip()
+            except Exception:
+                pass
+            engine = engine or "OpenAI-compatible API"
         dot = "#10B981" if online else "#EF4444"
         status_txt = f"online | {latency_ms}ms" if online else "offline"
-        ctx_txt = f"ctx {ctx:,}" if ctx else "ctx n/a"
+        ctx_txt = f"ctx {ctx:,}" if ctx else "ctx not reported"
         auth_txt = "auth on" if token else "auth off"
         gauge = ('<svg width="42" height="42" viewBox="0 0 24 24" fill="none">'
                  '<path d="M4.2 15.5a8 8 0 1 1 15.6 0" stroke="#8B5CF6" '
@@ -5112,7 +5248,7 @@ class ChatInterface:
             f'font-weight:400">{status_txt}</span></div>'
             f'<div style="color:#64748B;font-size:12px;margin-top:2px;'
             f'font-family:Helvetica,Arial,sans-serif">{host} &nbsp;|&nbsp; '
-            f'vLLM / OpenAI-compatible &nbsp;|&nbsp; {ctx_txt} &nbsp;|&nbsp; '
+            f'{engine or "unreachable"} &nbsp;|&nbsp; {ctx_txt} &nbsp;|&nbsp; '
             f'{auth_txt} &nbsp;|&nbsp; smart streaming | timeout handling | '
             f'context optimization</div>'
             '</div></div>')
