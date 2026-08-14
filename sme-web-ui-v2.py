@@ -4986,21 +4986,26 @@ class ChatInterface:
         looked like a one-model deployment and a user could not tell whether
         the second engine was up. It now renders one card per chat target.
         """
-        cards = [self._hero_card(lbl, t["endpoint"], t["model"])
+        cards = [self._hero_card(lbl, t["endpoint"], t["model"],
+                                 t.get("token", ""))
                  for lbl, t in self.chat_targets().items()]
         return ('<div style="display:flex;flex-direction:column;gap:10px">'
                 + "".join(cards) + '</div>')
 
-    def _hero_card(self, label, endpoint, model_name):
+    def _hero_card(self, label, endpoint, model_name, token=""):
         import time as _time
         model = model_name
         host = endpoint.split("//")[-1]
         online, latency_ms, ctx = False, None, None
         try:
             t0 = _time.time()
+            # Use THIS model's key, not the portal-wide one. A credentialed
+            # endpoint (api.openai.com) was being probed unauthenticated,
+            # returning 401, and rendering as "offline" for a model that is
+            # perfectly reachable - the registry had it healthy all along.
             r = requests.get(endpoint + "/v1/models",
-                             headers=({"Authorization": f"Bearer {self.config.api_token}"}
-                                      if self.config.use_token_auth else {}),
+                             headers=({"Authorization": f"Bearer {token}"}
+                                      if token else {}),
                              timeout=6, verify=self.config.verify_ssl)
             latency_ms = int((_time.time() - t0) * 1000)
             if r.status_code == 200:
@@ -5017,7 +5022,7 @@ class ChatInterface:
         dot = "#10B981" if online else "#EF4444"
         status_txt = f"online | {latency_ms}ms" if online else "offline"
         ctx_txt = f"ctx {ctx:,}" if ctx else "ctx n/a"
-        auth_txt = "auth on" if self.config.use_token_auth else "auth off"
+        auth_txt = "auth on" if token else "auth off"
         gauge = ('<svg width="42" height="42" viewBox="0 0 24 24" fill="none">'
                  '<path d="M4.2 15.5a8 8 0 1 1 15.6 0" stroke="#8B5CF6" '
                  'stroke-width="2.4" stroke-linecap="round"/>'
