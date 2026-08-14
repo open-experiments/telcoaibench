@@ -4795,7 +4795,13 @@ class ChatInterface:
             m["ok"] = True
             m["running"] = p.get("vllm:num_requests_running")
             m["waiting"] = p.get("vllm:num_requests_waiting")
-            kv = p.get("vllm:gpu_cache_usage_perc")
+            # vLLM renamed this gauge: older builds export
+            # gpu_cache_usage_perc, 0.26+ exports kv_cache_usage_perc. Accept
+            # either so the row works across serving versions rather than
+            # silently rendering "-" as it did on first deploy.
+            kv = p.get("vllm:kv_cache_usage_perc")
+            if kv is None:
+                kv = p.get("vllm:gpu_cache_usage_perc")
             m["kv"] = (kv * 100 if kv is not None and kv <= 1 else kv)
             gen = p.get("vllm:generation_tokens_total")
             m["gen_total"] = gen
