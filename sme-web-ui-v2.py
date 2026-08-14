@@ -2098,6 +2098,29 @@ class ChatClient:
         )
     
     @staticmethod
+    def _retry_max_completion_tokens(response, payload):
+        """OpenAI's newer reasoning models renamed max_tokens.
+
+        vLLM speaks `max_tokens`; gpt-5.x rejects it with a 400 telling you to
+        use `max_completion_tokens`. Rather than hardcode a vendor check on
+        the hostname - which would break for the next OpenAI-compatible
+        provider - react to the error the server actually returns and retry
+        once with the renamed field.
+        """
+        try:
+            if response.status_code != 400:
+                return None
+            if "max_completion_tokens" not in (response.text or ""):
+                return None
+        except Exception:
+            return None
+        if "max_tokens" not in payload:
+            return None
+        p2 = dict(payload)
+        p2["max_completion_tokens"] = p2.pop("max_tokens")
+        return p2
+
+    @staticmethod
     def _target_headers(target):
         """Per-request Authorization for the SELECTED model.
 
@@ -2172,6 +2195,13 @@ class ChatClient:
                 response = self.session.post(
                     url, json=payload, timeout=timeout,
                     headers=self._target_headers(target))
+                alt = self._retry_max_completion_tokens(response, payload)
+                if alt is not None:
+                    print("↩️  retrying with max_completion_tokens")
+                    payload = alt
+                    response = self.session.post(
+                        url, json=payload, timeout=timeout,
+                        headers=self._target_headers(target))
                 
                 print(f"📡 Response: {response.status_code}")
                 
@@ -2245,6 +2275,14 @@ class ChatClient:
                     timeout=(self.config.connect_timeout, None),
                     headers=self._target_headers(target)
                 )
+                alt = self._retry_max_completion_tokens(response, payload)
+                if alt is not None:
+                    print("↩️  retrying stream with max_completion_tokens")
+                    payload = alt
+                    response = self.session.post(
+                        url, json=payload, stream=True,
+                        timeout=(self.config.connect_timeout, None),
+                        headers=self._target_headers(target))
                 
                 print(f"📡 DEBUG: Response status: {response.status_code}")
                 print(f"📋 DEBUG: Response headers: {dict(response.headers)}")
