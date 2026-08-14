@@ -4037,6 +4037,19 @@ class ChatInterface:
                 if model_id and m.get("id") == model_id:
                     pick = m
                     break
+            if model_id and pick is None:
+                # NEVER silently substitute. A multi-model endpoint like
+                # api.openai.com lists hundreds of ids; falling back to
+                # data[0] would register some unrelated model under the name
+                # the user typed, and every score after that would be
+                # attributed to the wrong model.
+                ids = [m.get("id", "") for m in data]
+                near = [i for i in ids if model_id.lower() in i.lower()][:6]
+                hint = (f" Closest matches: {', '.join(near)}." if near
+                        else f" This endpoint serves {len(ids)} model(s); "
+                             f"first few: {', '.join(ids[:5])}.")
+                out["error"] = (f"'{model_id}' is not served here.{hint}")
+                return out
             pick = pick or data[0]
             out["model_id"] = pick.get("id", model_id)
             out["ctx"] = pick.get("max_model_len")
