@@ -2513,7 +2513,25 @@ class ChatInterface:
             
             # Process with smart completion
             print("Calling chat completion...")
-            target = self.chat_targets().get(chat_target) if chat_target else None
+            target = None
+            if chat_target:
+                tgts = self.chat_targets()
+                target = tgts.get(chat_target)
+                if target is None:
+                    # Labels can drift (a re-probe rewrites them from the
+                    # endpoint's own model id). Fall back to matching on the
+                    # model name before giving up, and SAY SO if it still
+                    # fails - silently answering from the default model while
+                    # the user believes they picked another one is the worst
+                    # possible outcome here.
+                    want = chat_target.split(" @ ")[0].strip()
+                    for lbl, t in tgts.items():
+                        if t.get("model") == want or lbl.startswith(want):
+                            target = t
+                            break
+                    if target is None:
+                        print(f"chat target '{chat_target}' did not resolve; "
+                              f"known: {list(tgts)}")
             if target:
                 print(f"💬 target: {target['model']} @ {target['endpoint']}")
             response = self.client.chat_completion(
@@ -4090,11 +4108,26 @@ class ChatInterface:
                     v["label"] = self._mk_label(v["model"], v["endpoint"])
         if added or probe:
             self._models_save(reg)
+        if probe:
+            self._probed_once = True
         self._models = reg
         return reg
 
     def models_all(self):
-        return getattr(self, "_models", None) or self.models_init(probe=False)
+        reg = getattr(self, "_models", None)
+        if reg is None:
+            reg = self.models_init(probe=False)
+        # Self-heal. Health lives in a file that several code paths write; if
+        # a save ever lands with stale "not checked yet" state, EVERY selector
+        # silently collapses to the default endpoint - the chat dropdown stops
+        # switching and the benchmark list shows one model. Re-probe once per
+        # process rather than serve a board that says nothing is reachable.
+        if reg and not any((v.get("health") or {}).get("ok") for v in reg.values()):
+            if not getattr(self, "_probed_once", False):
+                self._probed_once = True
+                print("model registry: nothing healthy on load - re-probing")
+                reg = self.models_init(probe=True)
+        return reg
 
     def models_healthy(self):
         """Labels of models the portal can actually reach - what the Chat,
@@ -4822,6 +4855,36 @@ class ChatInterface:
             m["error"] = str(e)[:120]
         return m
 
+    def obs_bind(self, label):
+        """Point the legacy Observability dashboards at a chosen endpoint.
+
+        Those dashboards (and the metrics collector behind them) are a single
+        shared object, so this is a GLOBAL switch: it changes what every
+        viewer of this portal sees on that section, not just this browser
+        tab. The side-by-side panel above needs no switching - it always
+        shows every endpoint. Stated here rather than hidden, because a
+        control that silently affects other people is worse than one that
+        says it does.
+        """
+        v = self.models_get(label)
+        if not v:
+            return f"Unknown model `{label}`."
+        try:
+            self.config.api_endpoint = v["endpoint"]
+            self.config.model_name = v["model"]
+            self.config.api_token = v.get("token", "") or ""
+            self.config.use_token_auth = bool(v.get("token"))
+            self.client = ChatClient(self.config)
+            try:
+                self.metrics_collector.stop_collection()
+            except Exception:
+                pass
+            return (f"Dashboards below now describe **{v['model']}** "
+                    f"({v['endpoint']}). Press *Start Collection* to gather "
+                    f"metrics for it.")
+        except Exception as e:
+            return f"Could not switch: {e}"
+
     def models_metrics_html(self):
         """One card per registered endpoint, rendered side by side."""
         reg = [v for v in self.models_all().values()]
@@ -5268,9 +5331,16 @@ class ChatInterface:
                                     label="Model",
                                     info=("which served model answers this "
                                           "conversation"),
-                                    interactive=len(_ct) > 1,
+                                    interactive=True,
                                     scale=1
                                 )
+
+                                def _refresh_chat_models():
+                                    ct = list(self.chat_targets().keys())
+                                    return gr.update(choices=ct, value=ct[0])
+
+                                interface.load(_refresh_chat_models, inputs=[],
+                                               outputs=[chat_model_dd])
 
                             # System Prompt Section
                             with gr.Group():
@@ -5398,6 +5468,26 @@ class ChatInterface:
                                            inputs=[], outputs=[obs_side])
                     obs_side_timer.tick(fn=self.models_metrics_html,
                                         inputs=[], outputs=[obs_side])
+
+                    gr.Markdown("---")
+                    with gr.Row():
+                        obs_model_dd = gr.Dropdown(
+                            choices=self.models_healthy(),
+                            value=(self.models_healthy()[0]
+                                   if self.models_healthy() else None),
+                            label="Dashboards below describe",
+                            info=("the sections below share one metrics "
+                                  "collector, so this switch is global for "
+                                  "the portal"),
+                            interactive=True, scale=3)
+                        obs_bind_btn = gr.Button("Switch", variant="secondary",
+                                                 scale=1)
+                    obs_bind_status = gr.Markdown("")
+                    obs_bind_btn.click(fn=self.obs_bind, inputs=[obs_model_dd],
+                                       outputs=[obs_bind_status])
+                    interface.load(
+                        lambda: gr.update(choices=self.models_healthy()),
+                        inputs=[], outputs=[obs_model_dd])
 
                     # Single control panel at the top
                     with gr.Row():
