@@ -3739,10 +3739,24 @@ class ChatInterface:
             yield ("A benchmark is already running for this target - press "
                    "Stop first."), [], ""
             return
+        # Wait for a free slot rather than refusing. "Run selected" over four
+        # models used to start two and fail the other two instantly, which
+        # looks like a broken button; queueing is what the user meant by
+        # kicking off a group.
         if sum(1 for v in self._bench_active.values() if v) >= self.BENCH_MAX_PARALLEL:
-            yield (f"Maximum {self.BENCH_MAX_PARALLEL} parallel benchmark runs "
-                   "reached - wait for one to finish or stop it."), [], ""
-            return
+            waited = 0
+            while (sum(1 for v in self._bench_active.values() if v)
+                   >= self.BENCH_MAX_PARALLEL):
+                if waited > 4 * 3600:
+                    yield ("Gave up waiting for a free run slot after 4h."), [], ""
+                    return
+                ahead = sum(1 for v in self._bench_active.values() if v)
+                yield (f"**Queued** - {ahead} run(s) in progress, "
+                       f"{self.BENCH_MAX_PARALLEL} slot(s) total. This model "
+                       f"starts automatically when a slot frees "
+                       f"({waited}s waiting)."), [], ""
+                _time.sleep(5)
+                waited += 5
         self._bench_active[slot] = True
         self._bench_stops[slot] = threading.Event()
         stop_ev = self._bench_stops[slot]
@@ -5409,25 +5423,43 @@ class ChatInterface:
                     # or three endpoints registered. This dropdown filters the
                     # cards to the selected endpoint - it does not replace the
                     # card, so the existing run/stop/remove wiring is untouched.
-                    ALL_TARGETS = "All targets"
-                    bench_target_dd = gr.Dropdown(
-                        choices=[ALL_TARGETS] + bench_keys_init,
-                        value=(bench_keys_init[0] if len(bench_keys_init) == 1
-                               else ALL_TARGETS),
-                        label="Benchmark target endpoint",
-                        info="which served model this run is measured against",
+                    # Multi-select: run one model, a chosen group, or all of
+                    # them. Only healthy endpoints from the Models tab appear.
+                    bench_models_cb = gr.CheckboxGroup(
+                        choices=bench_keys_init, value=bench_keys_init,
+                        label="Models to benchmark",
+                        info=("only endpoints the Models tab could reach are "
+                              "listed; each selected model gets its own "
+                              "results panel below"),
                         interactive=True,
                     )
+                    with gr.Row():
+                        bench_run_sel = gr.Button(
+                            "Run selected", variant="primary", scale=2)
+                        bench_select_all = gr.Button(
+                            "Select all", variant="secondary", scale=1)
+                        bench_select_none = gr.Button(
+                            "Clear selection", variant="secondary", scale=1)
+                    bench_run_note = gr.Markdown(
+                        f"Up to **{self.BENCH_MAX_PARALLEL}** run in parallel; "
+                        f"any others queue and start automatically as slots "
+                        f"free up.")
 
-                    def _pick_target(sel):
+                    def _pick_targets(sel):
                         keys = list(self._bench_registry.keys())
-                        if not sel or sel == ALL_TARGETS or sel not in keys:
-                            return keys
-                        return [sel]
+                        chosen = [k for k in keys if k in (sel or [])]
+                        return chosen or keys
 
-                    bench_target_dd.change(
-                        _pick_target, inputs=[bench_target_dd],
+                    bench_models_cb.change(
+                        _pick_targets, inputs=[bench_models_cb],
                         outputs=[bench_targets_state])
+                    bench_select_all.click(
+                        lambda: gr.update(
+                            value=list(self._bench_registry.keys())),
+                        inputs=[], outputs=[bench_models_cb])
+                    bench_select_none.click(
+                        lambda: gr.update(value=[]),
+                        inputs=[], outputs=[bench_models_cb])
                     with gr.Accordion("Provision new model endpoint", open=False):
                         with gr.Row():
                             bench_new_url = gr.Textbox(
@@ -5587,6 +5619,20 @@ class ChatInterface:
                                                 return self.remove_benchmark_target(k)
                                             return _remove
 
+                                        # the shared "Run selected" button
+                                        # fans out to every rendered panel:
+                                        # each attaches its own handler, so
+                                        # one click starts them all (extra
+                                        # ones queue, see run_benchmark)
+                                        bench_run_sel.click(
+                                            fn=_mk_run(key),
+                                            inputs=[bench_tasks, bench_tier,
+                                                    bench_limit, bench_conns,
+                                                    bench_max_tokens,
+                                                    bench_judge],
+                                            outputs=[status_md, table,
+                                                     summary_md, report_file],
+                                        )
                                         run_btn.click(
                                             fn=_mk_run(key),
                                             inputs=[bench_tasks, bench_tier,
@@ -5648,13 +5694,12 @@ class ChatInterface:
                         # the dropdown is refreshed alongside the cards so a
                         # target added in another browser tab still appears
                         return (keys, gr.update(choices=self._judge_choices()),
-                                gr.update(choices=[ALL_TARGETS] + keys,
-                                          value=ALL_TARGETS))
+                                gr.update(choices=keys, value=keys))
 
                     interface.load(
                         fn=_load_targets_ui, inputs=[],
                         outputs=[bench_targets_state, bench_judge,
-                                 bench_target_dd],
+                                 bench_models_cb],
                     )
 
                 with gr.TabItem("Leaderboard"):
