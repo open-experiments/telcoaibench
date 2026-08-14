@@ -2097,6 +2097,19 @@ class ChatClient:
             len(messages) > 4
         )
     
+    @staticmethod
+    def _target_headers(target):
+        """Per-request Authorization for the SELECTED model.
+
+        The session bakes in the portal-wide token at construction, so a
+        credentialed target (api.openai.com) was posting with no key and
+        getting 401 "You didn't provide an API key" - while the same model
+        probed fine on the Models tab, which does pass its key. Auth has to
+        travel with the target, not with the client.
+        """
+        tok = (target or {}).get("token")
+        return {"Authorization": f"Bearer {tok}"} if tok else None
+
     def chat_completion(
         self, 
         messages: List[Dict[str, str]], 
@@ -2156,7 +2169,9 @@ class ChatClient:
         for attempt in range(self.config.max_retry_attempts):
             try:
                 timeout = (self.config.connect_timeout, self.config.read_timeout)
-                response = self.session.post(url, json=payload, timeout=timeout)
+                response = self.session.post(
+                    url, json=payload, timeout=timeout,
+                    headers=self._target_headers(target))
                 
                 print(f"📡 Response: {response.status_code}")
                 
@@ -2227,7 +2242,8 @@ class ChatClient:
                     url, 
                     json=payload, 
                     stream=True, 
-                    timeout=(self.config.connect_timeout, None)
+                    timeout=(self.config.connect_timeout, None),
+                    headers=self._target_headers(target)
                 )
                 
                 print(f"📡 DEBUG: Response status: {response.status_code}")
