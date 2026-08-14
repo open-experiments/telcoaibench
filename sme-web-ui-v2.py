@@ -5232,9 +5232,16 @@ class ChatInterface:
                                           scale=1)
                         m_recheck = gr.Button("Re-check all",
                                               variant="secondary", scale=1)
-                        m_rm_dd = gr.Dropdown(choices=[], value=None,
-                                              label="Remove model", scale=2)
-                        m_rm = gr.Button("Remove", variant="stop", scale=1)
+                        # One control, not two: the dropdown and a separate
+                        # Remove button read as two buttons for a single
+                        # action. Picking a model removes it. Cheap to undo -
+                        # re-add the URL - so a confirm step would cost more
+                        # than the mistake.
+                        m_rm_dd = gr.Dropdown(
+                            choices=[], value=None,
+                            label="Remove model",
+                            info="select a model to remove it from the registry",
+                            scale=3)
                     m_status = gr.Markdown("")
                     m_table = gr.Dataframe(headers=self.MODELS_HEADERS,
                                            value=self.models_table(),
@@ -5255,6 +5262,10 @@ class ChatInterface:
                                 gr.update(choices=_m_labels()))
 
                     def _m_remove(sel):
+                        if not sel:
+                            # the handler also fires when we clear the value
+                            # after a removal - do not treat that as a click
+                            return (gr.update(), gr.update(), gr.update())
                         return (self.models_remove(sel),
                                 gr.update(value=self.models_table()),
                                 gr.update(choices=_m_labels(), value=None))
@@ -5264,8 +5275,8 @@ class ChatInterface:
                                          m_url, m_key, m_name])
                     m_recheck.click(_m_recheck, inputs=[],
                                     outputs=[m_status, m_table, m_rm_dd])
-                    m_rm.click(_m_remove, inputs=[m_rm_dd],
-                               outputs=[m_status, m_table, m_rm_dd])
+                    m_rm_dd.change(_m_remove, inputs=[m_rm_dd],
+                                   outputs=[m_status, m_table, m_rm_dd])
                     interface.load(
                         lambda: (gr.update(value=self.models_table()),
                                  gr.update(choices=_m_labels())),
