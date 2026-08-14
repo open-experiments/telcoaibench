@@ -4154,6 +4154,29 @@ class ChatInterface:
                 return v
         return None
 
+    def models_discover(self, endpoint, token=""):
+        """List what an endpoint serves so the user can pick ONE."""
+        endpoint = (endpoint or "").strip().rstrip("/")
+        if not endpoint:
+            return [], "Enter an endpoint base URL first."
+        if not endpoint.startswith(("http://", "https://")):
+            endpoint = "https://" + endpoint
+        try:
+            r = requests.get(endpoint + "/v1/models",
+                             headers=({"Authorization": f"Bearer {token}"}
+                                      if token else {}),
+                             timeout=20, verify=self.config.verify_ssl)
+            if r.status_code != 200:
+                return [], f"`{endpoint}` returned HTTP {r.status_code}."
+            ids = sorted(m.get("id", "") for m in r.json().get("data", [])
+                         if m.get("id"))
+        except Exception as e:
+            return [], f"Could not reach `{endpoint}`: {str(e)[:120]}"
+        if not ids:
+            return [], f"`{endpoint}` returned no models."
+        return ids, (f"{len(ids)} model(s) available - pick one from **Model "
+                     f"name**, then press **Test & Add**.")
+
     def models_add(self, endpoint, token="", model_id=""):
         endpoint = (endpoint or "").strip().rstrip("/")
         if not endpoint:
@@ -4270,18 +4293,28 @@ class ChatInterface:
             return keys, f"Could not reach `{url}/v1/models`: {e}"
         if not ids:
             return keys, f"Endpoint reachable but returned no models: `{url}`"
-        added = []
+        # NEVER bulk-register a catalogue. api.openai.com lists 126 models -
+        # embeddings, speech, image, video - and adding them all produced 128
+        # benchmark cards for models that cannot answer a telecom question.
+        # Multi-model endpoints must be picked from, one at a time, on the
+        # Models tab.
+        if len(ids) > 1:
+            preview = ", ".join(f"`{i}`" for i in ids[:12])
+            return keys, (
+                f"`{url}` serves **{len(ids)}** models - not adding them all. "
+                f"Use the **Models** tab: enter this URL and key, press "
+                f"**Discover models**, then pick the one you want. "
+                f"First few here: {preview}"
+                + (" ..." if len(ids) > 12 else ""))
+        mid = ids[0]
         host = url.split("//")[-1]
-        for mid in ids:
-            key = f"{mid} @ {host}"
-            self._bench_registry[key] = {"endpoint": url, "model": mid,
-                                         "token": token}
-            added.append(key)
+        key = f"{mid} @ {host}"
+        self._bench_registry[key] = {"endpoint": url, "model": mid,
+                                     "token": token}
         self._bench_registry_save()
         keys = list(self._bench_registry.keys())
         auth_note = "with credentials" if token else "no credentials"
-        return keys, (f"Discovered {len(added)} model(s) ({auth_note}): "
-                      + ", ".join(f"`{a}`" for a in added))
+        return keys, f"Added `{key}` ({auth_note})."
 
     def remove_benchmark_target(self, key):
         """Remove a provisioned target card (stops its run if active)."""
@@ -5236,11 +5269,15 @@ class ChatInterface:
                             scale=4)
                         m_key = gr.Textbox(label="API key (optional)",
                                            type="password", scale=2)
-                        m_name = gr.Textbox(
-                            label="Model name (optional - discovered)",
-                            placeholder="leave empty to auto-detect",
+                        m_name = gr.Dropdown(
+                            label="Model name",
+                            choices=[], value=None, allow_custom_value=True,
+                            info=("single-model endpoints auto-detect; for a "
+                                  "multi-model API press Discover and pick"),
                             scale=2)
                     with gr.Row():
+                        m_discover = gr.Button("Discover models",
+                                               variant="secondary", scale=1)
                         m_add = gr.Button("Test & Add", variant="primary",
                                           scale=1)
                         m_recheck = gr.Button("Re-check all",
@@ -5266,8 +5303,20 @@ class ChatInterface:
 
                     def _m_add(url, key, name):
                         msg, _lbl = self.models_add(url, key or "", name or "")
+                        # keep url/key so several models from the same API can
+                        # be added back to back without retyping the key
                         return (msg, gr.update(value=self.models_table()),
-                                gr.update(choices=_m_labels()), "", "", "")
+                                gr.update(choices=_m_labels()),
+                                gr.update(), gr.update(), gr.update(value=None))
+
+                    def _m_discover(url, key):
+                        ids, msg = self.models_discover(url, key or "")
+                        return msg, gr.update(choices=ids,
+                                              value=(ids[0] if len(ids) == 1
+                                                     else None))
+
+                    m_discover.click(_m_discover, inputs=[m_url, m_key],
+                                     outputs=[m_status, m_name])
 
                     def _m_recheck():
                         return (self.models_recheck(),
