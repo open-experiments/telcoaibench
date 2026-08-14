@@ -4747,6 +4747,123 @@ class ChatInterface:
         open(mpath, "w").write("\n".join(L))
         return jpath, mpath
 
+    # ------------------------------------------------------------------
+    # SIDE-BY-SIDE ENDPOINT METRICS
+    #
+    # The dashboards further down this tab are driven by a single shared
+    # metrics collector bound to one endpoint, so they can only ever describe
+    # one model. Rather than rewire that collector (and risk a tab that works)
+    # this panel polls every registered endpoint directly and renders them
+    # next to each other. Counters are turned into rates by differencing
+    # against the previous poll, which is the only way a monotonic Prometheus
+    # counter says anything useful about "now".
+    @staticmethod
+    def _parse_prom(text):
+        out = {}
+        for line in (text or "").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            try:
+                name_part, value = line.rsplit(" ", 1)
+                name = name_part.split("{")[0].strip()
+                v = float(value)
+            except Exception:
+                continue
+            out[name] = out.get(name, 0.0) + v
+        return out
+
+    def model_metrics(self, label, endpoint, token=""):
+        import time as _time
+        st = getattr(self, "_mstate", None)
+        if st is None:
+            st = self._mstate = {}
+        m = {"label": label, "ok": False, "error": "", "running": None,
+             "waiting": None, "kv": None, "gen_rate": None, "gen_total": None,
+             "ttft": None, "finished": None, "latency_ms": None}
+        try:
+            t0 = _time.time()
+            r = requests.get(endpoint.rstrip("/") + "/metrics",
+                             headers=({"Authorization": f"Bearer {token}"}
+                                      if token else {}),
+                             timeout=8, verify=self.config.verify_ssl)
+            m["latency_ms"] = int((_time.time() - t0) * 1000)
+            if r.status_code != 200:
+                m["error"] = f"HTTP {r.status_code}"
+                return m
+            p = self._parse_prom(r.text)
+            m["ok"] = True
+            m["running"] = p.get("vllm:num_requests_running")
+            m["waiting"] = p.get("vllm:num_requests_waiting")
+            kv = p.get("vllm:gpu_cache_usage_perc")
+            m["kv"] = (kv * 100 if kv is not None and kv <= 1 else kv)
+            gen = p.get("vllm:generation_tokens_total")
+            m["gen_total"] = gen
+            fin = p.get("vllm:request_success_total")
+            m["finished"] = fin
+            tsum = p.get("vllm:time_to_first_token_seconds_sum")
+            tcnt = p.get("vllm:time_to_first_token_seconds_count")
+            if tsum is not None and tcnt:
+                m["ttft"] = tsum / tcnt
+            prev = st.get(label)
+            now = _time.time()
+            if prev and gen is not None and prev.get("gen") is not None:
+                dt = now - prev["t"]
+                if dt > 0 and gen >= prev["gen"]:
+                    m["gen_rate"] = (gen - prev["gen"]) / dt
+            st[label] = {"t": now, "gen": gen}
+        except Exception as e:
+            m["error"] = str(e)[:120]
+        return m
+
+    def models_metrics_html(self):
+        """One card per registered endpoint, rendered side by side."""
+        reg = [v for v in self.models_all().values()]
+        if not reg:
+            return ("<div style='color:#94A3B8;padding:14px'>No endpoints "
+                    "registered - add one on the Models tab.</div>")
+        cards = []
+        for v in reg:
+            m = self.model_metrics(v["label"], v["endpoint"],
+                                   v.get("token", ""))
+            dot = "#10B981" if m["ok"] else "#EF4444"
+            def cell(lbl, val, unit=""):
+                shown = "-" if val is None else (
+                    f"{val:,.0f}{unit}" if isinstance(val, float)
+                    and abs(val) >= 10 else
+                    (f"{val:.2f}{unit}" if isinstance(val, float)
+                     else f"{val}{unit}"))
+                return (f"<div style='display:flex;justify-content:space-between;"
+                        f"padding:3px 0;border-bottom:1px solid #1E293B'>"
+                        f"<span style='color:#64748B;font-size:12px'>{lbl}</span>"
+                        f"<span style='color:#E2E8F0;font-size:13px;"
+                        f"font-variant-numeric:tabular-nums'>{shown}</span></div>")
+            body = "".join([
+                cell("requests running", m["running"]),
+                cell("requests waiting", m["waiting"]),
+                cell("KV cache used", m["kv"], "%"),
+                cell("tokens/s (since last poll)", m["gen_rate"]),
+                cell("tokens generated (total)", m["gen_total"]),
+                cell("requests finished", m["finished"]),
+                cell("mean TTFT", m["ttft"], "s"),
+                cell("scrape latency", m["latency_ms"], "ms"),
+            ])
+            err = (f"<div style='color:#FCA5A5;font-size:11.5px;margin-top:6px'>"
+                   f"{m['error']}</div>" if m["error"] else "")
+            cards.append(
+                "<div style='flex:1;min-width:280px;background:#0F172A;"
+                "border:1px solid #1E293B;border-radius:12px;padding:14px'>"
+                f"<div style='font-weight:700;color:#E2E8F0;font-size:15px;"
+                f"margin-bottom:2px'>{v['model']}"
+                f"<span style='display:inline-block;width:9px;height:9px;"
+                f"border-radius:50%;background:{dot};margin-left:8px'></span>"
+                "</div>"
+                f"<div style='color:#475569;font-size:11px;margin-bottom:8px;"
+                f"word-break:break-all'>{v['endpoint']}</div>"
+                + body + err + "</div>")
+        return ("<div style='display:flex;gap:12px;flex-wrap:wrap'>"
+                + "".join(cards) + "</div>")
+
     def model_hero_html(self):
         """Live identity strip for EVERY served model, not just the default.
 
@@ -5260,6 +5377,22 @@ class ChatInterface:
                             )
                 
                 with gr.TabItem("Observability"):
+                    gr.Markdown("### **All endpoints, side by side**")
+                    gr.Markdown(
+                        "*Live vLLM metrics polled from every registered "
+                        "endpoint. Rates are computed by differencing against "
+                        "the previous poll. The dashboards further down "
+                        "describe the default endpoint only.*")
+                    obs_side = gr.HTML(self.models_metrics_html())
+                    with gr.Row():
+                        obs_side_refresh = gr.Button(
+                            "Refresh endpoint metrics", variant="secondary")
+                    obs_side_timer = gr.Timer(15)
+                    obs_side_refresh.click(fn=self.models_metrics_html,
+                                           inputs=[], outputs=[obs_side])
+                    obs_side_timer.tick(fn=self.models_metrics_html,
+                                        inputs=[], outputs=[obs_side])
+
                     # Single control panel at the top
                     with gr.Row():
                         with gr.Column(scale=3):
