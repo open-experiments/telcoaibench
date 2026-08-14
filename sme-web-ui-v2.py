@@ -2099,26 +2099,33 @@ class ChatClient:
     
     @staticmethod
     def _retry_max_completion_tokens(response, payload):
-        """OpenAI's newer reasoning models renamed max_tokens.
+        """Adapt a chat payload to what the server says it will accept.
 
-        vLLM speaks `max_tokens`; gpt-5.x rejects it with a 400 telling you to
-        use `max_completion_tokens`. Rather than hardcode a vendor check on
-        the hostname - which would break for the next OpenAI-compatible
-        provider - react to the error the server actually returns and retry
-        once with the renamed field.
+        OpenAI's reasoning models (gpt-5.x) differ from vLLM in two ways:
+        they renamed `max_tokens` to `max_completion_tokens`, and they reject
+        any non-default `temperature`. Rather than hardcode a vendor check on
+        the hostname - which breaks for the next OpenAI-compatible provider -
+        react to the 400 the server actually returns and retry. This mirrors
+        `_adapt_body` in the benchmark harness, which already did it; the chat
+        client was the one place that did not.
         """
         try:
             if response.status_code != 400:
                 return None
-            if "max_completion_tokens" not in (response.text or ""):
-                return None
+            err = (response.text or "").lower()
         except Exception:
             return None
-        if "max_tokens" not in payload:
-            return None
         p2 = dict(payload)
-        p2["max_completion_tokens"] = p2.pop("max_tokens")
-        return p2
+        changed = False
+        if "max_completion_tokens" in err and "max_tokens" in p2:
+            # reasoning tokens count against the cap - leave headroom
+            p2["max_completion_tokens"] = max(int(p2.pop("max_tokens") or 0),
+                                              4096)
+            changed = True
+        if "temperature" in err and "temperature" in p2:
+            p2.pop("temperature")
+            changed = True
+        return p2 if changed else None
 
     @staticmethod
     def _target_headers(target):
@@ -2195,9 +2202,13 @@ class ChatClient:
                 response = self.session.post(
                     url, json=payload, timeout=timeout,
                     headers=self._target_headers(target))
-                alt = self._retry_max_completion_tokens(response, payload)
-                if alt is not None:
-                    print("↩️  retrying with max_completion_tokens")
+                # the server reports incompatibilities ONE AT A TIME, so
+                # adapt-and-retry in a small loop rather than once
+                for _ in range(3):
+                    alt = self._retry_max_completion_tokens(response, payload)
+                    if alt is None:
+                        break
+                    print("↩️  adapting payload and retrying")
                     payload = alt
                     response = self.session.post(
                         url, json=payload, timeout=timeout,
@@ -2275,9 +2286,11 @@ class ChatClient:
                     timeout=(self.config.connect_timeout, None),
                     headers=self._target_headers(target)
                 )
-                alt = self._retry_max_completion_tokens(response, payload)
-                if alt is not None:
-                    print("↩️  retrying stream with max_completion_tokens")
+                for _ in range(3):
+                    alt = self._retry_max_completion_tokens(response, payload)
+                    if alt is None:
+                        break
+                    print("↩️  adapting stream payload and retrying")
                     payload = alt
                     response = self.session.post(
                         url, json=payload, stream=True,
