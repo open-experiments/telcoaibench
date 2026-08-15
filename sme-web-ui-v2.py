@@ -4877,7 +4877,7 @@ class ChatInterface:
         tasks = list(weights.keys())
         ranked, unranked, bj, note = self._lb_compute()
         headers = ["Rank", "Model", "Composite (10)", "Auto-8", "Coverage",
-                   "Runs", "Judge"] + tasks
+                   "Runs"] + tasks
         rows = []
 
         def _a8(r):
@@ -4917,11 +4917,11 @@ class ChatInterface:
                 band_done = True
                 rows.append(["-", "-- provisional: judged suites not yet run,"
                              " ranked on Auto-8 alone --", "-", "-", "-",
-                             "-", "-"] + ["-"] * len(tasks))
+                             "-"] + ["-"] * len(tasks))
             rows.append([i, r["model"],
                          f"{r['composite']:.4f}" if r["verified"] else "-",
                          _a8(r),
-                         f"{r['coverage']*100:.0f}%", _runs(r), r["judge"]]
+                         f"{r['coverage']*100:.0f}%", _runs(r)]
                         + [_cell(r, t) for t in tasks])
         for r in unranked:
             # provisional: the composite averages only the suites recorded
@@ -4931,7 +4931,7 @@ class ChatInterface:
             done_n, all_n = len(r["results"]), len(tasks)
             rows.append(["partial", r["model"], "-", _a8(r),
                          f"{r['coverage']*100:.0f}% - {done_n}/{all_n} suites",
-                         _runs(r), r["judge"]]
+                         _runs(r)]
                         + [_cell(r, t) for t in tasks])
         # marathon live status rows: models being benchmarked / queued.
         # written by the in-cluster marathon runner to the shared state PVC
@@ -4943,11 +4943,11 @@ class ChatInterface:
                 pad = ["-"] * len(tasks)
                 for name in mst.get("under_test", []):
                     if name not in on_board:
-                        rows.append(["Under Test", name, "-", "-", "-", "-",
+                        rows.append(["Under Test", name, "-", "-", "-",
                                      "-"] + pad)
                 for name in mst.get("in_queue", []):
                     if name not in on_board:
-                        rows.append(["In Queue", name, "-", "-", "-", "-",
+                        rows.append(["In Queue", name, "-", "-", "-",
                                      "-"] + pad)
         except Exception:
             pass
