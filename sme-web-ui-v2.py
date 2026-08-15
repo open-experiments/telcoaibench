@@ -4787,14 +4787,10 @@ class ChatInterface:
         weights = self._lb_weights()
         total_w = sum(weights.values())
         judged_tasks = {"telcos_last_exam", "vendor_genai"}
-        # board judge = most common judge among judged results
-        from collections import Counter
-        jc = Counter()
-        for e in board["entries"].values():
-            for t, r in e["results"].items():
-                if t in judged_tasks and r.get("judge"):
-                    jc[r["judge"]] += 1
-        board_judge = jc.most_common(1)[0][0] if jc else None
+        # Judge segregation removed (2026-08-15): the judge distinction is
+        # not surfaced on the board. Judge labels are still recorded per
+        # result and exported in the publish snapshot for provenance.
+        board_judge = None
         rows = []
         for key, e in board["entries"].items():
             covered_w, acc_w, flags = 0.0, 0.0, []
@@ -4804,9 +4800,6 @@ class ChatInterface:
                 if not r:
                     continue
                 if t in judged_tasks:
-                    if board_judge and r.get("judge") != board_judge:
-                        flags.append(f"{t}: judge `{r.get('judge')}` != board judge - excluded")
-                        continue  # judge segregation
                     judges_used.add(r.get("judge"))
                 covered_w += w
                 acc_w += r["accuracy"] * w
