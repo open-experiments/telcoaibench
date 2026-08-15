@@ -1,6 +1,6 @@
 {
- "generated": "2026-08-13 19:00",
- "phase": "Auto-scored marathon (judged top-5 pass pending - fitment refreshes automatically after it)",
+ "generated": "2026-08-15 23:05",
+ "phase": "Judged pass complete (judge: gpt-5.6-sol) - 31 models fitted",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
   "1": "User edge - small models, 1-4 GPUs, 10-50ms",
@@ -617,6 +617,48 @@
    "fit_tier": 3,
    "size_band_tier": 2,
    "notes": "verbose/slow decode - latency envelope only fits a tier up"
+  },
+  "muse-glimmer-30b": {
+   "composite": 0.6031,
+   "coverage": 1.0,
+   "params_b": 30,
+   "weights_gb": 60,
+   "precision": "bf16",
+   "mean_latency_s": 3.6,
+   "latency_source": "suite mean (batched); 112 min / ~1,850 answers",
+   "probe_tok_per_s": null,
+   "mean_output_tokens": null,
+   "axes": {
+    "knowledge": 0.809,
+    "protocol": 0.617,
+    "math": 0.36,
+    "fault": 0.51,
+    "structured": 0.3
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": "near-zero judged-auto gap (-0.003); runs on vLLM day-0 image 0.26.1rc1.dev608 (MuseGlimmerForConditionalGeneration not in pinned v0.26.0) - engine not stack-comparable with the rest of the board"
+  },
+  "qwen3-8-27b": {
+   "composite": 0.5909,
+   "coverage": 1.0,
+   "params_b": 27,
+   "weights_gb": 56,
+   "precision": "bf16",
+   "mean_latency_s": 3.0,
+   "latency_source": "loadprofile p50, idle engine, conc 32-64, thinking off",
+   "probe_tok_per_s": 435,
+   "mean_output_tokens": 141,
+   "axes": {
+    "knowledge": 0.828,
+    "protocol": 0.573,
+    "math": 0.72,
+    "fault": 0.61,
+    "structured": 0.31
+   },
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "notes": "golden config: reasoning disabled (chat_template_kwargs enable_thinking=false); board score is best of 3 configs - winning run used the no-thinking config"
   }
  }
 }
