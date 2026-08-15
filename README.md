@@ -163,8 +163,7 @@ All benchmark assets live under [`benchmarks/`](benchmarks/README.md):
 | [`open-telco/`](benchmarks/open-telco/) | Self-contained Open-Telco eval framework - 8 GSMA telecom benchmarks, lite + full datasets embedded (~4.5MB gzipped JSONL), single-file runner (stdlib + `requests`). Parity-validated; includes leaderboard claim snapshots and the 2026-08 verification report. |
 | [`vendor-genai-tests/`](benchmarks/vendor-genai-tests/) | Vendor GenAI matrix - 24 deep-dives across 6 vendors (Ericsson, Nokia, Mavenir, Samsung, Rakuten Symphony, Cisco) x 4 domains; per-criterion LLM-as-judge with fact anchors, fabrication bait, and honesty traps. |
 | [`telcos-last-exam/`](benchmarks/telcos-last-exam/) | Telco's Last Exam - 30 questions, 8 domains, 3 difficulty tiers, 246 points; LLM-as-judge against machine-verified answer keys with grading notes; points-weighted scoring. |
-| [`model-reports/`](benchmarks/model-reports/) | Per-model benchmark answers and performance reports. |
-| [`embeddings/`](benchmarks/embeddings/) | Embeddings model benchmark notes. |
+| [`model-reports/`](benchmarks/model-reports/) | Per-model proof points behind the leaderboard - one marathon report per ranked model (suite scores, generation behavior, sample misses, AI Grid fit) plus pre-marathon historical reports. |
 
 **Reproducibility discipline** - publish every number with: model revision
 hash, serving stack + version, precision, temperature, dataset tier, sample
@@ -182,8 +181,7 @@ telcoaibench/
 │   ├── open-telco/         #   embedded eval framework: runner + datasets + reports
 │   ├── vendor-genai-tests/ #   Ericsson / Nokia / Mavenir + Telco5G
 │   ├── telcos-last-exam/   #   telco exam + per-model answers
-│   ├── model-reports/      #   per-model results & perf reports
-│   └── embeddings/         #   embeddings benchmark
+│   └── model-reports/      #   leaderboard proof points: marathon/ + pre-marathon/
 ├── archive/                # Legacy v1 application
 └── images/                 # Logo & screenshots
 ```

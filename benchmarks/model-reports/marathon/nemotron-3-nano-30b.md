@@ -59,4 +59,4 @@ Notes: verbose/slow decode - latency envelope only fits a tier up
 *Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
 
 ---
-*Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*
+*Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../../docs/data/LEADERBOARD.md) automatically.*

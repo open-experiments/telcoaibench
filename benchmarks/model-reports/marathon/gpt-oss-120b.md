@@ -59,4 +59,4 @@ Notes: 117B MoE in 63GB MXFP4 - a Tier 3 brain on a single-GPU Tier 2 budget; se
 *Fitment from measured accuracy, decode speed, verbosity and VRAM - refreshes after the judged pass.*
 
 ---
-*Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../docs/data/LEADERBOARD.md) automatically.*
+*Per-sample transcripts (full question/answer/verdict JSONL) are archived on the portal state volume under `benchmark-results/`, one directory per suite run, named by model. Scores flow to the [leaderboard](../../../docs/data/LEADERBOARD.md) automatically.*

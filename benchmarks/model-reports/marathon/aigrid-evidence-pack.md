@@ -2,7 +2,13 @@
 
 *Support material for "Telco AI Grid: Serving, Governing, & Monetizing AI" (Haiby, Mufti, Nar, Sharma).*
 *Source: TelcoAIBench marathon, 2026-08-10/11 - identical harness, prompts, greedy decoding, vLLM v0.26.0,*
-*1x RTX PRO 6000 Blackwell 96GB per model. Per-question transcripts archived; MCQ phase (judged pass pending).*
+*1x RTX PRO 6000 Blackwell 96GB per model. Per-question transcripts archived; AUTO-SCORED phase snapshot.*
+
+> **Snapshot note (2026-08-15):** the tables below are the 13-model snapshot this pack was
+> written against. The board has since grown to 31 ranked models (judged pass complete,
+> judge `gpt-5.6-sol`) - the maintained fitment for every model lives in
+> [`docs/data/tierfit.json`](../../../docs/data/tierfit.json) and each model's
+> [marathon report](./). The measurements and conclusions below are unchanged.
 
 The article's placement principle - *"tier choice should rest on measured accuracy, latency, and cost
 for the target workload rather than parameter count alone"* - is directly observable in this data:
