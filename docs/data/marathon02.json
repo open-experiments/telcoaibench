@@ -1,0 +1,90 @@
+{
+ "marathon": "02",
+ "title": "Marathon #02 - 2026 Functional Track",
+ "suite": "rel19_bench (batch 1, frozen 2026-08-16, 52 questions, AUTO-SCORED)",
+ "scope": "Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios",
+ "method": "Each model scored as the mean of two fixed answer-shuffles (A/B) of the identical frozen set; greedy decoding, temp 0. All 10 models on identical pinned serving stack except muse-glimmer-30b (day-0 engine, see its report).",
+ "generated": "2026-08-16",
+ "results": [
+  {
+   "rank": 1,
+   "model": "gemma4-31b-it-base",
+   "board2025_rank": 2,
+   "shuffleA": 0.9231,
+   "shuffleB": 0.9038,
+   "mean": 0.9135
+  },
+  {
+   "rank": 2,
+   "model": "qwen3-6-35b-a3b",
+   "board2025_rank": 10,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.9231,
+   "mean": 0.9135
+  },
+  {
+   "rank": 3,
+   "model": "muse-glimmer-30b",
+   "board2025_rank": 3,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.9038,
+   "mean": 0.9038
+  },
+  {
+   "rank": 4,
+   "model": "telecomgpt-r1",
+   "board2025_rank": 1,
+   "shuffleA": 0.9231,
+   "shuffleB": 0.8654,
+   "mean": 0.8942
+  },
+  {
+   "rank": 5,
+   "model": "gpt-oss-120b",
+   "board2025_rank": 6,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.8846,
+   "mean": 0.8942
+  },
+  {
+   "rank": 6,
+   "model": "otel2-llm-31b-it",
+   "board2025_rank": 4,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.8654,
+   "mean": 0.8846
+  },
+  {
+   "rank": 7,
+   "model": "qwen3-8-27b",
+   "board2025_rank": 5,
+   "shuffleA": 0.8846,
+   "shuffleB": 0.8462,
+   "mean": 0.8654
+  },
+  {
+   "rank": 8,
+   "model": "seed-oss-36b",
+   "board2025_rank": 7,
+   "shuffleA": 0.8269,
+   "shuffleB": 0.8077,
+   "mean": 0.8173
+  },
+  {
+   "rank": 9,
+   "model": "qwq-32b",
+   "board2025_rank": 9,
+   "shuffleA": 0.8269,
+   "shuffleB": 0.7885,
+   "mean": 0.8077
+  },
+  {
+   "rank": 10,
+   "model": "nemotron-3-super-120b",
+   "board2025_rank": 8,
+   "shuffleA": 0.75,
+   "shuffleB": 0.7692,
+   "mean": 0.7596
+  }
+ ]
+}

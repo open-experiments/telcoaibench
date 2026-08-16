@@ -206,6 +206,29 @@
   <div class="wrap">
     <h2>Leader<span>board</span></h2>
     <p class="sub">Every clean, full-set run recorded in the portal can be published here as a versioned snapshot. Composite = importance-weighted mean (judged suites weigh heaviest); ranking requires 65% weight coverage, full-set runs only, and one consistent judge.</p>
+    <div id="lb-tabs" style="display:flex;gap:8px;margin-bottom:14px">
+      <button id="lb-tab1" class="lb-tabbtn active" onclick="lbTab(1)">Legacy Test Benchmarks</button>
+      <button id="lb-tab2" class="lb-tabbtn" onclick="lbTab(2)">2026 Test Suite &middot; 6G Within</button>
+    </div>
+    <style>
+      .lb-tabbtn{background:var(--bg2);border:1px solid var(--line);color:var(--dim);border-radius:9px;
+        padding:8px 16px;font-size:13px;cursor:pointer;letter-spacing:.2px}
+      .lb-tabbtn.active{color:var(--txt);border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan) inset}
+      .m02-bar{display:inline-block;height:8px;border-radius:4px;background:linear-gradient(90deg,#22D3EE,#67E8F9);vertical-align:middle}
+    </style>
+    <div class="card" id="m02-card" style="display:none;padding:22px">
+      <div id="m02-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div>
+      <div id="m02-board"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.7">
+        <b style="color:var(--dim)">What this measures.</b> AUTO-SCORED functional knowhow on 2026 standards
+        currency (Rel-18/19 &amp; 6G readiness): capability limits, mechanisms, release availability,
+        spec-to-function mapping, and operational solution-selection scenarios &mdash; authored from primary
+        3GPP/ETSI sources and SME-reviewed. Each model runs the identical frozen 52-question set twice
+        (two fixed answer orderings); the score is the mean, which bounds choice-ordering variance.
+        Serving stack is the identical pinned engine for all models except muse-glimmer-30b (day-0 engine
+        &mdash; see its marathon report). &Delta; column = movement vs the 2025 board rank at left.
+      </div>
+    </div>
     <div class="card" id="lb-card">
       <div id="lb-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div>
       <div id="lb-board"></div>
@@ -291,6 +314,38 @@
   .lb-cell.na{color:var(--faint)}
 </style>
 <script>
+function lbTab(n){
+  document.getElementById('lb-card').style.display = n===1?'':'none';
+  document.getElementById('m02-card').style.display = n===2?'':'none';
+  document.getElementById('lb-tab1').classList.toggle('active', n===1);
+  document.getElementById('lb-tab2').classList.toggle('active', n===2);
+}
+fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
+  document.getElementById('m02-meta').textContent =
+    (d.suite||'')+'  |  generated '+(d.generated||'')+'  |  '+(d.results||[]).length+' models';
+  let h='<table style="width:100%;border-collapse:collapse;font-size:13.5px">'
+    +'<tr style="color:var(--faint);text-align:left"><th style="padding:6px 8px">Rank</th>'
+    +'<th style="padding:6px 8px">Model</th><th style="padding:6px 8px">Score</th>'
+    +'<th style="padding:6px 8px"></th><th style="padding:6px 8px">Shuffle A</th>'
+    +'<th style="padding:6px 8px">Shuffle B</th><th style="padding:6px 8px">2025 board</th>'
+    +'<th style="padding:6px 8px">&Delta;</th></tr>';
+  for(const r of d.results||[]){
+    const delta=r.board2025_rank-r.rank;
+    const ds=delta>0?'<span style="color:var(--green)">&#9650; '+delta+'</span>'
+            :delta<0?'<span style="color:var(--amber)">&#9660; '+(-delta)+'</span>'
+            :'<span style="color:var(--faint)">&ndash;</span>';
+    h+='<tr style="border-top:1px solid var(--line)">'
+      +'<td style="padding:7px 8px;color:var(--dim)">'+r.rank+'</td>'
+      +'<td style="padding:7px 8px;color:var(--txt)"><b>'+r.model+'</b></td>'
+      +'<td style="padding:7px 8px;font-variant-numeric:tabular-nums"><b>'+r.mean.toFixed(4)+'</b></td>'
+      +'<td style="padding:7px 8px"><span class="m02-bar" style="width:'+Math.round(r.mean*120)+'px"></span></td>'
+      +'<td style="padding:7px 8px;color:var(--dim);font-variant-numeric:tabular-nums">'+r.shuffleA.toFixed(4)+'</td>'
+      +'<td style="padding:7px 8px;color:var(--dim);font-variant-numeric:tabular-nums">'+r.shuffleB.toFixed(4)+'</td>'
+      +'<td style="padding:7px 8px;color:var(--faint)">#'+r.board2025_rank+'</td>'
+      +'<td style="padding:7px 8px">'+ds+'</td></tr>';
+  }
+  document.getElementById('m02-board').innerHTML=h+'</table>';
+}).catch(()=>{document.getElementById('m02-meta').textContent='Marathon #02 data not available yet.';});
 fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
   const meta=document.getElementById('lb-meta'), host=document.getElementById('lb-board');
   const ranked=d.ranked||[], unranked=d.unranked||[], rows=[...ranked,...unranked];

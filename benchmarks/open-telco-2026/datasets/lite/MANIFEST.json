@@ -1,0 +1,27 @@
+{
+ "suite": "rel19_bench",
+ "batch": "1 (v3.1)",
+ "n": 52,
+ "frozen": "2026-08-16",
+ "shuffleA": {
+  "seed": 52001,
+  "positions": {
+   "2": 17,
+   "0": 15,
+   "3": 13,
+   "1": 7
+  },
+  "sha256_16": "385a0a62911a694a"
+ },
+ "shuffleB": {
+  "seed": 52002,
+  "positions": {
+   "1": 13,
+   "3": 16,
+   "2": 16,
+   "0": 7
+  },
+  "sha256_16": "7f0cb83a43bc6dcd"
+ },
+ "scoring": "score_mcq (ANSWER: X), greedy, temp=0.0; final score = mean(A,B)"
+}
