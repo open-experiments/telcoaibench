@@ -226,7 +226,7 @@
         3GPP/ETSI sources and SME-reviewed. Each model runs the identical frozen 52-question set twice
         (two fixed answer orderings); the score is the mean, which bounds choice-ordering variance.
         Serving stack is the identical pinned engine for all models except muse-glimmer-30b (day-0 engine
-        &mdash; see its marathon report). &Delta; column = movement vs the 2025 board rank at left.
+        &mdash; see its marathon report). &Delta; column = movement vs the model's Legacy Test Benchmark rank.
       </div>
     </div>
     <div class="card" id="lb-card">
@@ -325,9 +325,9 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
     (d.suite||'')+'  |  generated '+(d.generated||'')+'  |  '+(d.results||[]).length+' models';
   let h='<table style="width:100%;border-collapse:collapse;font-size:13.5px">'
     +'<tr style="color:var(--faint);text-align:left"><th style="padding:6px 8px">Rank</th>'
-    +'<th style="padding:6px 8px">Model</th><th style="padding:6px 8px">Score</th>'
+    +'<th style="padding:6px 8px">Model</th><th style="padding:6px 8px">Origin</th><th style="padding:6px 8px">Score</th>'
     +'<th style="padding:6px 8px"></th><th style="padding:6px 8px">Shuffle A</th>'
-    +'<th style="padding:6px 8px">Shuffle B</th><th style="padding:6px 8px">2025 board</th>'
+    +'<th style="padding:6px 8px">Shuffle B</th><th style="padding:6px 8px">Legacy Test Benchmark</th>'
     +'<th style="padding:6px 8px">&Delta;</th></tr>';
   for(const r of d.results||[]){
     const delta=r.board2025_rank-r.rank;
@@ -337,6 +337,7 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
     h+='<tr style="border-top:1px solid var(--line)">'
       +'<td style="padding:7px 8px;color:var(--dim)">'+r.rank+'</td>'
       +'<td style="padding:7px 8px;color:var(--txt)"><b>'+r.model+'</b></td>'
+      +'<td style="padding:7px 8px;color:var(--dim)">'+(r.origin_flag||'')+' '+(r.origin||'')+'</td>'
       +'<td style="padding:7px 8px;font-variant-numeric:tabular-nums"><b>'+r.mean.toFixed(4)+'</b></td>'
       +'<td style="padding:7px 8px"><span class="m02-bar" style="width:'+Math.round(r.mean*120)+'px"></span></td>'
       +'<td style="padding:7px 8px;color:var(--dim);font-variant-numeric:tabular-nums">'+r.shuffleA.toFixed(4)+'</td>'

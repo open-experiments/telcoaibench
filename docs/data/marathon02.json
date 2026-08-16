@@ -12,7 +12,9 @@
    "board2025_rank": 2,
    "shuffleA": 0.9231,
    "shuffleB": 0.9038,
-   "mean": 0.9135
+   "mean": 0.9135,
+   "origin_flag": "🇺🇸",
+   "origin": "USA"
   },
   {
    "rank": 2,
@@ -20,7 +22,9 @@
    "board2025_rank": 10,
    "shuffleA": 0.9038,
    "shuffleB": 0.9231,
-   "mean": 0.9135
+   "mean": 0.9135,
+   "origin_flag": "🇨🇳",
+   "origin": "China"
   },
   {
    "rank": 3,
@@ -28,7 +32,9 @@
    "board2025_rank": 3,
    "shuffleA": 0.9038,
    "shuffleB": 0.9038,
-   "mean": 0.9038
+   "mean": 0.9038,
+   "origin_flag": "🇺🇸",
+   "origin": "USA"
   },
   {
    "rank": 4,
@@ -36,7 +42,9 @@
    "board2025_rank": 1,
    "shuffleA": 0.9231,
    "shuffleB": 0.8654,
-   "mean": 0.8942
+   "mean": 0.8942,
+   "origin_flag": "🇦🇪",
+   "origin": "UAE"
   },
   {
    "rank": 5,
@@ -44,7 +52,9 @@
    "board2025_rank": 6,
    "shuffleA": 0.9038,
    "shuffleB": 0.8846,
-   "mean": 0.8942
+   "mean": 0.8942,
+   "origin_flag": "🇺🇸",
+   "origin": "USA"
   },
   {
    "rank": 6,
@@ -52,7 +62,9 @@
    "board2025_rank": 4,
    "shuffleA": 0.9038,
    "shuffleB": 0.8654,
-   "mean": 0.8846
+   "mean": 0.8846,
+   "origin_flag": "🇺🇸",
+   "origin": "USA"
   },
   {
    "rank": 7,
@@ -60,7 +72,9 @@
    "board2025_rank": 5,
    "shuffleA": 0.8846,
    "shuffleB": 0.8462,
-   "mean": 0.8654
+   "mean": 0.8654,
+   "origin_flag": "🇨🇳",
+   "origin": "China"
   },
   {
    "rank": 8,
@@ -68,7 +82,9 @@
    "board2025_rank": 7,
    "shuffleA": 0.8269,
    "shuffleB": 0.8077,
-   "mean": 0.8173
+   "mean": 0.8173,
+   "origin_flag": "🇨🇳",
+   "origin": "China"
   },
   {
    "rank": 9,
@@ -76,7 +92,9 @@
    "board2025_rank": 9,
    "shuffleA": 0.8269,
    "shuffleB": 0.7885,
-   "mean": 0.8077
+   "mean": 0.8077,
+   "origin_flag": "🇨🇳",
+   "origin": "China"
   },
   {
    "rank": 10,
@@ -84,7 +102,9 @@
    "board2025_rank": 8,
    "shuffleA": 0.75,
    "shuffleB": 0.7692,
-   "mean": 0.7596
+   "mean": 0.7596,
+   "origin_flag": "🇺🇸",
+   "origin": "USA"
   }
  ]
 }
