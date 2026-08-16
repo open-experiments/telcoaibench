@@ -10,7 +10,7 @@ own board (Marathon #02 onward, "2026 Functional Track" tab on the site).
 | Suite | Status | Scope |
 |---|---|---|
 | `rel19_bench` | **batch 1 frozen 2026-08-16** (52 q) | Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec-to-function mapping, operational scenarios |
-| `ntn_bench` | planned | NTN & private networks |
+| `ntn_bench` | **batch 1 frozen 2026-08-16** (45 q) | NTN (NR-NTN/IoT-NTN, D2D, spectrum, orbits) & private networks (SNPN/PNI-NPN, CAG, onboarding, deployment models) |
 | `netapi_bench` | planned | Network APIs & monetization (CAMARA/TMF) |
 | `aiops_bench` | planned | AI-RAN & autonomous operations |
 

@@ -1,27 +1,58 @@
 {
- "suite": "rel19_bench",
- "batch": "1 (v3.1)",
- "n": 52,
- "frozen": "2026-08-16",
- "shuffleA": {
-  "seed": 52001,
-  "positions": {
-   "2": 17,
-   "0": 15,
-   "3": 13,
-   "1": 7
+ "suites": {
+  "rel19_bench": {
+   "suite": "rel19_bench",
+   "batch": "1 (v3.1)",
+   "n": 52,
+   "frozen": "2026-08-16",
+   "shuffleA": {
+    "seed": 52001,
+    "positions": {
+     "2": 17,
+     "0": 15,
+     "3": 13,
+     "1": 7
+    },
+    "sha256_16": "385a0a62911a694a"
+   },
+   "shuffleB": {
+    "seed": 52002,
+    "positions": {
+     "1": 13,
+     "3": 16,
+     "2": 16,
+     "0": 7
+    },
+    "sha256_16": "7f0cb83a43bc6dcd"
+   },
+   "scoring": "score_mcq (ANSWER: X), greedy, temp=0.0; final score = mean(A,B)"
   },
-  "sha256_16": "385a0a62911a694a"
- },
- "shuffleB": {
-  "seed": 52002,
-  "positions": {
-   "1": 13,
-   "3": 16,
-   "2": 16,
-   "0": 7
-  },
-  "sha256_16": "7f0cb83a43bc6dcd"
- },
- "scoring": "score_mcq (ANSWER: X), greedy, temp=0.0; final score = mean(A,B)"
+  "ntn_bench": {
+   "suite": "ntn_bench",
+   "batch": "1 (v3, SME-approved edits applied)",
+   "n": 45,
+   "frozen": "2026-08-16",
+   "shuffleA": {
+    "seed": 45001,
+    "positions": {
+     "3": 12,
+     "2": 12,
+     "0": 13,
+     "1": 8
+    },
+    "sha256_16": "4a4f0b484e523ba6"
+   },
+   "shuffleB": {
+    "seed": 45002,
+    "positions": {
+     "1": 14,
+     "0": 17,
+     "3": 9,
+     "2": 5
+    },
+    "sha256_16": "f19861ea3e443a85"
+   },
+   "scoring": "score_mcq (ANSWER: X), greedy, temp=0.0; final score = mean(A,B)"
+  }
+ }
 }
