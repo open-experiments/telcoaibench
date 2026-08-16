@@ -1,12 +1,4 @@
-# rel19_bench — Batch 1 v3 FUNCTIONAL KNOWHOW DRAFT v3.1 (52 questions) — for SME review
-
-**Redesign per your direction:** model-selection benchmark for operational telco AI
-(AI-RAN, AIOps, Transport, PacketNetwork, IMS, VAS, Regulatory, OSS/BSS).
-**Purged:** upload dates, plenary/venue numbers, WI codes, spec version numbers (13 questions).
-**Kept:** capability numbers, mechanisms, release availability, spec-to-function mapping.
-**SME v2 blockers all fixed:** Q18 (your stem), Q28 (your poseToRenderToPhoton question), Q47 (your TS 22.261 replacement).
-**Sources upgraded** to primary 3GPP pages/specs per your hierarchy; 8 new Ambient-IoT functional questions from 3gpp.org/technologies/rel19-aiot; 4 new LP-WUS mechanism questions from rel19-lpwus.
-Correct answer shown as A (shuffled at freeze).
+# rel19_bench — Batch 1 v3 FUNCTIONAL KNOWHOW  v3.1 (52 questions) 
 
 ---
 
