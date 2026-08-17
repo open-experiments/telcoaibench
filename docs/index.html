@@ -269,7 +269,8 @@
           reads <b>&ndash;</b>, because a 10-suite composite computed from 8 suites is not a lower-confidence version
           of the same number, it is a different measurement. <b>Auto-8</b> covers the 8 machine-scored suites and is
           defined for every model here, so that column <i>is</i> comparable from top to bottom - which is why it
-          carries the only bar. Read down Auto-8 to compare any two models. The <b>&Delta;</b> beside a composite is
+          is comparable for every model. The bar tracks each row's ranking metric, so bar
+          lengths descend with rank. The <b>&Delta;</b> beside a composite is
           that model's composite minus its own Auto-8: how far submitting to the unpublished judged suites moved it.
         </div>
         <div style="margin-top:10px">
@@ -419,6 +420,15 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     // NOT on the common basis and must be marked, never shown bare.
     return dn?{v:n/dn, full:Math.abs(dn-tot)<1e-9, cov:dn/tot}:null;};
   const maxA=Math.max(...rows.map(r=>{const a=auto8(r);return a&&a.full?a.v:0;}),0.0001);
+  // bar follows each row's RANKING metric so lengths descend with rank:
+  // composite for ranked rows, auto-8*coverage for the provisional band
+  const rankMetric=r=>{const a=auto8(r);
+    if(typeof r.composite==='number') return r.composite;
+    return a?a.v*(a.full?1:a.cov):0;};
+  const rmVals=rows.map(rankMetric).filter(v=>v>0);
+  const rmMx=Math.max(...rmVals,0.0001), rmMn=Math.min(...rmVals,rmMx-0.0001);
+  const barW=r=>{const v=rankMetric(r);
+    return (12+(rmMx>rmMn?(v-rmMn)/(rmMx-rmMn):1)*88).toFixed(1);};
   const heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
   let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th title="importance-weighted mean of all 10 suites - only defined once both judge-graded suites are recorded">Composite<span class="lb-sub">all 10 &middot; &Delta; vs Auto-8</span></th><th title="importance-weighted mean of the 8 machine-scored suites - defined for every model on the board, so this column IS comparable top to bottom">Auto-8<span class="lb-sub">same basis for all</span></th>';
   h+=tasks.map(t=>'<th title="'+t+'">'+(short[t]||t)+'</th>').join('')+'</tr>';
@@ -459,8 +469,8 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
       : '<td><span class="lb-cell na" title="not defined yet - the full composite needs both judge-graded suites; this model\'s score is in the Auto-8 column">&ndash;</span></td>';
     h+= a8===null ? '<td><span class="lb-cell na">&ndash;</span></td>'
       : a8.full
-      ? '<td><div class="lb-comp"><b'+(ver?'':' class="a8"')+'>'+a8.v.toFixed(4)+'</b><span class="lb-bar" title="Auto-8: weighted mean of all 8 machine-scored suites - the same basis for every model on this board"><i class="a8" style="width:'+Math.min(100,100*a8.v/maxA).toFixed(1)+'%"></i></span></div></td>'
-      : '<td><div class="lb-comp"><b class="prov">'+a8.v.toFixed(4)+'&#42;</b><span class="lb-bar" title="partial: only '+Math.round(a8.cov*100)+'% of the Auto-8 weight recorded so far - averages a subset of suites, so it is NOT on the common basis"><i class="prov" style="width:'+Math.min(100,100*(a8.v/maxA)*a8.cov).toFixed(1)+'%"></i></span></div></td>';
+      ? '<td><div class="lb-comp"><b'+(ver?'':' class="a8"')+'>'+a8.v.toFixed(4)+'</b><span class="lb-bar" title="bar length follows the ranking metric of the row (composite when ranked; partial Auto-8 in the provisional band) - bars descend with rank"><i class="a8" style="width:'+barW(r)+'%"></i></span></div></td>'
+      : '<td><div class="lb-comp"><b class="prov">'+a8.v.toFixed(4)+'&#42;</b><span class="lb-bar" title="partial: only '+Math.round(a8.cov*100)+'% of the Auto-8 weight recorded so far - averages a subset of suites, so it is NOT on the common basis"><i class="prov" style="width:'+barW(r)+'%"></i></span></div></td>';
     h+=tasks.map(t=>{
       const c=r.results&&r.results[t];
       if(!c) return '<td><span class="lb-cell na">&ndash;</span></td>';
