@@ -15,6 +15,14 @@ reference key on a 0-10 scale (strict grading: methodology, numerical
 results, 3GPP citations, completeness). Scores are reported as a 0-1
 average with sample stderr.
 
+## 2026 expansion
+
+The 2026 track adds `telcos_last_exam_2026`: **+30 expert questions, 260 points**
+(source of truth: [`exam-2026.md`](exam-2026.md)) — new domains IMS & Voice, OSS/BSS,
+Regulatory Services, AI & Autonomous Ops, NTN, Energy & Sustainability, plus expert
+deepeners in the legacy domains. The legacy 30-question exam stays frozen 1:1; the full
+2026 exam is both tasks combined, points-weighted (506 points total).
+
 ## Layout
 
 ```
@@ -22,8 +30,10 @@ telcos-last-exam/
 ├── exam.md                      # legacy 10 questions (kept verbatim)
 ├── answers.md                   # legacy answer key
 ├── exam-v2.md                   # v2 source of truth: 20 new questions + answers + grading notes
+├── exam-2026.md                 # 2026 expansion source of truth: 30 expert questions (batch 1)
 ├── datasets/
-│   └── telcos_last_exam.jsonl.gz  # machine-readable exam (question + reference), embedded
+│   ├── telcos_last_exam.jsonl.gz       # machine-readable exam (question + reference), embedded
+│   └── telcos_last_exam_2026.jsonl.gz  # 2026 expansion batch 1 (30 q, 260 pts)
 └── model-answers/               # historical per-model answer sheets (manual era)
     ├── chatgpt-5-answers.md
     ├── qwen3-30b-a3b-fp8-answers.md

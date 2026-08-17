@@ -6015,7 +6015,8 @@ class ChatInterface:
                             choices=["teleqna", "teletables", "oranbench",
                                      "srsranbench", "telemath", "telelogs",
                                      "3gpp", "6g_bench",
-                                     "telcos_last_exam", "vendor_genai"],
+                                     "telcos_last_exam",
+                                     "telcos_last_exam_2026", "vendor_genai"],
                             value=["teleqna", "telemath", "telelogs"],
                             interactive=True,
                             label="Benchmarks to run"

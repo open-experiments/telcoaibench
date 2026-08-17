@@ -266,6 +266,9 @@ TASKS = {
     # LLM-as-judge suites (need --judge-* / a judge model in the portal)
     "telcos_last_exam": {"prompt": build_exam_prompt, "judged": "reference",
                          "path": "telcos-last-exam/datasets/telcos_last_exam.jsonl.gz"},
+    # 2026 expansion batch 1 (30 expert q, 260 pts); full 2026 exam = this + legacy, points-weighted
+    "telcos_last_exam_2026": {"prompt": build_exam_prompt, "judged": "reference",
+                         "path": "telcos-last-exam/datasets/telcos_last_exam_2026.jsonl.gz"},
     "vendor_genai":     {"prompt": build_plain_prompt, "judged": "rubric",
                          "path": "vendor-genai-tests/datasets/vendor_genai.jsonl.gz"},
 }

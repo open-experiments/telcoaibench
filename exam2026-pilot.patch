@@ -1,0 +1,1253 @@
+diff --git a/benchmarks/open-telco/otel_eval.py b/benchmarks/open-telco/otel_eval.py
+index 98d05b5..9da22f9 100644
+--- a/benchmarks/open-telco/otel_eval.py
++++ b/benchmarks/open-telco/otel_eval.py
+@@ -266,6 +266,9 @@ TASKS = {
+     # LLM-as-judge suites (need --judge-* / a judge model in the portal)
+     "telcos_last_exam": {"prompt": build_exam_prompt, "judged": "reference",
+                          "path": "telcos-last-exam/datasets/telcos_last_exam.jsonl.gz"},
++    # 2026 expansion batch 1 (30 expert q, 260 pts); full 2026 exam = this + legacy, points-weighted
++    "telcos_last_exam_2026": {"prompt": build_exam_prompt, "judged": "reference",
++                         "path": "telcos-last-exam/datasets/telcos_last_exam_2026.jsonl.gz"},
+     "vendor_genai":     {"prompt": build_plain_prompt, "judged": "rubric",
+                          "path": "vendor-genai-tests/datasets/vendor_genai.jsonl.gz"},
+ }
+diff --git a/benchmarks/telcos-last-exam/README.md b/benchmarks/telcos-last-exam/README.md
+index bbdcc79..b060a11 100644
+--- a/benchmarks/telcos-last-exam/README.md
++++ b/benchmarks/telcos-last-exam/README.md
+@@ -15,6 +15,14 @@ reference key on a 0-10 scale (strict grading: methodology, numerical
+ results, 3GPP citations, completeness). Scores are reported as a 0-1
+ average with sample stderr.
+ 
++## 2026 expansion
++
++The 2026 track adds `telcos_last_exam_2026`: **+30 expert questions, 260 points**
++(source of truth: [`exam-2026.md`](exam-2026.md)) — new domains IMS & Voice, OSS/BSS,
++Regulatory Services, AI & Autonomous Ops, NTN, Energy & Sustainability, plus expert
++deepeners in the legacy domains. The legacy 30-question exam stays frozen 1:1; the full
++2026 exam is both tasks combined, points-weighted (506 points total).
++
+ ## Layout
+ 
+ ```
+@@ -22,8 +30,10 @@ telcos-last-exam/
+ ├── exam.md                      # legacy 10 questions (kept verbatim)
+ ├── answers.md                   # legacy answer key
+ ├── exam-v2.md                   # v2 source of truth: 20 new questions + answers + grading notes
++├── exam-2026.md                 # 2026 expansion source of truth: 30 expert questions (batch 1)
+ ├── datasets/
+-│   └── telcos_last_exam.jsonl.gz  # machine-readable exam (question + reference), embedded
++│   ├── telcos_last_exam.jsonl.gz       # machine-readable exam (question + reference), embedded
++│   └── telcos_last_exam_2026.jsonl.gz  # 2026 expansion batch 1 (30 q, 260 pts)
+ └── model-answers/               # historical per-model answer sheets (manual era)
+     ├── chatgpt-5-answers.md
+     ├── qwen3-30b-a3b-fp8-answers.md
+diff --git a/benchmarks/telcos-last-exam/datasets/telcos_last_exam_2026.jsonl.gz b/benchmarks/telcos-last-exam/datasets/telcos_last_exam_2026.jsonl.gz
+new file mode 100644
+index 0000000000000000000000000000000000000000..e41b7a2a7a7e1bd2f087776db0cb3c5e3c7c07c2
+GIT binary patch
+literal 33818
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/benchmarks/telcos-last-exam/exam-2026.md b/benchmarks/telcos-last-exam/exam-2026.md
+new file mode 100644
+index 0000000..04dce58
+--- /dev/null
++++ b/benchmarks/telcos-last-exam/exam-2026.md
+@@ -0,0 +1,528 @@
++# Telco's Last Exam — 2026 Expansion (Batch 1, 30 expert questions, 260 points)
++
++Source of truth for the `telcos_last_exam_2026` judged task (dataset:
++[`datasets/telcos_last_exam_2026.jsonl.gz`](datasets/telcos_last_exam_2026.jsonl.gz)).
++The full 2026 exam = the legacy 30 questions (246 pts, kept 1:1) + this batch
++(260 pts), points-weighted. SME v1 review applied; status: judged-pilot stage.
++
++**Design:** widens the exam horizontally — new domains IMS & Voice (4), OSS/BSS (3), Regulatory Services (3), AI & Autonomous Ops (4), NTN (2), Energy & Sustainability (2) — and vertically with expert deepeners in the legacy domains: RF/RAN (3), Core & Protocols (3), Transport & Fronthaul (2), Timing & Sync (1), Security (2), Cloud-Native (1). All expert tier; 260 points added (exam total would become 506). Each question ships a worked reference answer + judge grading notes (must-have / accept / penalize) in the existing exam-v2 format. Judged suite: candidate answers graded 0-10 by the portal judge (gpt-5.6-sol) against the reference.
++
++---
++
++## IM1 · IMS & Voice · expert · 10 pts
++
++**VoNR bearer dimensioning with EVS and ROHC**
++
++A VoNR service uses EVS at 13.2 kbit/s with 20 ms packetization over IPv6.
++a) Compute the RTP payload size per packet and the on-the-wire IP packet size without header compression.
++b) Compute the resulting IP-layer bit rate, and the rate after ROHC compresses the IPv6/UDP/RTP stack to ~4 bytes.
++c) State the 5QI used for the voice media flow and how the GBR you would configure relates to (b).
++d) Explain why the SIP/IMS signalling flow rides a different QoS flow, and which 5QI that is.
++
++**Reference answer:**
++
++a) 13.2 kbit/s x 0.020 s = 264 bits = **33 bytes** of EVS payload per packet (plus ~1 byte payload-format ToC, acceptable). Header stack IPv6 40 + UDP 8 + RTP 12 = **60 bytes**, so ~**93 bytes** per packet on the wire.
++b) 93 B / 20 ms = 4650 B/s = **37.2 kbit/s** at the IP layer. With ROHC compressing the 60-byte stack to ~4 bytes: 37 B / 20 ms ≈ **14.8 kbit/s**.
++c) Voice media uses **5QI 1** (GBR, conversational voice). Provisioning cannot equate codec rate with transport demand: GFBR practice carries margin for the real traffic profile (commonly ~38-49 kbit/s per direction for EVS 13.2, though exact values vary by implementation and policy), because ROHC gain is a radio-layer optimization below the IP service flow and cannot be assumed at admission.
++d) SIP signalling is carried on the IMS signalling PDU-session flow with **5QI 5** (non-GBR, high priority): signalling must survive cell congestion that would throttle a GBR media flow, and its burst profile (large SIP messages, sporadic) does not fit a small constant GBR.
++
++**Grading notes:** Must have: 33-byte payload arithmetic, 60-byte IPv6/UDP/RTP stack, ~37 kbit/s uncompressed and ~15 kbit/s ROHC rates (±1 kbit/s tolerance for the ToC byte), 5QI 1 for media, 5QI 5 for signalling, and the reasoning that codec rate != transport demand so provisioning must carry margin for the real profile with ROHC treated as a radio-layer optimization. Accept IPv4 variant (20-byte header, 73 B, 29.2 kbit/s) if declared, and any GFBR/MBR provisioning practice that reasons correctly about overhead and margin. Penalize: equating codec rate with bearer rate without overhead reasoning, or 5QI 2/5QI 7 for voice media.
++
++---
++
++## IM2 · IMS & Voice · expert · 8 pts
++
++**IMS-AKA registration security internals**
++
++Walk through the security establishment of an initial IMS registration over 5GS: the two REGISTER rounds, what the 401 challenge carries, how the IPsec security associations between UE and P-CSCF are derived and addressed (SAs, SPIs, protected ports), and which headers negotiate them. Then state what integrity and confidentiality protection applies to all subsequent SIP signalling, and name one thing that changes when the UE registers over untrusted non-3GPP access instead.
++
++**Reference answer:**
++
++First REGISTER (unprotected) carries Security-Client (IPsec-3GPP: algorithms, SPIs, protected client ports). S-CSCF fetches AVs from HSS/UDM and returns **401 Unauthorized** with RAND and AUTN (WWW-Authenticate, AKAv2); CK/IK from Milenage/TUAK become the IPsec keys. UE and P-CSCF establish **four ESP SAs** (two pairs: UE-client<->P-CSCF-server and reverse), addressed by the negotiated SPIs, between protected client/server ports from Security-Client/Security-Server. The second REGISTER runs over the new SAs with the RES in the Authorization header; P-CSCF adds Security-Verify echoing Security-Server to defeat bid-down. From then on **all SIP signalling runs inside ESP** with the negotiated integrity (HMAC-SHA-1-96 or AES-GMAC family) and optional encryption; Service-Route/P-Associated-URI complete registration. Over untrusted non-3GPP access, the UE first builds an **IKEv2/IPsec tunnel to the N3IWF** (EAP-AKA'), so IMS security runs inside that outer tunnel — and P-CSCF discovery/addressing shifts to the tunnel's inner IP.
++
++**Grading notes:** Must have: two-round REGISTER, 401 with RAND/AUTN, CK/IK -> ESP SA derivation, SPI + protected-port negotiation via Security-Client/Server/Verify, all subsequent signalling in ESP, and the N3IWF/IKEv2 difference for non-3GPP. Accept TS 33.203/24.229 citations but do not require them; accept architecture-correct variants that do not enumerate every SA/port detail — the four-SA structure and protected-port concept suffice. Penalize: TLS-only answers, claiming NAS security replaces IMS-AKA, or omitting the bid-down protection role of Security-Verify.
++
++---
++
++## IM3 · IMS & Voice · expert · 8 pts
++
++**EPS fallback failure modes and timers**
++
++An operator with NR SA but VoNR not yet enabled uses EPS fallback for voice. Describe the call-setup sequence from the QoS-flow trigger to the first RTP packet, including the two RAN-level realizations and the core-side requirement that makes context transfer seamless. Then analyze three production failure modes: (1) fallback without N26, (2) TAU-induced setup delay, and (3) return-to-NR ping-pong — for each, the mechanism and the mitigation.
++
++**Reference answer:**
++
++Sequence: MO/MT call -> the network attempts dedicated voice QoS-flow establishment (**5QI 1**); NG-RAN determines that voice cannot be supported over NR (configuration/capability, incl. N26 interworking availability) and initiates EPS fallback — one standardized realization is rejecting the 5QI-1 flow setup with cause 'IMS voice EPS fallback triggered' — executing either **handover to LTE** (with N26: Ngap HO -> S1) or **RRC release with redirection** to LTE. With **N26**, AMF<->MME context transfer keeps the PDN/PDU session and IMS registration alive; the dedicated **QCI-1** bearer is then set up in EPS and SIP UPDATE/PRACK completes; first RTP flows on QCI 1.
++(1) **No N26**: UE must attach in EPS with 'handover' indication and re-establish PDN connections — several seconds of extra setup and possible IMS re-registration; mitigation: deploy N26 or accept redirection-based fallback only with combined-attach optimizations.
++(2) **TAU delay**: after blind redirection the UE performs TAU (and possibly authentication) before the voice bearer can be set up; mitigation: HO-based fallback, pre-provisioned EPS security context via N26, and skipping authentication at TAU.
++(3) **Ping-pong**: after call release the UE returns to NR (fast return via release-with-redirect to NR), then the next call falls back again; repeated inter-RAT transitions degrade data and battery. Mitigation: fast-return policies with hysteresis, keeping the UE in LTE during short inter-call gaps, or enabling VoNR on the loaded band first.
++
++**Grading notes:** Must have: the sequence 'voice establishment -> NG-RAN determines NR voice unsupported -> fallback' (the literal 5QI-1-rejection cause is one valid realization, not required phrasing), both HO-based and redirection-based realizations, N26 context-transfer role, QCI-1 setup in EPS, and mechanism+mitigation for all three failure modes. Accept answers citing measured setup-time deltas (HO-based ~1-2 s faster than redirection+TAU). Penalize: claiming EPS fallback needs dual registration, or confusing EPS fallback with SRVCC (mid-call vs setup-time).
++
++---
++
++## IM4 · IMS & Voice · expert · 8 pts
++
++**IMS emergency services under regulatory constraints**
++
++Design the IMS emergency-call path for a 5G SA network in a jurisdiction requiring location-based PSAP routing and callback. Cover: how an unauthenticated/SIM-less UE is admitted, which dedicated IMS elements route the call and obtain location, how the network gets the position fix (name two positioning methods and the 5GC function that computes them), and what enables PSAP callback to a SIM-less caller. Note one architectural difference for roamers.
++
++**Reference answer:**
++
++The UE performs **emergency registration** (or anonymous/SIM-less access where mandated): AMF admits emergency service with **null security or limited service state**, and an **emergency PDU session** to a dedicated emergency DNN is established (subject to local regulation). The P-CSCF marks the session; the **E-CSCF** routes the call, querying the **LRF** (location retrieval function) for routing location; the **LMF** computes position over NL1 using e.g. **DL-TDOA/multi-RTT, A-GNSS, or NR E-CID** (TS 38.305 family), with control via AMF (Namf_Location). Routing uses the location to select the PSAP (via LRF/RDF). **Callback**: the PSAP calls a temporary routable identity bound by the LRF/E-CSCF to the emergency registration (reference identity / ESQK-style correlation), valid for a regulated time window — this is what works even for SIM-less callers as long as the emergency registration persists. Roamers: emergency calls **break out locally in the visited network** (no home routing) — the visited P/E-CSCF handles it, since PSAP selection and location are inherently local.
++
++**Grading notes:** Must have: emergency registration incl. SIM-less admission, E-CSCF + LRF roles, LMF as the position-computing function with two concrete methods, temporary callback identity correlation, local breakout for roamers. Accept jurisdiction-specific registration, anonymous-access and callback realizations as fully valid when architecturally coherent — the reference is one realization, not the only one. Penalize: routing emergency via S-CSCF/home network, or claiming GPS-only positioning satisfies indoor mandates.
++
++---
++
++## OS1 · OSS/BSS · expert · 8 pts
++
++**Closed-loop service assurance with TMF Open APIs**
++
++Design a closed-loop assurance pipeline for a 5G slice product using TM Forum Open APIs end-to-end: name the specific APIs (numbers) you would use for (a) receiving resource alarms, (b) collecting performance measurements, (c) checking the customer-facing SLA/SLO state, and (d) triggering a corrective service change. Describe the correlation stage between (a)/(b) and (d) — what turns raw events into a service-impact decision — and give one concrete guard that prevents the loop from oscillating.
++
++**Reference answer:**
++
++(a) **TMF642 Alarm Management** (northbound alarm ingest/subscription); (b) **TMF628 Performance Management** (measurement collection jobs/streams); (c) **TMF623 SLA Management** (SLA lifecycle/violation records) and/or **TMF657 Service Quality Management** (current service-quality/SLS state, KPI/KQI exposure) — either or both are valid depending on whether the candidate reads live quality state or SLA lifecycle; (d) **TMF641 Service Ordering** (or TMF640 Service Activation) to execute the corrective change against the service inventory model (**TMF638** service inventory for state). Correlation: topology-aware enrichment — map alarms/PM to the impacted service instances via the inventory graph (resource->CFS/RFS), deduplicate, compute service-level KPI breach probability against the SLO (e.g., slice throughput SLO from TS 28.554-style KPIs), and only then emit a decision (scale UPF, re-route TN path, reallocate RAN PRB quota) as a TMF641 order. Oscillation guard: **hysteresis + hold-down timers** on the actuation (different thresholds for act vs revert, minimum dwell), plus idempotent order state-checks so a queued corrective order suppresses duplicates.
++
++**Grading notes:** Must have: TMF642, TMF628, TMF641 (TMF640 acceptable) correctly matched to roles, an SLA/quality-state API (TMF623 and/or TMF657, either fully valid), topology/inventory-based correlation into service impact, and a concrete anti-oscillation guard. Accept event streaming via TMF688. Penalize: inventing API numbers, correlation described as 'AI magic' with no topology mapping, or actuation bypassing the order/activation layer straight into NF configuration.
++
++---
++
++## OS2 · OSS/BSS · expert · 8 pts
++
++**5G converged charging architecture**
++
++Contrast 4G online/offline charging with 5G converged charging: name the 5G function and service-based interface involved, explain quota management for an online-charged data session (grant, thresholds, re-authorization), how offline records are produced in the same architecture, and where rating happens. Then explain what a charging architecture must add to support network-slice-differentiated pricing and 5QI-level rating without doubling CDR volume.
++
++**Reference answer:**
++
++4G split OCS (Gy/Ro, online quota) from OFCS (Rf/Ga, offline CDRs). 5G converges both in the **CHF** via **Nchf_ConvergedCharging** (SBI): the SMF acts as CTF, requesting **quota grants** per rating group (Create/Update), consuming against **volume/time/validity thresholds**, and re-authorizing on threshold hit, QoS change, or tariff-time change; the same session's usage reports feed **CHF-generated CDRs** (CGF integrated or separate) — one architecture, two outputs. **Rating** sits with the CHF/rating function (online: before/at grant; offline: at record processing). For slice/5QI-differentiated pricing: usage must be reported per **rating group x slice (S-NSSAI) x QoS level** — the PCF installs charging keys per PCC rule so the SMF reports at that granularity; the CHF then rates by (rating-group, S-NSSAI, 5QI) tuple. To avoid CDR explosion, aggregate at the charging-key level with slice/QoS as attributes of one record rather than separate CDR streams, and use change-triggers (QoS change, slice change) to cut records only at pricing-relevant boundaries.
++
++**Grading notes:** Must have: CHF + Nchf_ConvergedCharging, SMF as the reporting CTF, quota grant/threshold/re-auth cycle, converged online+offline outputs, rating location, and per-(rating group, S-NSSAI, 5QI) reporting driven by PCC charging keys with aggregation to bound CDR volume. Accept Gy/Ro/Rf legacy names and CCR/CCA analogies. Penalize: placing quota logic in the UPF, claiming 5G has no offline charging, or per-packet rating proposals.
++
++---
++
++## OS3 · OSS/BSS · expert · 8 pts
++
++**Inventory truth and automation safety**
++
++An operator's automation increasingly executes changes computed from OSS inventory, but discovered network state and planned inventory disagree for ~8% of resources. Analyze: (a) three root causes of planned-vs-discovered drift, (b) the failure mode when closed-loop automation acts on stale inventory (give one concrete telco example), and (c) a reconciliation architecture — sources of truth per data class, discovery cadence, and how automation should gate on data quality. Include the role a network digital twin can and cannot play.
++
++**Reference answer:**
++
++(a) Root causes: manual field changes never written back (swap-outs, re-cabling); order fallout — activation partially executed but inventory updated optimistically; parallel writers (legacy OSS, NMS/EMS scripts, GitOps pipelines) without a single write path; plus naming/model mismatches across systems.
++(b) Failure mode: automation computes a change against a resource that is not in the assumed state — e.g., a TN latency-rerouting loop moves a slice onto a link that inventory shows as 10GE spare but is actually carrying protection traffic after an un-synced field fix -> congestion/SLA breach; or RAN parameter push to a cell that was re-homed to a different DU.
++(c) Reconciliation: declare **per-class sources of truth** — network-discovered state is authoritative for operational/config state (cadence: streaming/near-real-time for config, hourly for topology), planned inventory authoritative for intent/design and assignments; run continuous diff with materialized drift scores; auto-heal trivial classes (write-back), queue human review for conflicting classes. Automation gates: every closed-loop action validates a **freshness/consistency SLO** on the data it reads (e.g., 'topology reconciled < 1 h, drift score < threshold') and otherwise degrades to recommend-only. A digital twin **can** provide a consistent, versioned merge of discovered+planned state for what-if validation before execution; it **cannot** create truth — with a broken write-back discipline the twin drifts exactly like the inventory it mirrors.
++
++**Grading notes:** Must have: >=3 plausible root causes, a concrete acted-on-stale-data failure example, per-data-class source-of-truth split (discovered = operational truth, planned = intent), continuous reconciliation with drift measurement, automation gating on data quality, and the twin's limits. Accept different cadence numbers. Penalize: 'make one system the master for everything', or twins presented as a fix for reconciliation.
++
++---
++
++## RG1 · Regulatory Services · expert · 10 pts
++
++**Lawful interception in 5GC**
++
++Describe the 3GPP lawful-interception architecture for a 5G SA network: the administrative and mediation functions, where interception points sit for (a) signalling events and (b) content of communication, and the three standardized interface families between them. Then explain two 5G-specific complications — one caused by SUPI concealment and one by home-routed roaming — and how the architecture addresses each.
++
++**Reference answer:**
++
++Per TS 33.126/127/128: warrants enter via the **ADMF complex** — **LICF** (control/legal policy) with **LIPF** provisioning the network; intercepted product flows to the LEMF through **MDF2** (intercept-related information, IRI) and **MDF3** (content, CC). **POIs**: (a) IRI-POIs embedded in control-plane NFs — AMF (registration/mobility events), SMF (session events), UDM (identity/subscriber events), SMSF, etc.; (b) CC-POI at the **UPF** (user-plane content, triggered via SMF/CC-TF). Interface families: **LI_X1** (provisioning/administration to POIs/MDFs), **LI_X2** (IRI from POI to MDF2), **LI_X3** (CC from POI to MDF3); delivery to the agency over LI_HI1/2/3 handover interfaces.
++Complications: **SUCI concealment** — the target identifier on the air/N1 is an encrypted SUCI, so targeting by SUPI/IMSI requires the **UDM/SIDF IRI-POI** where de-concealment happens; the architecture mandates interception capability at the point where SUPI is available and correlation of SUCI-based events to the SUPI-based warrant. **Home-routed roaming** — for an inbound roamer the visited network cannot decrypt home-routed user plane nor see home-side services; each jurisdiction intercepts what terminates in it (VPLMN intercepts at V-SMF/UPF for visited-anchored traffic and serves visited-country warrants; HPLMN serves its own), and encrypted-service limitations are handled at the jurisdictional boundary rather than by breaking the N32/N9 security.
++
++**Grading notes:** Must have: LICF/LIPF/ADMF, MDF2/MDF3 split, IRI-POIs in AMF/SMF/UDM, CC-POI at UPF, X1/X2/X3 roles, UDM-based answer to SUCI concealment, and jurisdiction-split answer for home-routed roaming. Accept mentioning virtualization/POI-in-CNF trust issues as extra; accept POI placements differing in detail from the reference (LI realization varies by service and deployment) — grade architecture and interface roles, not exact per-NF placement. Penalize: intercepting 'at the gNB', claiming SEPP decryption for LI, or conflating HI and X interfaces.
++
++---
++
++## RG2 · Regulatory Services · expert · 8 pts
++
++**Emergency location accuracy mandates**
++
++A regulator mandates dispatchable-location-grade accuracy (horizontal ~50 m and a usable vertical fix) for emergency calls, including indoors. Explain the 5G location architecture that must deliver this (functions and key interfaces), evaluate which NR positioning methods can realistically meet the indoor requirement and why GNSS alone cannot, and describe how the fix reaches PSAP routing. Close with the main deployment cost driver an operator faces to meet the vertical (z-axis) requirement.
++
++**Reference answer:**
++
++Architecture: AMF invokes the **LMF** (Namf_Location / NL1); LMF runs **LPP** with the UE and **NRPPa** with NG-RAN to configure/collect measurements; the **GMLC/LRF** exposes location to the emergency routing layer (E-CSCF queries LRF; the fix selects the PSAP, and updated fixes can be pushed mid-call). Methods: **A-GNSS** fails indoors (no sky view; urban-canyon multipath), so indoor-capable candidates are **DL-TDOA/UL-TDOA** (needs tight inter-gNB sync and PRS density), **multi-RTT** (relaxes sync dependence, needs multiple visible TRPs), **NR E-CID** (coarse, fallback only), plus **barometric/hybrid** methods for the vertical component. Realistically a hybrid — multi-RTT/TDOA + UE barometer + indoor densification — is what meets ~50 m horizontal and floor-level vertical; pure macro-cell TDOA rarely yields a usable z-axis in high-rises. Cost driver: the vertical requirement forces **indoor infrastructure density** (small cells/TRPs with PRS across venues) and calibrated altitude reference data (barometric reference networks, floor mapping) — a capex/opex burden far above the horizontal requirement.
++
++**Grading notes:** Must have: LMF + LPP/NRPPa + AMF/GMLC-LRF chain into PSAP routing, at least two indoor-viable methods with sync/TRP-visibility caveats, explicit GNSS-indoors failure, hybrid answer for z-axis, and densification/altitude-calibration as the cost driver. Accept FCC-style numeric mandates (e.g., 3-meter z-axis) as examples. Penalize: 'GPS solves it', omitting the LMF, or claiming Cell-ID meets 50 m.
++
++---
++
++## RG3 · Regulatory Services · expert · 8 pts
++
++**Caller-ID trust: STIR/SHAKEN end-to-end**
++
++Explain how STIR/SHAKEN establishes caller-ID trust for IP voice: what is signed, by whom, the three attestation levels and what each asserts, how verification works at the terminating side, and the governance chain that makes certificates trustworthy. Then analyze two structural gaps — international/transit traffic and non-IP legs — and one mechanism the industry uses to bridge each.
++
++**Reference answer:**
++
++The originating provider signs a **PASSporT** (JWT: orig/dest TNs, iat, attestation, origid) carried in the SIP **Identity** header, using its **STI certificate**. Attestation: **A** — provider knows the customer *and* their right to use the number; **B** — knows the customer, cannot vouch for the number; **C** — only knows where it received the call (gateway). Terminating side: **STI-VS** fetches the cert via the x5u URL, validates signature/freshness and the chain to an approved **STI-CA**; results feed robocall analytics and display (and per local policy, blocking). Governance: a national **STI-PA** (policy administrator) authorizes providers via SPC tokens; STI-CAs issue certs only against those tokens — that chain is what binds a signature to an accountable provider. Gaps: (1) **International/transit** — a foreign originator has no SPC token, so calls arrive unsigned and gateways can only C-attest, which conveys near-zero trust; bridged by cross-border trust frameworks and **gateway providers taking responsibility** (know-your-upstream obligations, traceback participation). (2) **Non-IP (TDM) legs** strip SIP Identity; bridged by **out-of-band PASSporT delivery** (transmitting the token via a parallel service/CPS so the terminating side can still verify).
++
++**Grading notes:** Must have: PASSporT-in-Identity signing, A/B/C attestation semantics, terminating verification against STI-CA chain, STI-PA/SPC-token governance, and both gaps with their bridges (cross-border/KYC-gateway; out-of-band delivery for TDM). Accept 'div' PASSporT for diversion as extra. Penalize: claiming SHAKEN blocks spoofing outright, verification 'by the PSAP', or ignoring that C-attestation carries little assurance.
++
++---
++
++## AI1 · AI & Autonomous Ops · expert · 10 pts
++
++**NWDAF-driven predictive scaling with lead-time math**
++
++Design an NWDAF-driven closed loop that scales a UPF deployment ahead of load. Given: AnLF publishes a load forecast every 5 min with a 15-min horizon and a quantified confidence; scaling out one UPF replica takes 3 min (schedule+start) plus 2 min soak before it takes traffic; scale-in is instant but re-anchors sessions.
++a) Which two standardized NWDAF analytics IDs (by function, names acceptable) feed this loop, and which NWDAF split produces vs trains the model?
++b) Derive the trigger rule: at what forecast condition must scale-out fire so capacity is ready before a predicted breach of 80% target utilization, and what forecast property (beyond the point estimate) must the rule consume?
++c) Specify the anti-flapping design for scale-in given the session re-anchoring cost.
++d) Name the failure mode if the forecast model is trained on data that already contains the loop's own scaling actions, and one way to break that circularity.
++
++**Reference answer:**
++
++a) **NF load analytics** (Nnwdaf 'NF load information') and **network performance / user-plane congestion analytics** feed the loop; the **AnLF** performs inference and exposes analytics, the **MTLF** trains and provisions the models (Nnwdaf_MLModelProvision).
++b) Total lead need = 3 + 2 = **5 min**. The rule must fire when the forecast at lead time >= 5 min predicts crossing: trigger when the **upper confidence bound** (e.g., P90) of predicted utilization at t+5..t+15 min exceeds 80% — consuming the forecast's **uncertainty/confidence interval**, not the mean; with a 5-min publication period the effective decision latency adds up to 5 min, so in practice the rule evaluates the t+10 window to preserve margin.
++c) Scale-in: **asymmetric thresholds with dwell** — e.g., only when P90 utilization < 60% continuously for >= 20 min (multiple forecast cycles), scale in one replica at a time with graceful **session draining** (quiesce new-session assignment via SMF UPF-selection weights, let sessions age out or re-anchor in batches), and enforce a cool-down that forbids scale-in within N min after any scale-out.
++d) **Feedback contamination**: the model learns load patterns that embed the controller's own mitigations, so predictions of 'no breach' are conditional on actions the rule may then not take — the loop can unlearn the very signal it acts on. Break it by logging actions and training on **counterfactual-adjusted features** (include replica count/actions as model inputs), or training on control-free shadow periods / holdout cells.
++
++**Grading notes:** Must have: AnLF/MTLF split, load-type analytics named, lead-time arithmetic (5 min) driving a trigger on an upper confidence bound (not the mean), asymmetric-with-dwell scale-in incl. draining, and the feedback-contamination failure mode with a mitigation. Accept different threshold numbers if internally consistent. Penalize: reactive-only designs, triggering on point estimates, or ignoring the publication-period latency entirely.
++
++---
++
++## AI2 · AI & Autonomous Ops · expert · 8 pts
++
++**Model drift management for RAN AI**
++
++A deployed RAN traffic-prediction model (feeds energy-saving cell shutdown) degrades after a stadium opens nearby. Define: (a) the two distinct drift types involved and a statistical detector for each; (b) a champion-challenger deployment design that lets a retrained model prove itself without risking KPIs; (c) the rollback trigger, stated as a measurable rule; and (d) the validation error that makes offline retraining results look better than they will be in production, with the guard against it.
++
++**Reference answer:**
++
++(a) **Data/covariate drift** — input distribution shifts (new event-day traffic peaks): detect with distribution-distance monitors per feature, e.g., **PSI or KL divergence** against the training reference window with alert thresholds (PSI > 0.2 conventionally). **Concept drift** — the input->target relationship changed (same features, new demand law): detect by monitoring **live prediction error** (rolling MAE/quantile loss) against the error budget, since input monitoring alone won't see it.
++(b) Champion-challenger: challenger runs in **shadow mode** on live features producing predictions that are logged but not acted on; compare error over a window covering event and non-event days; then a limited **canary** on a low-risk cell cluster with automatic KPI guardrails (accessibility/retainability/energy KPIs) before fleet promotion.
++(c) Rollback rule example: 'if rolling 24-h MAE of the active model exceeds the champion's baseline by >x% for 2 consecutive windows, OR any guarded KPI degrades beyond its threshold with shutdown actions active — revert to previous model version and freeze shutdown automation to conservative schedule.' Versioned model registry makes the revert one step.
++(d) **Temporal leakage** (random train/test splits mixing future into past, or evaluation windows overlapping the drift event) — offline metrics look excellent because the model effectively saw the future. Guard: strict **chronological splits** with out-of-time test windows, and evaluating on post-change data only.
++
++**Grading notes:** Must have: covariate-vs-concept drift distinction with a detector each (PSI/KL for inputs, live-error monitoring for concept), shadow mode -> canary with KPI guardrails, a concrete measurable rollback rule, temporal leakage named (chronological split as the guard). Accept ADWIN/DDM-style detectors. Penalize: 'retrain periodically' with no detection, validating on random splits, or acting on challenger predictions during shadow phase.
++
++---
++
++## AI3 · AI & Autonomous Ops · expert · 8 pts
++
++**Intent conflict resolution per TS 28.312**
++
++An energy-saving intent ('reduce RAN energy 20% in region X') and an assurance intent ('uplink latency P95 <= 20 ms for slice S in region X') decompose onto the same cells and collide: the energy MnS wants night shutdown of a capacity layer that slice S traffic uses. Describe how an intent-driven management system per TS 28.312 should handle this: the intent lifecycle stages where conflict can be caught, the difference between detection at decomposition time vs at runtime, and three resolution mechanisms an intent management function can apply. State what must be reported back to each intent owner.
++
++**Reference answer:**
++
++Per TS 28.312, intents carry **expectations** (targets + contexts) managed through a lifecycle (creation/feasibility, decomposition/activation, runtime assurance, reporting). Conflicts can be caught at: **feasibility check** (before acceptance — the IMF evaluates whether the new intent is satisfiable given committed intents), **decomposition time** (both intents map to overlapping resources/parameters with incompatible target actions — detectable by intersecting the impacted-object sets and comparing intended parameter changes), and **runtime** (both accepted, but fulfilment actions interact — detected via degradation of one intent's KPIs correlated with the other's actions).
++Resolution mechanisms: (1) **priority/precedence** — intents carry priority; the IMF satisfies the higher-priority expectation and degrades the lower gracefully (assurance typically outranks energy); (2) **constraint-scoped re-decomposition** — restate the energy action within the assurance constraint (shutdown only cells where slice-S load can be absorbed by the coverage layer within the latency budget — partial fulfilment, e.g., 14% instead of 20%); (3) **negotiation/feedback** — report 'not fully satisfiable' with the achievable value and let the intent owner accept, relax the target, or re-scope the region/time window.
++Reporting: each owner gets **fulfilment state** (fulfilled/degraded/not-fulfilled), the achieved value vs target, and the conflict cause — so the trade-off is explicit and auditable, not silent.
++
++**Grading notes:** Must have: expectations/lifecycle framing, all three catch points (feasibility, decomposition, runtime), three resolution mechanisms incl. priority and partial-fulfilment/re-decomposition, and fulfilment reporting to both owners. Accept utility-function formulations of priorities. Penalize: 'the RAN sorts it out' (no IMF role), silent override of one intent, or treating conflict detection as purely runtime alarm correlation.
++
++---
++
++## AI4 · AI & Autonomous Ops · expert · 10 pts
++
++**O-RAN xApp conflict and guardrail design**
++
++In a Near-RT RIC, an MLB xApp (load balancing) and an MRO xApp (mobility robustness) both act on handover parameters (CIO/hysteresis) for the same cell pairs. Classify the conflict types O-RAN defines and identify which one this is; then design the control-plane defense in depth: what the A1 layer contributes, what a RIC conflict-mitigation component checks pre- and post-action on E2, and the verification loop that catches a bad combined outcome after actuation. Include the timescale discipline: why 10 ms-class decisions do not belong to either xApp.
++
++**Reference answer:**
++
++O-RAN classifies **direct** conflicts (same parameter, same target — detectable pre-action), **indirect** conflicts (different parameters whose effects couple, e.g., CIO vs tilt), and **implicit** conflicts (coupling only visible in outcomes over time). MLB and MRO writing CIO/hysteresis for the same pairs is a **direct** conflict (with an implicit residue: even coordinated settings can jointly raise ping-pong).
++Defense in depth: **A1 policies** from the Non-RT RIC bound each xApp's authority (allowed parameter ranges, cell scopes, optimization objectives/weights) — declarative guardrails set by the operator's rApp layer. The RIC's **conflict mitigation** function arbitrates E2 control: pre-action it detects overlapping (parameter, target-cell) writes and applies policy (priority, serialization with dwell timers, or merging into one bounded change); post-action it subscribes to the affected KPIs. The **verification loop**: after each actuation window, compare HO success/ping-pong/RLF rates and cell-load KPIs against pre-change baseline; if the combined effect breaches guard thresholds, roll back to the last-good parameter set and quarantine the offending xApp's writes (fall to recommend-only) pending review.
++Timescale: Near-RT RIC control loops are **10 ms-1 s**; per-TTI/beam/scheduling decisions (**<10 ms**) belong in the DU/RT layer — E2 round-trip latency and RIC processing make faster-than-10 ms control physically unreliable, so xApp designs targeting scheduler-timescale actions are architecture violations.
++
++**Grading notes:** Must have: direct/indirect/implicit taxonomy with correct classification (direct), A1 policy bounding, pre-action arbitration (priority/serialization/merge) + post-action KPI subscription, rollback-and-quarantine verification loop, and the 10 ms Near-RT lower bound with the DU rationale. Accept E2SM-RC/E2SM-CCC naming as extra. Penalize: 'run them in different time slots' as the only mechanism, no post-action verification, or placing sub-10 ms control in xApps.
++
++---
++
++## NT1 · NTN · expert · 10 pts
++
++**LEO service-link geometry: delay, Doppler, timing**
++
++For a transparent-payload LEO at 600 km altitude serving a UE at 30° elevation (Earth radius 6371 km, f = 20 GHz downlink):
++a) Compute the slant range and one-way UE-satellite propagation delay.
++b) Estimate the worst-case Doppler shift on the service link at this elevation (orbital speed from first principles or state ~7.56 km/s), and the resulting UE requirement.
++c) Explain how NR NTN closes the uplink timing problem: the three timing-advance components and who computes what.
++d) Why does the transparent architecture double-count delay for scheduling, and what parameter absorbs it?
++
++**Reference answer:**
++
++a) Slant range d = sqrt((Re sin e)^2 + 2Re*h + h^2) - Re sin e = sqrt(3185.5^2 + 7,645,200 + 360,000) - 3185.5 = sqrt(18,152,610) - 3185.5 ≈ 4260.6 - 3185.5 ≈ **1075 km**; one-way delay = 1075/299792 ≈ **3.6 ms** (service link; the feeder link adds a comparable leg, so UE-gateway one-way ≈ 7-9 ms, RTT ≈ 15-20 ms).
++b) v = sqrt(mu/(Re+h)) = sqrt(398600/6971) ≈ **7.56 km/s**; worst-case fractional Doppler v/c ≈ 25.2 ppm -> at 20 GHz an upper bound ≈ **504 kHz**; at 30° elevation the radial component scales by ~Re cos(e)/(Re+h) ≈ 0.79 -> ≈ **400 kHz**, with high Doppler *rate* during passes. The UE must therefore perform **ephemeris-based pre-compensation** (satellite ephemeris broadcast in SIB; UE with GNSS position computes and pre-corrects frequency/timing).
++c) Uplink timing: **common TA** broadcast per beam/cell (covers the reference-point-to-satellite path), **UE-specific TA** self-computed from GNSS position + ephemeris (UE-satellite geometry), and the **closed-loop TA** fine correction from the network — UE combines all three so PRACH/PUSCH arrive aligned despite hundreds of km of range spread within one beam.
++d) Transparent payload: gNB is on the ground, so scheduling grants and HARQ/RTT timers span **feeder + service** links both ways; **K_offset** (cell-specific, optionally UE-specific update) shifts the UL scheduling timeline to absorb the extra RTT, and HARQ operates with extended/disabled feedback options to survive the delay.
++
++**Grading notes:** Must have: correct slant-range formula and ~1075 km / ~3.6 ms, Doppler upper bound ~500 kHz at 20 GHz with elevation scaling and ephemeris+GNSS pre-compensation, the common/UE-specific/closed-loop TA split, and K_offset's role for the transparent architecture. Accept +-5% arithmetic tolerance and simplified Doppler geometry if stated; accept equivalent terminology for the TA components (UE autonomous/self-estimated TA, network closed-loop correction) — grade concepts over naming. Penalize: using vertical height instead of slant range, GEO-style delay numbers, or omitting UE GNSS dependence.
++
++---
++
++## NT2 · NTN · expert · 8 pts
++
++**NGSO mobility: beams, handover, and tracking areas**
++
++A LEO constellation serves smartphones directly. Explain: (a) earth-fixed vs earth-moving beam operation and what each implies for handover frequency at 600 km (satellite visibility of a few minutes); (b) how conditional handover is adapted for NTN and why baseline A3-measurement-triggered HO underperforms; (c) feeder-link switchover and what the UE experiences; (d) how tracking areas can stay geographically meaningful when cells move, and why that matters for paging and regulatory geo-fencing.
++
++**Reference answer:**
++
++(a) **Earth-moving beams** sweep the ground with the satellite: every UE sees cell change on the sweep period (tens of seconds), causing constant HO load even for stationary UEs. **Earth-fixed beams** steer to hold a geographic cell for the pass duration, so UEs re-associate only per satellite pass (each few minutes) — trading beam-steering complexity for far fewer HOs.
++(b) NTN uses **conditional handover** with NTN-specific triggers: **location-based** (UE distance to reference points) and **time-based** (validity windows from ephemeris — 'execute at T') conditions, prepared in advance. Baseline A3 fails because near-far geometry barely differs between adjacent satellite beams (similar RSRP, slow differential change) and the measurement->report->command loop over ~15-20 ms RTT plus processing is too slow versus predictable, ephemeris-driven cell change — prediction beats measurement here.
++(c) **Feeder-link switchover** moves the satellite's ground anchor between gateways (satellite leaving a gateway's visibility): with a transparent payload this relocates the serving gNB path, executed as a coordinated bulk re-anchoring within a switch window; UEs may see a brief service interruption or a network-triggered group mobility event, mitigated by scheduling switchovers and overlapping gateway visibility.
++(d) NTN networks broadcast **multiple/mapped TACs per moving cell** so that the TA advertised over a location tracks geography ('soft' TA update as beams move); the AMF pages by geographic TA rather than by transient cell identity. This keeps paging areas stable and supports **regulatory geo-fencing** (service authorization, lawful/emergency routing by country) — you cannot let a moving cell drag its TA across a border, or paging and jurisdiction both break.
++
++**Grading notes:** Must have: fixed-vs-moving beam trade with HO-frequency consequence, CHO with location/time conditions + why A3 underperforms (geometry + delay vs predictability), feeder switchover as gateway re-anchoring with UE-visible effect, and geographically-stable TAC handling tied to paging + regulatory scoping. Accept Rel-17/18/19 feature attributions loosely. Penalize: treating NTN HO as terrestrial A3 tuning, or ignoring the feeder link entirely.
++
++---
++
++## EN1 · Energy & Sustainability · expert · 10 pts
++
++**RAN energy-saving arithmetic and KPI guardrails**
++
++A macro site has 3 sectors, average sector consumption 350 W at busy hour with a load-proportional model P = 120 W (static) + load_fraction x 230 W (dynamic) per sector.
++a) Compute site power at 100% and at 20% load.
++b) Overnight (6 h, load 20%), carrier shutdown puts 2 of 3 carriers per sector into deep sleep. The 120 W static share splits evenly across the 3 carriers, and a sleeping carrier's static share drops by 80%. Carried traffic is unchanged and concentrates on the surviving carrier; dynamic power is traffic-proportional, so treat the dynamic term as unchanged at 20% total load. Compute the sleeping site power, the nightly energy saved (kWh), then annualize for a 10,000-site fleet in GWh.
++c) Name the three KPI guardrails such a feature must watch and the wake-up mechanism that protects them.
++d) Explain why 'energy saved per site' is the wrong optimization target at fleet level and what metric replaces it.
++
++**Reference answer:**
++
++a) 100%: 120 + 230 = 350 W/sector -> **1050 W site**. 20%: 120 + 0.2x230 = 166 W/sector -> **498 W site**.
++b) Static per carrier = 120/3 = 40 W. Sleeping: 2 carriers at 40 x 0.20 = 8 W each (80% cut), surviving carrier 40 W -> static = 40 + 16 = **56 W/sector**. Dynamic unchanged (same traffic): 0.2 x 230 = 46 W/sector. Sector asleep = 102 W -> site **306 W** vs 498 W baseline = **192 W saved**. Nightly: 0.192 kW x 6 h ≈ **1.15 kWh/site**; fleet: 1.15 x 365 x 10,000 ≈ **4.2 GWh/yr** (~EUR 0.84M at EUR 0.20/kWh). The structural insight must appear: with traffic unchanged, the dynamic (traffic-proportional) energy is not harvestable — the saving is entirely the static/idle share that the sleep state removes.
++c) Guardrails: **accessibility** (RRC/ERAB//PDU-session setup success — coverage layer must absorb attempts), **retainability/drop rate** (no mid-call degradation when capacity wakes late), and **user throughput / latency** (concentration must not congest the surviving carrier). Wake-up: **load-triggered fast carrier activation** (thresholds on PRB utilization/active users with activation in seconds) plus scheduled wake before the morning ramp; modern variants use traffic prediction to wake ahead of demand.
++d) Per-site savings ignores service delivered: fleet target is **energy intensity — energy per delivered traffic (kWh/GB or Wh/bit)** (plus absolute footprint targets), otherwise the 'best' sites are simply the emptiest ones and the program optimizes toward degrading service rather than efficiency.
++
++**Grading notes:** Must have: correct a) arithmetic (1050/498 W), b) per-carrier static split with 80% sleep cut -> ~56 W static + 46 W dynamic = ~306 W site, ~1.1-1.2 kWh/night, ~4-4.5 GWh/yr fleet order, the insight that only static/idle energy is harvestable while traffic is unchanged, three KPI guardrails with a load-triggered + scheduled wake-up, and energy-intensity as the fleet metric. Accept different but internally consistent assumptions in b) if stated. Penalize: claiming dynamic energy is saved while traffic is unchanged, missing wake-up design, or optimizing kWh with no service normalization.
++
++---
++
++## EN2 · Energy & Sustainability · expert · 8 pts
++
++**Energy intensity accounting for network operations**
++
++An operator reports 18 TWh/yr network consumption carrying 120 EB/yr.
++a) Compute the network energy intensity in kWh/GB and sanity-check it against the industry order of magnitude.
++b) Traffic grows 25%/yr while an efficiency program improves intensity 20%/yr. Compute absolute energy in 2 years and state the structural lesson.
++c) Decompose where a mobile operator's network energy actually goes (rank the top consumer and typical share), and derive why AI-driven RAN features are the highest-leverage software lever.
++d) Give two accounting traps that make reported intensity numbers non-comparable across operators.
++
++**Reference answer:**
++
++a) 18e9 kWh / 120e9 GB = **0.15 kWh/GB** — consistent with reported operator ranges (~0.1-0.3 kWh/GB and falling; numbers vary by fixed/mobile mix).
++b) Energy_y2 = 18 x (1.25 x 0.80)^2 = 18 x 1.0^2 = **18 TWh** — flat. Lesson: at 25% traffic growth, ~20%/yr intensity improvement only *holds* absolute energy constant; absolute reduction requires efficiency outpacing growth (or growth slowing) — intensity targets alone don't cut footprint.
++c) **RAN dominates**: typically **~70-80%** of mobile network energy (radio sites: PAs, RF chains, cooling, rectifiers), then core/data centers, transport, retail/IT. Within a site, the power amplifier chain and always-on baseline dominate. Hence software that modulates the RAN baseline — **AI-scheduled sleep states (symbol/channel/carrier/deep), traffic-predictive shutdown, massive-MIMO channel adaptation** — attacks the largest block with no truck roll, making it the highest-leverage lever per invested dollar (hardware refresh saves more per site but at capex).
++d) Traps: (1) **boundary definitions** — including/excluding data centers, retail, offices, or using market-based vs location-based electricity accounting (renewables PPAs make 'energy' vs 'emissions' diverge); (2) **traffic denominator games** — counting busy-hour vs total delivered bytes, fixed+mobile blended intensity vs mobile-only, or double-counting wholesale/MVNO traffic. Comparisons need identical boundaries and denominators.
++
++**Grading notes:** Must have: 0.15 kWh/GB computation with plausibility note, the compounding computation showing flat absolute energy and the growth-vs-efficiency lesson, RAN ~70-80% share with PA/always-on detail and the resulting AI-sleep leverage argument, and two concrete accounting traps. Accept ±: any consistent share in 60-85% for RAN. Penalize: intensity improving => footprint shrinking claims, or core/data-center named as the top consumer.
++
++---
++
++## RF5 · RF/RAN · expert · 8 pts
++
++**Cross-link interference and remote interference in TDD**
++
++A nationwide 3.5 GHz TDD network sees sporadic morning uplink desensitization on coastal cells hundreds of km apart. (a) Explain the atmospheric mechanism and why TDD makes it possible for a distant gNB's downlink to hit a victim's uplink despite synchronized frame timing. (b) Describe the 3GPP remote-interference-management concept: what the RIM reference signals establish and the automated workflow between victim and aggressor sets. (c) Separately, define cross-link interference in dynamic/flexible TDD between neighbors, its two component types, and one mitigation for each.
++
++**Reference answer:**
++
++(a) **Tropospheric ducting**: temperature-inversion layers (common over sea/morning) trap radio energy and propagate it far beyond the horizon with low loss. In synchronized TDD, a gNB 100-300 km away transmits DL while the victim receives UL; the propagation delay (e.g., 300 km ≈ 1 ms) exceeds the guard period, so the distant DL arrives *during* the victim's UL window — an aggressor's DL tail sliding into the victim's UL despite perfect frame sync. Signature: rise of UL interference-over-thermal on the first UL symbols, correlated across a geographic band and with weather.
++(b) **RIM** (Rel-16): victims experiencing the IoT rise transmit **RIM reference signals**; aggressors detect RIM-RS and thereby learn (i) that they are causing remote interference and (ii) whether the ducting channel is still open (RS presence/disappearance). The automated workflow: victim set starts RIM-RS on detection -> aggressor set applies mitigation (e.g., DL power/beam adjustment on affected symbols, muting the last DL symbols before the guard, tilt changes) -> aggressors monitor RIM-RS disappearance to lift mitigation when the duct closes; coordination can run over the air (RS-based) or via OAM/backhaul.
++(c) **CLI** in flexible TDD: neighbor cells choose opposite link directions in the same slot. Components: **gNB-to-gNB** (aggressor DL into victim gNB UL receive — mitigations: coordinated slot-format alignment across an interference cluster, beam nulling/power control on offending symbols) and **UE-to-UE** (an uplinking UE at a cell edge desensitizes a downlinking UE nearby — mitigations: CLI measurements (SRS-RSRP/CLI-RSSI) reported to the network to steer scheduling/pairing away from exposed UEs, or restricting flexible slots to cell-center users).
++
++**Grading notes:** Must have: ducting mechanism + delay-exceeds-guard-period arithmetic logic, RIM-RS purpose (aggressor awareness + duct-open monitoring) with the closed workflow, and CLI split into gNB-gNB / UE-UE with one mitigation each. Accept guard-period km arithmetic examples. Penalize: attributing remote interference to unsynchronized networks only, or conflating RIM (remote, ducting) with local CLI.
++
++---
++
++## RF6 · RF/RAN · expert · 10 pts
++
++**AI-CSI feedback vs eType-II codebooks**
++
++Rel-19 studied two-sided AI/ML CSI compression but deferred normative support to Rel-20. (a) Quantify the baseline: what does a high-resolution eType-II PMI report cost in UCI bits (order of magnitude) and why does MU-MIMO precoding quality depend on it. (b) Explain the two-sided architecture: what runs where, and why the 'pairing' problem between UE-side encoder and network-side decoder makes this substantially harder to standardize than a one-sided model. (c) State the gain axis the Rel-19 evaluations showed (bits at equal accuracy or accuracy at equal bits) and the metric used to monitor reconstruction quality. (d) Give the two lifecycle-management problems that drove the deferral, and the fallback any eventual deployment must keep.
++
++**Reference answer:**
++
++(a) eType-II reports (W1 beam selection + W2 per-subband amplitude/phase, high parameter combos) cost on the order of **several hundred UCI bits per report** (≈300-800+ depending on rank/paramCombination/subbands) — a large PUSCH/PUCCH overhead at short periodicities. MU-MIMO ZF/RZF precoding needs accurate per-subband channel/eigenvector knowledge to null inter-user leakage; quantization error directly becomes residual interference, so precoding gain is bounded by feedback resolution.
++(b) Two-sided: a **UE-side encoder** compresses the estimated channel/eigenvectors into a latent representation; a **network-side decoder** reconstructs for precoding. Encoder and decoder are trained jointly — so a UE-chipset encoder must be *paired* with each vendor's decoder. Multi-vendor reality: offline joint training across every UE-vendor x network-vendor pair, or standardized dataset/reference-model exchange; without a working pairing/interoperability regime, a UE meeting the spec could still be incompatible with a given RAN's decoder — this is the core standardization difficulty — and the principal reason Rel-19 concluded at study/evaluation level while normative two-sided support moved to Rel-20 (one-sided use cases carry no cross-vendor joint-training burden).
++(c) Gain axis: **fewer feedback bits at comparable CSI accuracy** (or better accuracy at equal bits) — order 2-4x UCI compression in evaluations; monitored via **SGCS** (squared generalized cosine similarity) between reconstructed and reference precoders/eigenvectors (NMSE as alternative), tracked as a monitoring KPI to detect model degradation.
++(d) LCM problems: (1) **performance monitoring & fallback decision** — detecting silently degraded reconstruction in the field (distribution shift by scenario/site) without ground truth at the gNB, and deciding when to switch models; (2) **model identity/versioning across the ecosystem** — activation, switching, transfer, and pairing-compatibility signalling for models the network didn't train (UE-side updates changing behavior). Mandatory fallback: **legacy codebook-based reporting (eType-II)** always retained and switchable per UE, so AI-CSI failure degrades to known performance, never below it.
++
++**Grading notes:** Must have: eType-II cost order (hundreds of bits) tied to MU-MIMO leakage, two-sided split + pairing as the standardization crux (correctly framed: studied in Rel-19, normative work in Rel-20), compression-at-equal-accuracy framing with SGCS (or NMSE) monitoring, both LCM problems, and codebook fallback. Accept differing bit counts within order of magnitude and either 'deferral' or 'phased standardization' framing. Penalize: claiming two-sided AI-CSI is already normatively standardized and deployable, one-sided-model descriptions of the compression use case, or no fallback story.
++
++---
++
++## RF7 · RF/RAN · expert · 8 pts
++
++**Low-band anchor strategy: SUL vs CA vs DSS**
++
++An operator holds 2x10 MHz at 700 MHz (currently LTE) and 80 MHz at 3.5 GHz TDD. Uplink coverage at 3.5 GHz limits NR cell edge. Compare three ways to use the low band — (i) NR SUL paired with the 3.5 GHz carrier, (ii) NR CA with a 700 MHz FDD carrier (after re-farm), (iii) DSS on 700 with LTE — along: what each does to UL link budget at cell edge, DL capacity contribution, spectral cost, and UE ecosystem constraints. Recommend a sequencing and justify with the decisive UL-physics argument.
++
++**Reference answer:**
++
++(i) **SUL**: the 700 MHz UL becomes an additional uplink for the 3.5 GHz cell — cell-edge UEs transmit UL on 700 (lower path loss by roughly 13-14 dB from frequency scaling alone, plus better penetration) while DL stays on 3.5 GHz. Recovers UL-limited coverage precisely where it breaks, no DL capacity gain, uses only the UL half efficiently... but consumes the 700 UL and needs SUL-capable UEs and band-combination support.
++(ii) **CA (700 FDD NR + 3.5 TDD)**: full re-farm gives an NR low-band anchor — UL falls back to 700 when edge-limited (UL carrier selection), DL adds 10 MHz wide-area capacity/coverage layer usable for standalone coverage, mobility anchoring, and VoNR reliability. Costs the LTE carrier (migration risk while LTE traffic remains) and 10 MHz DL is modest capacity.
++(iii) **DSS**: NR and LTE share 700 dynamically — keeps LTE alive during migration and shows an NR coverage layer immediately, but PDCCH/CRS coexistence overhead costs ~10-20% capacity on an already-thin carrier, and it does nothing structural for 3.5 GHz UL unless combined with CA/SUL anyway.
++Decisive UL physics: the coverage gap is an **uplink** problem — UE power (23-26 dBm) is fixed while 3.5 GHz TDD UL also suffers duty-cycle loss (UL slots only); moving the *uplink* to 700 attacks exactly the binding constraint; adding DL-heavy solutions does not. Sequencing: DSS (or keep LTE) short-term while LTE traffic drains -> enable **SUL or UL-carrier CA** for the 3.5 GHz layer as soon as device base allows -> full re-farm to NR FDD CA as end state (SUL's advantage over CA UL is scheduling simplicity on one cell; CA's is a full standalone low-band layer — either resolves the edge, full re-farm is the destination).
++
++**Grading notes:** Must have: ~13-14 dB low-band UL advantage (or equivalent physics), SUL = UL-only fix on the 3.5 GHz cell, CA = full low-band layer incl. DL + anchor value, DSS = migration bridge with real overhead cost, UL-limitation identified as decisive, and a defensible sequencing. Accept different dB figures within reason and TDD duty-cycle framing as bonus. Penalize: recommending DSS as the end state, claiming DL improvements fix UL limitation, or ignoring device-support constraints.
++
++---
++
++## CP5 · Core & Protocols · expert · 8 pts
++
++**N32 security between roaming partners**
++
++Explain how two 5G cores secure inter-PLMN signalling: the function pair that terminates N32, the two protection modes standardized for N32-f and what each protects, and why one of them exists specifically because of IPX intermediaries. Then explain what 'topology hiding' does, and give two concrete things that break (or get harder) in roaming when PRINS-style selective protection is misconfigured to full encryption.
++
++**Reference answer:**
++
++**SEPPs** terminate N32 at each PLMN edge (N32-c control/handshake, N32-f forwarding). Modes: **TLS end-to-end between SEPPs** — full transport protection when the path has no modifying intermediaries; and **PRINS** (PRotocol for N32 INterconnect Security) — application-layer protection (JOSE: JWE encryption + JWS signatures) applied **per information element**, existing because **IPX providers legitimately read and modify certain IEs in transit** (routing, value-added mediation): PRINS encrypts sensitive IEs (SUPI, keys, location) while leaving agreed IEs integrity-protected-but-visible, and records IPX modifications as signed patches so the receiving SEPP can verify who changed what.
++**Topology hiding**: the SEPP rewrites internal NF addresses/identities (FQDNs, NF instance info) so the partner sees only the SEPP; internal core topology (NF inventory, addressing, slice structure) stays hidden - reduces attack surface and information leakage.
++Misconfigured to full encryption under PRINS: (1) **IPX-based services break** — steering-of-roaming header enrichment, signalling firewalls/analytics, and billing-relevant IE inspection at the IPX cannot function on ciphertext, so calls/sessions may be misrouted or rejected per intermediary policy; (2) **operational troubleshooting and fraud/security screening degrade** — the terminating operator's interconnect defenses (e.g., location-plausibility checks by intermediates, per-IE validation) can't see the fields, pushing all validation to the far SEPP and slowing incident diagnosis across the partner chain.
++
++**Grading notes:** Must have: SEPP/N32-c/N32-f, TLS vs PRINS with per-IE JOSE protection, IPX modification-with-accountability as PRINS's reason, topology-hiding function, and two concrete breakages from over-encryption. Accept 'signed modification chain' phrasing for IPX patches. Penalize: claiming IPSec/GTP firewalls make SEPP optional, PRINS described as transport TLS, or topology hiding as NAT only.
++
++---
++
++## CP6 · Core & Protocols · expert · 10 pts
++
++**URLLC reliability budget with PDCP duplication**
++
++A motion-control service needs 99.9999% reliability within a 4 ms one-way latency bound over the RAN. After all retransmissions that fit within the latency budget, each transmission leg has a residual packet-error probability of 1e-3; a further HARQ round-trip does not fit the budget.
++a) Show why HARQ cannot deliver the target within budget, with a timing argument (numerology 30 kHz, HARQ RTT ≈ 8 slots).
++b) Compute the residual error if the packet is duplicated over two independent legs (PDCP duplication, carrier aggregation), and state the independence assumption and one physical effect that violates it.
++c) What does duplication cost, and when is it the wrong tool (give the alternative for that regime)?
++d) Where does survival time enter the engineering, and how does it relax the per-packet target?
++
++**Reference answer:**
++
++a) At 30 kHz SCS a slot is 0.5 ms; HARQ RTT ≈ 8 slots = **4 ms** — one retransmission alone consumes the entire one-way budget (initial tx + processing already uses part of it), so at most the initial transmission plus (marginally) one fast retransmission fits; achieving 1e-6 from the 1e-3 residual would need further retransmission rounds that cannot fit. Reliability must come from **parallelism, not repetition in time**.
++b) Two independent legs each at residual 1e-3: combined failure = (1e-3)^2 = **1e-6** = 99.9999%. Assumption: **failure independence** across legs. Violated by **correlated fading/interference** — e.g., both carriers on the same band/site experiencing common shadowing, a shared hardware chain, or a common interference burst; true decorrelation wants different bands/sites (ideally dual connectivity across sites for site diversity).
++c) Cost: **2x radio resource per packet**, ~2x UE/network energy for those flows, and scheduler complexity; duplicated traffic consumes roughly twice the radio resources attributable to those packets (system capacity only halves in the limit where all traffic is duplicated from one constrained resource pool). Wrong tool when links are already good (duplication wastes capacity for no reliability need — turn it off dynamically via duplication activation/deactivation MAC CE) or when the bottleneck is **latency, not loss** — there, mini-slot scheduling, preemption (DL) / configured grants (UL), and higher-priority QoS do the work.
++d) **Survival time**: the application tolerates N consecutive lost messages before leaving its operating state (e.g., survival time = 2 message periods). The system-level availability target then applies to *bursts*, not single packets: a single packet loss followed by success within survival time is not a failure, so the effective per-packet requirement relaxes (consecutive-loss probability, e.g., p^2 for survival of one extra period) — engineering can trade per-packet BLER against burst-error behavior, favoring mechanisms (like duplication) that decorrelate consecutive failures.
++
++**Grading notes:** Must have: HARQ-RTT-vs-4 ms timing argument, (1e-3)^2 = 1e-6 with independence assumption + a concrete correlation violation, duplication cost + the latency-limited regime alternative, and survival time converting per-packet into consecutive-loss requirements. Accept CA vs DC diversity nuance as bonus. Penalize: 'more HARQ' answers, multiplying reliabilities without the independence caveat, or omitting resource cost.
++
++---
++
++## CP7 · Core & Protocols · expert · 8 pts
++
++**End-to-end slice SLA enforcement across domains**
++
++An enterprise slice sells: 20 ms one-way E2E latency (UE to app), 50 Mbit/s per-UE downlink minimum, 99.9% monthly availability. Design the enforcement: (a) split the latency budget across RAN, transport, core/UPF, and app hosting with defensible numbers; (b) name the enforcement mechanism per domain (what actually guarantees the number); (c) name the 3GPP KPI framework and two slice KPIs you would monitor against the SLA; (d) explain slice admission control — what question it answers that per-UE QoS cannot.
++
++**Reference answer:**
++
++(a) Example split: **RAN 8 ms** (queuing+scheduling dominates; covers air interface incl. one HARQ), **transport 4 ms** (aggregation+metro path, ~5 us/km fiber plus node queuing), **core/UPF 2 ms** (UPF forwarding + steering), **app/edge hosting 4 ms**, reserve **2 ms** margin. Defensible variants fine; the discipline is per-domain budgets summing below 20 with explicit margin, and edge placement of the UPF+app (a centralized UPF at 800 km would alone eat >8 ms RTT-share).
++(b) RAN: slice-aware scheduling — **5QI with delay-critical GBR profile, PRB reservation/priority per S-NSSAI** (RRM policies); Transport: **TE with latency-bounded paths** (SR-TE/FlexAlgo low-latency metric), hard resource separation where sold (FlexE/OTN or at least H-QoS with slice VPNs); Core: **dedicated or prioritized UPF** (edge-placed), sized worst-case, with N4-level QoS enforcement (MBR/GBR, session-AMBR per slice); Hosting: pinned edge compute with CPU isolation. Availability: redundancy per domain (dual gNB coverage where feasible, TN protection switching <50 ms, N+1 UPF with N4 session continuity/stateless failover).
++(c) TS **28.554** (5G end-to-end KPIs) with TS 28.552 measurements: e.g., **slice DL/UL throughput per UE (against the 50 Mbit/s floor)** and **slice latency / packet delay** KPIs (plus PDU-session establishment success and slice availability derived KPIs).
++(d) **Slice admission control** answers 'can this slice's *aggregate* commitments still be honored if we admit another slice / more load?' — per-UE QoS enforces relative treatment of already-admitted traffic but cannot see that the sum of GBR commitments is approaching physical capacity across cells/links/UPFs; NSAC (per-slice max UE/PDU counts) plus capacity-aware slice admission at orchestration decide whether new commitments are accepted at all — protection *of* SLAs happens at admission, delivery of them at scheduling.
++
++**Grading notes:** Must have: per-domain budget summing < 20 ms with margin + edge-placement logic, one concrete enforcement mechanism per domain, TS 28.554 with two relevant slice KPIs, and the aggregate-commitment framing of slice admission (NSAC acceptable). Accept different splits and TN technologies. Penalize: budgets that don't sum, 'QoS flows handle it' with no transport/hosting story, or no admission-control distinction.
++
++---
++
++## TX4 · Transport & Fronthaul · expert · 10 pts
++
++**Fronthaul latency budget and DU placement**
++
++An O-RAN 7-2x fronthaul must respect a 100 us one-way user-plane latency budget between O-RU and O-DU.
++a) Decompose the budget: what consumes it besides fiber propagation (name three contributors), and with 25 us reserved for equipment/processing contributors, compute the maximum O-RU-to-O-DU fiber distance (5 us/km).
++b) Explain what physically breaks when the budget is exceeded (tie it to the HARQ/slot timeline, 30 kHz SCS).
++c) A metro DU pool aggregates 200 O-RUs over a packet network. State the transport design that keeps the eCPRI user plane inside budget under congestion: the queuing discipline, what gets strict priority, and the role of time-gated scheduling (802.1Qbv-style) on shared links.
++d) Give the economic tension DU pooling creates against this budget, and the standard compromise.
++
++**Reference answer:**
++
++a) Contributors besides fiber: **switch/router store-and-forward + queuing delay** per hop, **eCPRI/transport encapsulation & serialization**, **FEC/line processing** (and O-RU internal processing). With 25 us for those: 75 us for fiber -> 75/5 = **15 km** maximum fiber run (practical deployments quote 10-20 km).
++b) The O-DU's scheduler/PHY pipeline is slot-locked: at 30 kHz SCS a slot is 500 us and UL processing (demod->decode->HARQ-ACK->DL scheduling of retransmission) must complete within the HARQ timeline (a few slots). Fronthaul latency eats directly into the O-DU's processing window for each slot; beyond budget, UL symbols arrive too late to decode in time -> HARQ deadlines missed, symbols discarded — the cell degrades or the combined delay forces relaxed (longer) HARQ timing, costing capacity/latency.
++c) Congestion design: **strict-priority (or 802.1Qbv time-gated) queuing with the eCPRI user-plane (and PTP/sync) in the highest class**; C/M-plane and other traffic in lower classes; on shared links, **time-gated windows** reserve deterministic transmission slots aligned to the radio symbol cadence so a large lower-class frame cannot head-of-line-block a user-plane burst (gate closes lower queues just before the user-plane window; preemption 802.1Qbu/802.3br as alternative). Buffer/jitter dimensioning against the O-RU/O-DU de-jitter windows (T2a/Ta3-style reception windows) completes it.
++d) Tension: pooling wants DUs **centralized** (fewer sites, better pooling gain/utilization, cheaper ops), the budget wants them **close** (15 km-class). Compromise: **regional/metro edge hubs** — DU pools at aggregation sites within the fronthaul radius serving 10-20 km cell clusters, with CU centralization taking the long-haul share (midhaul F1 tolerates ms-class latency), i.e., split the centralization between DU (limited) and CU (aggressive).
++
++**Grading notes:** Must have: three non-fiber contributors, 15 km computation, slot/HARQ-timeline explanation of the hard limit, strict-priority + time-gated design with user-plane+sync on top, and the pooling-vs-radius compromise via CU/DU split geography. Accept different reserve numbers with consistent arithmetic, and reception-window naming as bonus; grade 100 us as this deployment's given design budget, not a universal O-RAN constant. Penalize: treating 100 us as round-trip, best-effort QoS answers, or 'centralize everything' ignoring the radius.
++
++---
++
++## TX5 · Transport & Fronthaul · expert · 8 pts
++
++**SRv6 for slice-aware transport**
++
++An operator builds SRv6-based metro transport for 5G slices. Explain: (a) how SRv6 expresses a low-latency slice path (mechanism, not marketing — what goes in the packet, what the ingress computes) and the role of Flex-Algo as the scalable alternative to explicit SID lists; (b) local protection — what TI-LFA provides and its guarantee; (c) two distinct ways slice separation can be realized in SRv6 transport with their isolation/scale trade-off; (d) the operational argument for SRv6 over RSVP-TE in this context (state two).
++
++**Reference answer:**
++
++(a) The ingress PE encapsulates traffic with an outer IPv6 header (+SRH when needed) whose destination/segment list steers the packet through **SIDs** — instructions (node/adjacency/service) computed by the ingress (or a PCE/controller) against a latency-optimized objective from the TE database (delay-measured links). **Flex-Algo** avoids per-flow SID stacks: the IGP computes an additional topology algorithm (e.g., algo 128 = 'minimize measured delay, exclude non-encrypted links'), each participating node gets an algo-specific SID, and one SID steers the whole path along the delay-optimal tree — per-destination low-latency forwarding with near-zero header overhead and no per-path state.
++(b) **TI-LFA** precomputes per-destination backup paths (using SRv6 repair SIDs to tunnel around the failure to the post-convergence path), giving **~50 ms-class local repair** upon link/node failure detection without waiting for IGP convergence, and — its distinguishing property — the backup follows the **post-convergence path** (no transient loops/suboptimal detours).
++(c) Slice separation options: (1) **logical**: slice-per-Flex-Algo/SR policy with H-QoS per slice on shared links — scales well (state in IGP/policies, not per-flow), isolation is statistical (scheduling), no capacity hard split; (2) **hard**: slice-per-dedicated-resource — FlexE channels / dedicated lambdas / separate physical or virtual sub-interfaces mapped to SR policies — deterministic isolation (one slice's burst cannot touch another's capacity) at the cost of stranded capacity and coarser granularity. Choice follows what the slice SLA sold.
++(d) SRv6 vs RSVP-TE: (1) **no per-LSP soft state in the core** — RSVP-TE holds per-tunnel state on every transit node (refresh, scaling limits, full-mesh O(N^2) problems); SR keeps state only at the ingress/controller; (2) **native IPv6 data-plane simplicity and service programming** — one protocol family end-to-end (metro to core), SIDs can encode service functions (chains) and integrate with the 5G user plane, while protection (TI-LFA) and ECMP behave natively — operationally fewer protocols to run and troubleshoot.
++
++**Grading notes:** Must have: SID/SRH steering with ingress/PCE computation, Flex-Algo as per-destination algo-SID scaling, TI-LFA 50 ms + post-convergence-path property, both separation modes with the statistical-vs-deterministic trade, two concrete RSVP-TE contrasts (state, protocol simplification). Accept uSID mention as bonus. Penalize: SRv6 described as 'MPLS with bigger labels' without state argument, or claiming logical slicing gives hard isolation.
++
++---
++
++## TS3 · Timing & Sync · expert · 8 pts
++
++**Timing resilience beyond full on-path support**
++
++A TDD operator cannot get full on-path PTP support in leased metro segments, and is also worried about GNSS jamming/spoofing at cell-site receivers. Design the timing architecture: (a) what changes between G.8275.1 and G.8275.2 profiles and what APTS means operationally; (b) why leased dark-segment asymmetry is the dominant error source in partial support and how it is bounded; (c) a two-layer GNSS attack defense — detection signals and the holdover strategy with concrete class/duration expectations; (d) the network-side backstop that limits how long any site must free-run.
++
++**Reference answer:**
++
++(a) **G.8275.1** = full timing support, every node a T-BC/T-TC, PTP over L2 hop-by-hop; **G.8275.2** = partial timing support, PTP over IP through PTP-unaware segments (unicast), tolerating nodes that add uncorrected delay. **APTS** (assisted partial timing support): GNSS at the edge site is the primary reference and the PTP path runs as *assist/backup* — while GNSS is healthy the site calibrates the PTP path's asymmetry against GNSS, so on GNSS loss the PTP backup takes over with a pre-measured correction.
++(b) PTP measures one mean path delay and assumes symmetry; through unaware leased segments, **forward/reverse delay differ** (different fiber routes/lengths, congestion-dependent queuing per direction) and half the asymmetry lands directly as time error — µs-class if uncontrolled, dwarfing every other contributor. Bounded by: APTS-style **asymmetry calibration against GNSS**, procuring symmetric-routed circuits with SLAs, prioritized PTP marking to minimize queuing spread, and monitoring (comparing PTP-vs-GNSS offset trends to catch re-routes that change asymmetry).
++(c) Detection layer: GNSS receiver integrity — RAIM/multi-constellation cross-check, C/N0 and AGC anomaly monitoring (jamming signature), position/time jump detection at a *static* site (spoofing signature: a fixed antenna 'moving'), plus cross-source comparison against the PTP reference (sudden GNSS-vs-PTP divergence flags the compromised source). Holdover layer: on declared GNSS failure, switch to PTP (APTS) if healthy; if both are suspect, **oscillator holdover** — OCXO holds ~1.5 µs for hours-class, rubidium for a day-class, ePRTC-grade (cesium-assisted) for multi-day; the site should be engineered so the holdover class covers the expected repair/mitigation time for the site tier.
++(d) Backstop: a **resilient distributed PRTC architecture** — regional ePRTC/cesium-anchored grandmasters (and increasingly, sources independent of open-sky GNSS such as fiber-delivered ePRTC references) feeding the PTP network, so a GNSS event at a site (or regionally) degrades to 'PTP from an unaffected anchor', bounding free-run to the switchover time rather than the attack duration; TDD neighbors sharing a sync island also bound *relative* error, which is what interference actually cares about.
++
++**Grading notes:** Must have: 8275.1 vs .2 vs APTS operational distinction, asymmetry-as-dominant-error with calibration bounding, two-layer defense (integrity detection incl. spoofing-vs-jamming signatures; holdover classes with realistic durations), and network-anchor backstop with the relative-error insight. Oscillator holdover durations are illustrative — accept any figures consistent with the stated oscillator class and sound engineering; grade the strategy, not the constants. Penalize: 'GNSS everywhere' with no attack story, symmetric-path assumption unexamined, or holdover treated as unlimited.
++
++---
++
++## SE3 · Security · expert · 8 pts
++
++**SBA authorization attack surface**
++
++Within a 5G SBA core, NF-to-NF authorization uses OAuth2 with the NRF as authorization server. Analyze the trust model: (a) what a service-request access token asserts and the two layers beneath it that must also hold; (b) three concrete abuse scenarios if token scoping or validation is weak (name the attack pattern each maps to); (c) the hardening added when an SCP sits in the path (delegated discovery) and the client-credential binding that prevents a stolen token being replayed by another NF; (d) why 'the core is a trusted zone' failed as an assumption — give the operational reality that killed it.
++
++**Reference answer:**
++
++(a) The token (JWT signed by NRF) asserts: this consumer NF (instance/type) may invoke this producer NF type/service — audience, scope, expiry. Beneath it: (1) **mutual TLS** authenticating both endpoints (the token is only as good as the certificate identity it was issued to and presented with), and (2) **NF registration integrity at the NRF** — profiles/discovery must be authentic, else tokens get issued to/for imposters.
++(b) Abuses: **over-broad scope** (token for Nudm-sdm read reused to hit other UDM services) -> privilege escalation / confused-deputy; **audience confusion** (token minted for producer A accepted by producer B due to lax audience validation) -> lateral movement; **rogue NF registration** (attacker registers a fake NF/updates a profile at a weakly-protected NRF, gets discovered and receives legitimate traffic or harvests tokens) -> man-in-the-middle/data harvesting at core scale (also: token replay from a compromised NF if tokens aren't sender-bound).
++(c) With **SCP delegated discovery**, the SCP performs discovery/selection and forwards requests; hardening (Rel-17) adds **CCA — Client Credentials Assertion** — the consumer signs its own identity assertion that travels with the request so the producer/NRF can verify *which NF actually asked* even through intermediaries, binding token issuance/usage to the authenticated client rather than 'whoever presented it'; combined with per-hop mTLS and audience+scope enforcement at the producer, a stolen bearer token alone stops being sufficient.
++(d) The trusted-zone assumption died with the operational reality of the **cloud-native, multi-vendor, multi-tenant core**: NFs are containers from many vendors on shared Kubernetes with dozens of admin/CI/CD paths, third-party integrations, exposed OAM planes, and workloads spanning sites/public cloud — a single compromised pod, image, or pipeline sits *inside* the old perimeter. Hence zero-trust posture on the SBI: authenticate and authorize every call, assume any peer can be compromised, and scope blast radius per service.
++
++**Grading notes:** Must have: token semantics + mTLS and NRF-registration underpinnings, three concrete abuse scenarios with escalation/lateral/rogue-NF patterns, SCP context with CCA as client binding, and the cloud-native/multi-vendor argument ending the trusted-zone model. Accept mentions of token audience being NF-instance-scoped as strengthening. Penalize: 'TLS solves it', treating NRF as unconditionally trustworthy, or no stolen-token discussion.
++
++---
++
++## SE4 · Security · expert · 8 pts
++
++**Quantum-safe migration for a mobile operator**
++
++Plan the post-quantum migration for a mobile operator. (a) Triage which telco cryptographic assets are actually exposed to harvest-now-decrypt-later and which are not, with reasoning (cover: subscriber air-interface keys, SUCI concealment, N32/TLS interconnect, IPsec backhaul, code signing). (b) State the migration mechanism available today for the transport layers — including the current standardization-status split between TLS 1.3 and IKEv2 — and why 'hybrid' is the recommended mode. (c) Explain the crypto-agility requirements this forces on procurement. (d) Name the pragmatic sequencing (what first, what last) with justification.
++
++**Reference answer:**
++
++(a) Triage by data lifetime + key exchange type: **HNDL-exposed** = anything whose *recorded ciphertext* stays sensitive for years and whose confidentiality rests on public-key exchange: **N32/SBA TLS and IPsec backhaul/roaming tunnels** (subscriber data, signalling, LI-adjacent traffic recorded today, decrypted when a CRQC arrives) and **SUCI concealment** (ECIES with X25519/P-256 — recorded SUCIs could be de-concealed later, a privacy exposure; the identity mapping stays sensitive indefinitely). **Less exposed**: **air-interface session keys** — derived via symmetric AKA hierarchies (128/256-bit symmetric, quantum impact only Grover-halving -> 256-bit symmetric is fine), and sessions are short-lived; **code signing / firmware** — not HNDL (integrity, not confidentiality) but must be PQ **before** CRQC since a forged signature is exploited *live*; long-lived device roots-of-trust deserve early attention (field lifetime 10-15 yr).
++(b) Mechanism: **hybrid key exchange** — classical ECDH combined with **ML-KEM** so the session is safe unless *both* are broken. The status split matters: for **TLS 1.3**, hybrid groups are standardized and deployable now (e.g., X25519MLKEM768); for **IKEv2**, ML-KEM integration is far advanced in the IETF process (ipsecme work, implementable vendor-side/experimentally) but not yet an established RFC mechanism — an expert plan states this asymmetry rather than treating both as done. Hybrid is recommended because PQC algorithms/implementations are young (implementation bugs, potential cryptanalysis) — hybrid preserves today's security floor while adding quantum resistance.
++(c) Crypto-agility in procurement: require **negotiable/upgradable cryptographic primitives** (no hard-coded algorithms), certificate/PKI tooling that handles larger PQ keys/signatures (ML-DSA sizes affect handshakes, MTU, HSMs), firmware-updatable crypto in long-lived field hardware, vendor roadmaps with dates for hybrid TLS/IKEv2 and PQ certificates, and inventory/SBOM-style **cryptographic bills of materials** so exposure is auditable.
++(d) Sequencing: **first** the long-haul recorded-traffic transports (N32/roaming TLS, inter-site IPsec — highest HNDL exposure, fewest endpoints, hybrid available now) and new **device/firmware roots-of-trust** entering the field (irreversible 10-15 yr lifetime); **then** internal SBA/TLS and SUCI profile evolution (needs 3GPP-standardized PQ ECIES replacement, UE+UDM coordination); **last** air-interface mechanisms (already symmetric-safe) and short-lived internal credentials — driven by exposure window x replacement lead time, not by uniform deadlines.
++
++**Grading notes:** Must have: HNDL triage separating recorded-transport + SUCI (exposed) from symmetric air-interface (largely safe) with signing as pre-CRQC-integrity case, hybrid ML-KEM with the TLS-1.3-standardized vs IKEv2-still-in-IETF-process status split and the immaturity rationale, concrete agility procurement asks, and lifetime-driven sequencing (interconnect + roots-of-trust first). Accept Grover/AES-256 framing. Penalize: 'replace everything at once', claiming AKA breaks under quantum, or omitting SUCI.
++
++---
++
++## CN3 · Cloud-Native · expert · 10 pts
++
++**Zero-downtime UPF fleet upgrade**
++
++A production UPF runs as 6 replicas on Kubernetes serving 300k PDU sessions (evenly spread), fronted by SMF-driven UPF selection. Sessions are stateful (N4, GTP-U tunnels). Design a zero-downtime rolling upgrade:
++a) Why does a naive Kubernetes rolling update (maxUnavailable=1) break user traffic even with a PodDisruptionBudget?
++b) Design the correct sequence per replica (quiesce -> drain -> upgrade -> soak), with arithmetic: drain via re-anchoring at 500 sessions/s per replica without SLA impact, startup 2 min, soak 10 min — compute the per-replica cycle and the full-fleet upgrade window (one at a time, plus one surge replica).
++c) What state strategy would cut the drain time to near zero, and what does it cost?
++d) Which two signals must gate promotion to the next replica (not just pod readiness)?
++
++**Reference answer:**
++
++a) Kubernetes only knows pod lifecycle, not session state: killing a UPF pod tears down 50k GTP-U anchors — PDU sessions break (or hang until SMF-level recovery); PDB limits *how many* pods die concurrently, not *whether* live sessions are lost. UPF pods are not interchangeable HTTP backends; traffic must be moved at the **N4/session layer** before the pod may die.
++b) Correct cycle per replica: (1) **quiesce** — SMF removes the replica from selection for new sessions (weight 0); (2) **drain** — re-anchor or age-out its 50k sessions: 50,000/500 = **100 s ≈ 1.7 min** of controlled re-anchoring (SSC-mode-aware: SSC2/3 make-before-break where subscribed; else scheduled re-establishment); (3) **upgrade + startup 2 min**; (4) **soak 10 min** with live canary traffic before it re-enters selection at full weight. Per-replica ≈ 1.7 + 2 + 10 ≈ **~14 min**; with a **surge replica** pre-added (capacity stays >= 6 during every step), fleet = 6 x 14 ≈ **~84 min ≈ 1.5 h** (surge add/remove adds a few min at the ends).
++c) **Externalized/replicated session state** (N4 session contexts + forwarding state in a shared store or state-sync to a hot standby, e.g., checkpointed session DB or 1+1 state replication): the new pod adopts sessions instead of draining them, cutting drain to seconds. Cost: state-store infrastructure and latency on the fast path (or memory x2 for replication), added failure modes (state store becomes critical), and vendor support complexity — packet-path performance vs operational elegance.
++d) Promotion gates: (1) **session/service KPIs on the upgraded replica during soak** — session establishment success, GTP-U throughput/packet loss, N4 heartbeat/error rates vs baseline; (2) **fleet-level SLA/KPI stability** — no accessibility/latency regression and no error-budget burn at the slice/service level while the canary carries traffic. Pod 'Ready' only proves the process started; promotion needs *service* evidence.
++
++**Grading notes:** Must have: the sessions-vs-pods argument in (a), quiesce/drain/upgrade/soak with 100 s drain and ~1.5 h fleet window (consistent arithmetic), state externalization/replication trade-off in (c), and two service-level gates in (d). Accept different soak times with recomputed windows; SSC-mode nuance is bonus; accept state replication, hot standby, vendor session checkpointing, or control-plane-driven session reconstruction as equally valid alternatives to a shared external store. Penalize: relying on PDB/readiness alone, draining by killing sessions, or ignoring the surge-capacity requirement.
++
++---
++
+diff --git a/sme-web-ui-v2.py b/sme-web-ui-v2.py
+index efa23d4..77a283b 100644
+--- a/sme-web-ui-v2.py
++++ b/sme-web-ui-v2.py
+@@ -6015,7 +6015,8 @@ class ChatInterface:
+                             choices=["teleqna", "teletables", "oranbench",
+                                      "srsranbench", "telemath", "telelogs",
+                                      "3gpp", "6g_bench",
+-                                     "telcos_last_exam", "vendor_genai"],
++                                     "telcos_last_exam",
++                                     "telcos_last_exam_2026", "vendor_genai"],
+                             value=["teleqna", "telemath", "telelogs"],
+                             interactive=True,
+                             label="Benchmarks to run"
