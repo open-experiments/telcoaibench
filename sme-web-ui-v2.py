@@ -178,6 +178,272 @@ def load_system_prompts():
 # Load system prompts at module level
 SYSTEM_PROMPTS = load_system_prompts()
 
+
+# ---------------------------------------------------------------------------
+# Multi-tenant accounts & quotas.
+#
+# The admin account (Config.admin_username) can create TENANT users, each
+# with: a set of allowed LOCAL models (in-cluster only - external AIaaS
+# endpoints such as the judge are never tenant-visible), a lifetime TOKEN
+# quota (prompt + completion, topped up by the admin), and a BENCHMARK
+# ATTEMPT quota (auto-scored suites only; judged suites consume the external
+# judge and stay admin-only). Separately, each local model carries its own
+# lifetime token pool ("model/GPU quota"): tenant traffic charges both pools
+# and is refused when either is exhausted; admin traffic is metered against
+# the model pool but never blocked. State lives on the persistent state
+# volume so it survives portal restarts; every charge is appended to
+# usage_log.jsonl, which feeds the per-tenant build-up view in the
+# Observability tab.
+# ---------------------------------------------------------------------------
+import hashlib as _hashlib
+import secrets as _secrets
+import threading as _threading
+
+
+class TenantManager:
+    def __init__(self, admin_username: str, admin_password: str):
+        self.admin_user = admin_username
+        self.admin_pass = admin_password
+        self._lock = _threading.Lock()
+        self._tenants_file = state_path("tenants.json")
+        self._pools_file = state_path("model_quotas.json")
+        self._log_file = state_path("usage_log.jsonl")
+
+    # -- storage ----------------------------------------------------------
+    def _load(self, path, default):
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except Exception:
+            return default
+
+    def _save(self, path, data):
+        tmp = path + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(data, f, indent=1)
+        os.replace(tmp, path)
+
+    def _tenants(self):
+        return self._load(self._tenants_file, {})
+
+    def _pools(self):
+        return self._load(self._pools_file, {})
+
+    def _log(self, event: dict):
+        try:
+            event["ts"] = time.time()
+            with open(self._log_file, "a") as f:
+                f.write(json.dumps(event) + "\n")
+        except Exception:
+            pass
+
+    @staticmethod
+    def _hash(password: str, salt: str) -> str:
+        return _hashlib.sha256((salt + password).encode()).hexdigest()
+
+    # -- auth -------------------------------------------------------------
+    def auth_check(self, username: str, password: str) -> bool:
+        if username == self.admin_user:
+            return password == self.admin_pass
+        with self._lock:
+            t = self._tenants().get(username)
+        if not t or not t.get("active", True):
+            return False
+        return self._hash(password, t["salt"]) == t["pw_hash"]
+
+    def is_admin(self, username) -> bool:
+        return username == self.admin_user or username is None
+
+    @staticmethod
+    def _is_external(entry: dict) -> bool:
+        """True when a registry entry points outside the cluster (AIaaS)."""
+        ep = (entry or {}).get("endpoint", "") or ""
+        return not (".svc.cluster.local" in ep or "-predictor." in ep)
+
+    def get(self, username):
+        with self._lock:
+            return self._tenants().get(username)
+
+    # -- admin operations -------------------------------------------------
+    def create_tenant(self, username, password, allowed_models,
+                      token_quota, bench_quota):
+        username = (username or "").strip()
+        if not username or username == self.admin_user:
+            return False, "Invalid username."
+        if not password or len(password) < 6:
+            return False, "Password must be at least 6 characters."
+        with self._lock:
+            ts = self._tenants()
+            if username in ts:
+                return False, f"Tenant '{username}' already exists."
+            salt = _secrets.token_hex(8)
+            ts[username] = {
+                "salt": salt, "pw_hash": self._hash(password, salt),
+                "allowed_models": sorted(set(allowed_models or [])),
+                "token_quota": int(token_quota), "tokens_used": 0,
+                "bench_quota": int(bench_quota), "bench_used": 0,
+                "active": True, "created": time.time(),
+            }
+            self._save(self._tenants_file, ts)
+        self._log({"kind": "tenant_created", "tenant": username,
+                   "token_quota": int(token_quota),
+                   "bench_quota": int(bench_quota)})
+        return True, f"Tenant '{username}' created."
+
+    def update_tenant(self, username, add_tokens=0, add_bench=0,
+                      allowed_models=None, active=None):
+        with self._lock:
+            ts = self._tenants()
+            t = ts.get(username)
+            if not t:
+                return False, f"No tenant '{username}'."
+            if add_tokens:
+                t["token_quota"] += int(add_tokens)
+            if add_bench:
+                t["bench_quota"] += int(add_bench)
+            if allowed_models is not None:
+                t["allowed_models"] = sorted(set(allowed_models))
+            if active is not None:
+                t["active"] = bool(active)
+            self._save(self._tenants_file, ts)
+        self._log({"kind": "tenant_updated", "tenant": username,
+                   "add_tokens": int(add_tokens), "add_bench": int(add_bench)})
+        return True, f"Tenant '{username}' updated."
+
+    def set_model_pool(self, model, add_tokens):
+        with self._lock:
+            ps = self._pools()
+            p = ps.setdefault(model, {"token_quota": 0, "tokens_used": 0})
+            p["token_quota"] += int(add_tokens)
+            self._save(self._pools_file, ps)
+        self._log({"kind": "model_pool_topup", "model": model,
+                   "add_tokens": int(add_tokens)})
+        return True, f"Model pool '{model}' += {int(add_tokens):,} tokens."
+
+    # -- enforcement & accounting -----------------------------------------
+    def allowed_models_for(self, username):
+        """None = unrestricted (admin)."""
+        if self.is_admin(username):
+            return None
+        t = self.get(username)
+        return list(t.get("allowed_models", [])) if t else []
+
+    def check_chat(self, username, model):
+        if self.is_admin(username):
+            return True, ""
+        t = self.get(username)
+        if not t or not t.get("active", True):
+            return False, "Account disabled."
+        if model not in t.get("allowed_models", []):
+            return False, f"Model '{model}' is not in your allowed set."
+        if t["tokens_used"] >= t["token_quota"]:
+            return False, ("Token quota exhausted "
+                           f"({t['tokens_used']:,}/{t['token_quota']:,}). "
+                           "Ask the admin for a top-up.")
+        p = self._pools().get(model)
+        if p and p["token_quota"] > 0 and p["tokens_used"] >= p["token_quota"]:
+            return False, (f"Model '{model}' has exhausted its GPU token "
+                           "pool. Ask the admin for a top-up.")
+        return True, ""
+
+    def check_bench(self, username, model, tasks):
+        if self.is_admin(username):
+            return True, "", list(tasks)
+        ok, why = self.check_chat(username, model)
+        if not ok:
+            return False, why, []
+        t = self.get(username)
+        if t["bench_used"] >= t["bench_quota"]:
+            return False, ("Benchmark attempt quota exhausted "
+                           f"({t['bench_used']}/{t['bench_quota']})."), []
+        judged = [x for x in tasks
+                  if x in ("telcos_last_exam", "telcos_last_exam_2026",
+                           "vendor_genai")]
+        kept = [x for x in tasks if x not in judged]
+        note = ""
+        if judged:
+            note = ("Judged suites are admin-only (external judge cost); "
+                    f"skipped: {', '.join(judged)}. ")
+        if not kept:
+            return False, note + "No runnable auto-scored suites selected.", []
+        return True, note, kept
+
+    def charge(self, username, model, prompt_tokens, completion_tokens,
+               kind="chat"):
+        n = int(prompt_tokens or 0) + int(completion_tokens or 0)
+        if n <= 0:
+            return
+        with self._lock:
+            if not self.is_admin(username):
+                ts = self._tenants()
+                if username in ts:
+                    ts[username]["tokens_used"] += n
+                    self._save(self._tenants_file, ts)
+            ps = self._pools()
+            p = ps.setdefault(model, {"token_quota": 0, "tokens_used": 0})
+            p["tokens_used"] += n
+            self._save(self._pools_file, ps)
+        self._log({"kind": kind, "tenant": username or self.admin_user,
+                   "model": model, "prompt_tokens": int(prompt_tokens or 0),
+                   "completion_tokens": int(completion_tokens or 0),
+                   "tokens": n})
+
+    def charge_bench_attempt(self, username):
+        if self.is_admin(username):
+            return
+        with self._lock:
+            ts = self._tenants()
+            if username in ts:
+                ts[username]["bench_used"] += 1
+                self._save(self._tenants_file, ts)
+        self._log({"kind": "bench_attempt", "tenant": username})
+
+    # -- reporting --------------------------------------------------------
+    def tenants_table(self):
+        rows = []
+        with self._lock:
+            ts = self._tenants()
+        for u, t in sorted(ts.items()):
+            rows.append([u,
+                         "active" if t.get("active", True) else "disabled",
+                         ", ".join(t.get("allowed_models", [])),
+                         f"{t['tokens_used']:,} / {t['token_quota']:,}",
+                         max(0, t["token_quota"] - t["tokens_used"]),
+                         f"{t['bench_used']} / {t['bench_quota']}"])
+        return rows
+
+    def pools_table(self):
+        rows = []
+        with self._lock:
+            ps = self._pools()
+        for m, p in sorted(ps.items()):
+            cap = p.get("token_quota", 0)
+            rows.append([m,
+                         f"{p.get('tokens_used', 0):,}",
+                         f"{cap:,}" if cap else "uncapped",
+                         (max(0, cap - p.get("tokens_used", 0))
+                          if cap else "-")])
+        return rows
+
+    def usage_events(self, tenant=None, limit=5000):
+        out = []
+        try:
+            with open(self._log_file) as f:
+                for line in f:
+                    try:
+                        e = json.loads(line)
+                    except Exception:
+                        continue
+                    if e.get("kind") not in ("chat", "bench"):
+                        continue
+                    if tenant and e.get("tenant") != tenant:
+                        continue
+                    out.append(e)
+        except Exception:
+            pass
+        return out[-limit:]
+
+
 class SessionManager:
     """Manages persistent chat sessions"""
     
@@ -1872,6 +2138,7 @@ class ChatClient:
     
     def __init__(self, config: Config):
         self.config = config
+        self.last_usage = None  # most recent completion's token usage
         self.session = self._create_session()
         
     def _create_session(self) -> requests.Session:
@@ -2228,6 +2495,8 @@ class ChatClient:
                     return f"API Error {response.status_code}: {error_detail}"
                 
                 result = response.json()
+                if result.get('usage'):
+                    self.last_usage = result['usage']  # quota accounting
                 if 'choices' in result and len(result['choices']) > 0:
                     content = result['choices'][0]['message']['content']
                     print(f"✅ Success! Length: {len(content)}")
@@ -2268,8 +2537,10 @@ class ChatClient:
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "stream": True
+            "stream": True,
+            "stream_options": {"include_usage": True}
         }
+        self.last_usage = None  # set from the final stream chunk when reported
         
         print(f"🌊 DEBUG: Streaming request to: {url}")
         print(f"📦 DEBUG: Payload keys: {list(payload.keys())}")
@@ -2365,6 +2636,11 @@ class ChatClient:
                                             if 'choices' in chunk:
                                                 print(f"🧩 DEBUG: Choices[0] keys: {list(chunk['choices'][0].keys())}")
                                         
+                                        if chunk.get('usage'):
+                                            # final usage chunk (stream_options
+                                            # include_usage) - arrives after
+                                            # finish_reason, feeds quota accounting
+                                            self.last_usage = chunk['usage']
                                         if 'choices' in chunk and len(chunk['choices']) > 0:
                                             choice = chunk['choices'][0]
                                             delta = choice.get('delta', {})
@@ -2383,7 +2659,9 @@ class ChatClient:
                                             if choice.get('finish_reason'):
                                                 finish_reason = choice.get('finish_reason')
                                                 print(f"🏁 DEBUG: Finished with reason: {finish_reason}")
-                                                break
+                                                # keep reading: the usage chunk
+                                                # and [DONE] follow
+                                                continue
                                                 
                                     except json.JSONDecodeError as e:
                                         print(f"⚠️ DEBUG: JSON error on line {data_lines}: {str(e)}")
@@ -2465,6 +2743,8 @@ class ChatInterface:
         self._processing = False  # Flag to prevent double processing
         self.session_manager = SessionManager()  # Add session management
         self.metrics_collector = MetricsCollector()  # Add metrics collection
+        self.tenants = TenantManager(config.admin_username,
+                                     config.admin_password)  # multi-tenant
     
     # ------------------------------------------------------------------
     # Chat targets. The chat tab used to be hard-wired to SME_API_ENDPOINT,
@@ -2473,6 +2753,46 @@ class ChatInterface:
     #   [{"label":"telecomgpt-r1","endpoint":"https://...","model":"telecomgpt-r1"}]
     # Config, not code - adding a third model needs no edit here. The default
     # endpoint is always present and always first.
+    def _local_model_names(self):
+        """Names of in-cluster (local) models from the registry."""
+        names = []
+        try:
+            for v in self.models_all().values():
+                if not TenantManager._is_external(v):
+                    names.append(v.get("model"))
+        except Exception:
+            pass
+        return sorted(set(n for n in names if n))
+
+    def _usage_buildup_html(self, tenant=None):
+        """Cumulative token-usage build-up per tenant (admin: all tenants)."""
+        events = self.tenants.usage_events(tenant=tenant)
+        if not events:
+            return ("<div style='color:#888;padding:12px'>No usage recorded "
+                    "yet.</div>")
+        # cumulative series per tenant
+        series = {}
+        for e in events:
+            u = e.get("tenant", "?")
+            series.setdefault(u, []).append(
+                (e["ts"], e.get("tokens", 0)))
+        rows = []
+        for u, pts in sorted(series.items()):
+            tot = sum(n for _, n in pts)
+            rows.append((u, tot, len(pts)))
+        mx = max(r[1] for r in rows) or 1
+        bars = "".join(
+            f"<div style='margin:6px 0'><span style='display:inline-block;"
+            f"width:180px'>{u} <small>({n} req)</small></span>"
+            f"<span style='display:inline-block;height:12px;border-radius:6px;"
+            f"background:linear-gradient(90deg,#8B5CF6,#22D3EE);"
+            f"width:{max(2, int(360 * tot / mx))}px'></span> "
+            f"<b>{tot:,}</b> tokens</div>"
+            for u, tot, n in rows)
+        return ("<div style='padding:8px'><b>Token usage build-up "
+                "(chat + benchmark, prompt + completion)</b>" + bars
+                + "</div>")
+
     def chat_targets(self):
         """Healthy models from the unified registry, newest state first.
 
@@ -2503,7 +2823,8 @@ class ChatInterface:
         max_tokens: int,
         uploaded_file: Optional[Any] = None,
         session_id: str = None,
-        chat_target: str = None
+        chat_target: str = None,
+        request: "gr.Request" = None,
     ) -> Tuple[str, List[List[str]], Optional[Any], str]:
         """Enhanced message processing with UI debugging"""
         
@@ -2601,12 +2922,30 @@ class ChatInterface:
                               f"known: {list(tgts)}")
             if target:
                 print(f"💬 target: {target['model']} @ {target['endpoint']}")
+            # -- tenant quota gate ------------------------------------------
+            _user = getattr(request, "username", None) if request else None
+            _model_id = (target or {}).get("model") or self.config.model_name
+            _ok, _why = self.tenants.check_chat(_user, _model_id)
+            if not _ok:
+                new_history = history + [[message, f"⛔ {_why}"]]
+                self._processing = False
+                return "", new_history, None, session_id
+            self.client.last_usage = None
             response = self.client.chat_completion(
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 target=target
             )
+            # -- quota accounting (prompt + completion) ---------------------
+            _usage = getattr(self.client, "last_usage", None) or {}
+            _pt = _usage.get("prompt_tokens")
+            _ct = _usage.get("completion_tokens")
+            if _pt is None and _ct is None:
+                # endpoint did not report usage: estimate ~4 chars/token
+                _pt = sum(len(m.get("content", "")) for m in messages) // 4
+                _ct = len(response or "") // 4
+            self.tenants.charge(_user, _model_id, _pt, _ct, kind="chat")
             
             print(f"✅ Response received: {len(response)} chars")
             print(f"📝 Response preview: {response[:200]}...")
@@ -3808,7 +4147,7 @@ class ChatInterface:
             return {"chat_template_kwargs": {"enable_thinking": True}}
         return None
 
-    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens, judge_key="(none)", thinking="model default"):
+    def run_benchmark(self, slot, model_key, tasks, tier, limit, max_connections, max_tokens, judge_key="(none)", thinking="model default", username=None):
         """Generator handler for one benchmark slot: runs the selected
         benchmarks against the chosen registry model, yielding
         (status_md, table_rows, summary_md) for real-time UI updates."""
@@ -3828,6 +4167,19 @@ class ChatInterface:
         if not entry:
             yield f"Unknown model selection: {model_key}. Provision or pick a model first.", [], ""
             return
+        # -- tenant quota gate (attempt + judged filter + model access) -----
+        _model_id = entry.get("model") or model_key
+        _ok, _note, tasks = self.tenants.check_bench(username, _model_id, tasks)
+        if not _ok:
+            yield f"⛔ {_note}", [], ""
+            return
+        if not self.tenants.is_admin(username):
+            if self.tenants._is_external(entry):
+                yield "⛔ External endpoints are admin-only.", [], ""
+                return
+            self.tenants.charge_bench_attempt(username)
+            if _note:
+                yield f"ℹ️ {_note}", [], ""
 
         limit = int(limit) if limit and int(limit) > 0 else None
         max_tokens = int(max_tokens) if max_tokens and int(max_tokens) > 0 else None
@@ -3909,6 +4261,30 @@ class ChatInterface:
             # keeping the GPU loaded headlessly
             stop_ev.set()
             self._bench_active[slot] = False
+            # -- quota accounting: prompt + completion across the whole run --
+            try:
+                _pt = _ct = 0
+                for _task in tasks:
+                    _f = os.path.join(out_dir, f"{_task}.jsonl")
+                    if not os.path.exists(_f):
+                        continue
+                    _recs = mod.load_dataset(_task, tier, limit)
+                    with open(_f) as fh:
+                        for _i, _line in enumerate(fh):
+                            try:
+                                _r = json.loads(_line)
+                            except Exception:
+                                continue
+                            _ct += int(_r.get("output_tokens") or 0)
+                            if _i < len(_recs):
+                                _q = _recs[_i].get("question", "")
+                                _ch = _recs[_i].get("choices") or []
+                                _pt += (len(_q)
+                                        + sum(len(str(c)) for c in _ch)) // 4
+                self.tenants.charge(username, _model_id, _pt, _ct,
+                                    kind="bench")
+            except Exception as _e:
+                print(f"bench quota accounting skipped: {_e}")
 
     def _run_benchmark_tasks(self, slot, tasks, tier, limit, max_connections,
                              mod, client, stop_ev, model_tag, entry, out_dir,
@@ -5483,7 +5859,7 @@ class ChatInterface:
             
             # Main content area with tabs for better organization
             with gr.Tabs():
-                with gr.TabItem("Models"):
+                with gr.TabItem("Models") as tab_models:
                     gr.Markdown(
                         "**Every model the portal knows about lives here.** "
                         "Add an endpoint once - with or without an API key - "
@@ -5700,7 +6076,7 @@ class ChatInterface:
                                     elem_classes="system-prompt-detail"
                                 )
                 
-                with gr.TabItem("Prompt Manager"):
+                with gr.TabItem("Prompt Manager") as tab_prompts:
                     with gr.Row():
                         with gr.Column(scale=1):
                             gr.Markdown("### System Prompt Management")
@@ -5757,6 +6133,9 @@ class ChatInterface:
                             )
                 
                 with gr.TabItem("Observability"):
+                    with gr.Accordion("Quota & tenant usage", open=False):
+                        quota_view = gr.HTML("")
+                        quota_refresh = gr.Button("Refresh usage")
                     gr.Markdown("### **All endpoints, side by side**")
                     gr.Markdown(
                         "*Live vLLM metrics polled from every registered "
@@ -6149,14 +6528,19 @@ class ChatInterface:
                                             def _run(tasks_legacy, tasks_2026,
                                                      tier, limit,
                                                      conns, mtok, judge_key,
-                                                     thinking):
+                                                     thinking,
+                                                     request: gr.Request = None):
                                                 tasks = (list(tasks_legacy or [])
                                                          + list(tasks_2026 or []))
+                                                _user = getattr(
+                                                    request, "username", None
+                                                ) if request else None
                                                 for out in self.run_benchmark(
                                                         k, k, tasks, tier,
                                                         limit, conns, mtok,
                                                         judge_key=judge_key,
-                                                        thinking=thinking):
+                                                        thinking=thinking,
+                                                        username=_user):
                                                     if len(out) == 4:
                                                         st, tb, md, rp = out
                                                         yield (st, tb, md,
@@ -6277,7 +6661,7 @@ class ChatInterface:
                                  bench_models_cb],
                     )
 
-                with gr.TabItem("Leaderboard"):
+                with gr.TabItem("Leaderboard") as tab_board:
                     _h0, _r0, _n0 = self._lb_table()
                     gr.Markdown(
                         "Every clean, full-set benchmark run recorded here "
@@ -6338,6 +6722,187 @@ class ChatInterface:
                                               lb_note, lb_del_dd])
                     interface.load(fn=_lb_refresh, inputs=[],
                                    outputs=[lb_table, lb_note, lb_del_dd])
+
+                # ---- Tenants (admin-only): accounts, quotas, usage --------
+                with gr.TabItem("Tenants") as tab_tenants:
+                    gr.Markdown(
+                        "Create **tenant accounts** with access to allowed "
+                        "LOCAL models, a lifetime **token quota** (prompt + "
+                        "completion; top up below) and a **benchmark attempt "
+                        "quota** (auto-scored suites only - judged suites and "
+                        "external AIaaS endpoints stay admin-only). Each "
+                        "local model additionally carries its own GPU token "
+                        "pool; tenant traffic charges both."
+                    )
+                    with gr.Row():
+                        tn_user = gr.Textbox(label="Username", scale=1)
+                        tn_pass = gr.Textbox(label="Password", type="password",
+                                             scale=1)
+                        tn_tokq = gr.Number(label="Token quota",
+                                            value=1_000_000, precision=0,
+                                            scale=1)
+                        tn_benq = gr.Number(label="Benchmark attempts",
+                                            value=10, precision=0, scale=1)
+                    tn_models = gr.CheckboxGroup(
+                        choices=self._local_model_names(),
+                        label="Allowed local models", interactive=True)
+                    with gr.Row():
+                        tn_create_btn = gr.Button("Create tenant",
+                                                  variant="primary")
+                        tn_refresh_btn = gr.Button("Refresh tables")
+                    tn_status = gr.Markdown("")
+                    tn_table = gr.Dataframe(
+                        headers=["tenant", "state", "allowed models",
+                                 "tokens used / quota", "tokens left",
+                                 "bench used / quota"],
+                        label="Tenants", interactive=False)
+                    with gr.Row():
+                        tn_sel = gr.Dropdown(choices=[], label="Tenant",
+                                             scale=1)
+                        tn_add_tok = gr.Number(label="Add tokens", value=0,
+                                               precision=0, scale=1)
+                        tn_add_ben = gr.Number(label="Add attempts", value=0,
+                                               precision=0, scale=1)
+                        tn_active = gr.Dropdown(
+                            choices=["(keep)", "active", "disabled"],
+                            value="(keep)", label="State", scale=1)
+                        tn_topup_btn = gr.Button("Apply", scale=1)
+                    gr.Markdown("**Model / GPU token pools** (0 quota = "
+                                "uncapped; tenant traffic is refused once a "
+                                "capped pool is exhausted)")
+                    pool_table = gr.Dataframe(
+                        headers=["model", "tokens used", "pool quota",
+                                 "tokens left"],
+                        label="Model pools", interactive=False)
+                    with gr.Row():
+                        pool_sel = gr.Dropdown(
+                            choices=self._local_model_names(),
+                            label="Model", scale=2)
+                        pool_add = gr.Number(label="Add pool tokens", value=0,
+                                             precision=0, scale=1)
+                        pool_btn = gr.Button("Top up pool", scale=1)
+                    usage_plot = gr.HTML(label="Usage build-up")
+
+                    def _tn_tables():
+                        rows = self.tenants.tenants_table()
+                        names = [r[0] for r in rows]
+                        return (rows, self.tenants.pools_table(),
+                                gr.update(choices=names,
+                                          value=names[0] if names else None),
+                                self._usage_buildup_html(None))
+
+                    def _tn_create(u, pw, models, tokq, benq):
+                        ok, msg = self.tenants.create_tenant(
+                            u, pw, models, tokq or 0, benq or 0)
+                        r = _tn_tables()
+                        return (("✅ " if ok else "⛔ ") + msg,) + r
+
+                    def _tn_topup(u, tok, ben, state):
+                        if not u:
+                            return ("⛔ Pick a tenant.",) + _tn_tables()
+                        act = {"(keep)": None, "active": True,
+                               "disabled": False}[state or "(keep)"]
+                        ok, msg = self.tenants.update_tenant(
+                            u, add_tokens=tok or 0, add_bench=ben or 0,
+                            active=act)
+                        return (("✅ " if ok else "⛔ ") + msg,) + _tn_tables()
+
+                    def _pool_topup(m, tok):
+                        if not m:
+                            return ("⛔ Pick a model.",) + _tn_tables()
+                        ok, msg = self.tenants.set_model_pool(m, tok or 0)
+                        return (("✅ " if ok else "⛔ ") + msg,) + _tn_tables()
+
+                    _tn_outs = [tn_table, pool_table, tn_sel, usage_plot]
+                    tn_create_btn.click(_tn_create,
+                                        inputs=[tn_user, tn_pass, tn_models,
+                                                tn_tokq, tn_benq],
+                                        outputs=[tn_status] + _tn_outs)
+                    tn_topup_btn.click(_tn_topup,
+                                       inputs=[tn_sel, tn_add_tok,
+                                               tn_add_ben, tn_active],
+                                       outputs=[tn_status] + _tn_outs)
+                    pool_btn.click(_pool_topup, inputs=[pool_sel, pool_add],
+                                   outputs=[tn_status] + _tn_outs)
+                    tn_refresh_btn.click(lambda: _tn_tables(), inputs=[],
+                                         outputs=_tn_outs)
+                    interface.load(lambda: _tn_tables(), inputs=[],
+                                   outputs=_tn_outs)
+
+            # ---- per-session identity: tab visibility, model filtering,
+            # ---- quota readout (admin sees everything; tenants see their
+            # ---- allowed local models and their own usage) ----------------
+            def _session_setup(request: gr.Request = None):
+                user = getattr(request, "username", None) if request else None
+                admin = self.tenants.is_admin(user)
+                allowed = self.tenants.allowed_models_for(user)
+
+                def _bench_keys_for():
+                    keys = list(getattr(self, "_bench_registry", {}).keys())
+                    if admin:
+                        return keys
+                    out = []
+                    for k in keys:
+                        e = self._bench_registry.get(k, {})
+                        if (not TenantManager._is_external(e)
+                                and e.get("model") in (allowed or [])):
+                            out.append(k)
+                    return out
+
+                def _chat_choices_for():
+                    tgts = self.chat_targets()
+                    if admin:
+                        return list(tgts.keys())
+                    return [lbl for lbl, v in tgts.items()
+                            if v.get("model") in (allowed or [])
+                            and not TenantManager._is_external(v)]
+
+                bench_keys = _bench_keys_for()
+                chat_keys = _chat_choices_for()
+                legacy_choices = ["teleqna", "teletables", "oranbench",
+                                  "srsranbench", "telemath", "telelogs",
+                                  "3gpp", "6g_bench"]
+                y2026_choices = ["rel19_bench", "ntn_bench", "netapi_bench",
+                                 "aiops_bench"]
+                if admin:
+                    legacy_choices += ["telcos_last_exam", "vendor_genai"]
+                    y2026_choices += ["telcos_last_exam_2026"]
+                    quota_html = self._usage_buildup_html(None)
+                else:
+                    tinfo = self.tenants.get(user) or {}
+                    quota_html = (
+                        f"<div style='padding:8px'><b>Account: {user}</b><br>"
+                        f"Tokens: {tinfo.get('tokens_used', 0):,} used / "
+                        f"{tinfo.get('token_quota', 0):,} quota &nbsp;|&nbsp; "
+                        f"Benchmark attempts: {tinfo.get('bench_used', 0)} / "
+                        f"{tinfo.get('bench_quota', 0)}<br>"
+                        f"Allowed models: "
+                        f"{', '.join(allowed or []) or '(none)'}</div>"
+                        + self._usage_buildup_html(user))
+                return (
+                    gr.update(visible=admin),   # tab_models
+                    gr.update(visible=admin),   # tab_prompts
+                    gr.update(visible=admin),   # tab_board
+                    gr.update(visible=admin),   # tab_tenants
+                    gr.update(choices=chat_keys,
+                              value=chat_keys[0] if chat_keys else None),
+                    gr.update(choices=bench_keys,
+                              value=bench_keys if admin else bench_keys),
+                    gr.update(choices=legacy_choices,
+                              value=(["teleqna", "telemath", "telelogs"]
+                                     if admin else [])),
+                    gr.update(choices=y2026_choices, value=[]),
+                    gr.update(visible=admin),   # bench_judge
+                    quota_html,
+                )
+
+            _sess_outs = [tab_models, tab_prompts, tab_board, tab_tenants,
+                          chat_model_dd, bench_models_cb,
+                          bench_tasks_legacy, bench_tasks_2026,
+                          bench_judge, quota_view]
+            interface.load(fn=_session_setup, inputs=[], outputs=_sess_outs)
+            quota_refresh.click(fn=_session_setup, inputs=[],
+                                outputs=_sess_outs)
 
             # Event handlers
             def update_system_prompt(selection):
@@ -7128,7 +7693,7 @@ def main():
     
     print(f"🌐 Launching on port {30180}...")
     interface.launch(
-        auth=(config.admin_username, config.admin_password),
+        auth=chat.tenants.auth_check,
         server_name="0.0.0.0",
         server_port=30180,
         allowed_paths=[STATE_DIR],
