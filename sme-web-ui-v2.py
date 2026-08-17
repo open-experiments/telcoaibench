@@ -358,7 +358,7 @@ class TenantManager:
                            f"({t['bench_used']}/{t['bench_quota']})."), []
         judged = [x for x in tasks
                   if x in ("telcos_last_exam", "telcos_last_exam_2026",
-                           "vendor_genai")]
+                           "vendor_genai", "vendor_genai_2026")]
         kept = [x for x in tasks if x not in judged]
         note = ""
         if judged:
@@ -6412,7 +6412,8 @@ class ChatInterface:
                             bench_tasks_2026 = gr.CheckboxGroup(
                                 choices=["rel19_bench", "ntn_bench",
                                          "netapi_bench", "aiops_bench",
-                                         "telcos_last_exam_2026"],
+                                         "telcos_last_exam_2026",
+                                         "vendor_genai_2026"],
                                 value=[],
                                 interactive=True,
                                 label="2026 Test Suite - 6G Within (frozen; "
@@ -6866,7 +6867,8 @@ class ChatInterface:
                                  "aiops_bench"]
                 if admin:
                     legacy_choices += ["telcos_last_exam", "vendor_genai"]
-                    y2026_choices += ["telcos_last_exam_2026"]
+                    y2026_choices += ["telcos_last_exam_2026",
+                                      "vendor_genai_2026"]
                     quota_html = self._usage_buildup_html(None)
                 else:
                     tinfo = self.tenants.get(user) or {}

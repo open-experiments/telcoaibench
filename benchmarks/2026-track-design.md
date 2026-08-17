@@ -1,7 +1,7 @@
 # TelcoAIBench 2026 Track — Design
 
 **Status:** approved 2026-08-16 · auto-scored track delivered (195q frozen, Marathon #02
-complete) · judged-suite expansions in progress.
+complete) · exam-2026 delivered (21-model judged marathon) · vendor-genai-2026 frozen, marathon in progress.
 
 ## Why
 

@@ -17,6 +17,16 @@ criteria - technical_accuracy, completeness, depth, honesty - weighted
 punished hardest. Runs report per-vendor, per-domain and per-criterion
 breakdowns plus a downloadable per-question failure report.
 
+## 2026 expansion
+
+The 2026 track adds `vendor_genai_2026`: **24 new matrix cells** completing an
+**8-vendor x 6-domain grid** (48 cells with the legacy 24, kept 1:1) — **Huawei** and
+**ZTE** across all six domains, and the six legacy vendors across the two new domains
+(**Transport/IP**, **Security**). Same 5-part structure, judge anchors, fabrication
+baits and rubric weights; five honesty traps (M-E, S-E, R-E, S-F, R-F) reward stating
+that a vendor does not play in a domain. Source of truth:
+[`vendor-genai-2026.md`](vendor-genai-2026.md).
+
 ## Layout
 
 ```

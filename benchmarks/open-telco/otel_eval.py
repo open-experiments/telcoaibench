@@ -286,6 +286,10 @@ TASKS = {
                          "path": "telcos-last-exam/datasets/telcos_last_exam_2026.jsonl.gz"},
     "vendor_genai":     {"prompt": build_plain_prompt, "judged": "rubric",
                          "path": "vendor-genai-tests/datasets/vendor_genai.jsonl.gz"},
+    # 2026 expansion: 24 new matrix cells (Huawei x6, ZTE x6, legacy vendors x
+    # Transport/IP + Security); full 2026 matrix = legacy 24 + these 24
+    "vendor_genai_2026": {"prompt": build_plain_prompt, "judged": "rubric",
+                         "path": "vendor-genai-tests/datasets/vendor_genai_2026.jsonl.gz"},
 }
 
 JUDGED_TASKS = [k for k, v in TASKS.items() if v.get("judged")]
