@@ -336,6 +336,8 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
     +suiteKeys.map(k=>'<th style="padding:6px 8px">'+(d.suite_names||{})[k]+'</th>').join('')
     +'<th style="padding:6px 8px">Legacy Test Benchmark</th>'
     +'<th style="padding:6px 8px">&Delta;</th></tr>';
+  const m02means=(d.results||[]).map(r=>r.mean);
+  const m02mn=Math.min.apply(null,m02means), m02mx=Math.max.apply(null,m02means);
   for(const r of d.results||[]){
     const delta=r.board2025_rank-r.rank;
     const ds=delta>0?'<span style="color:var(--green)">&#9650; '+delta+'</span>'
@@ -343,10 +345,10 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
             :'<span style="color:var(--faint)">&ndash;</span>';
     h+='<tr style="border-top:1px solid var(--line)">'
       +'<td style="padding:7px 8px;color:var(--dim)">'+r.rank+'</td>'
-      +'<td style="padding:7px 8px;color:var(--txt)"><b>'+r.model+'</b></td>'
-      +'<td style="padding:7px 8px;color:var(--dim)">'+(r.origin_flag||'')+' '+(r.origin||'')+'</td>'
+      +'<td style="padding:7px 8px;color:var(--txt);white-space:nowrap"><b>'+r.model+'</b></td>'
+      +'<td style="padding:7px 8px;color:var(--dim);white-space:nowrap">'+(r.origin_flag||'')+' '+(r.origin||'')+'</td>'
       +'<td style="padding:7px 8px;font-variant-numeric:tabular-nums"><b>'+r.mean.toFixed(4)+'</b></td>'
-      +'<td style="padding:7px 8px"><span class="m02-bar" style="width:'+Math.round(r.mean*120)+'px"></span></td>'
+      +'<td style="padding:7px 8px"><span class="m02-bar" style="width:'+Math.round(18+(m02mx>m02mn?(r.mean-m02mn)/(m02mx-m02mn):1)*102)+'px"></span></td>'
       +suiteKeys.map(k=>{const v=(r.suites||{})[k];return v==null?'<td style="padding:7px 8px;color:var(--faint)">&ndash;</td>'
         :'<td style="padding:7px 8px"><span class="lb-cell" style="'+m02heat(v)+'">'+v.toFixed(4)+'</span></td>';}).join('')
       +'<td style="padding:7px 8px;color:var(--faint)">#'+r.board2025_rank+'</td>'
