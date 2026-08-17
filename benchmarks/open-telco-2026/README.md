@@ -11,7 +11,7 @@ own board (Marathon #02 onward, "2026 Functional Track" tab on the site).
 |---|---|---|
 | `rel19_bench` | **batch 1 frozen 2026-08-16** (52 q) | Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec-to-function mapping, operational scenarios |
 | `ntn_bench` | **batch 1 frozen 2026-08-16** (45 q) | NTN (NR-NTN/IoT-NTN, D2D, spectrum, orbits) & private networks (SNPN/PNI-NPN, CAG, onboarding, deployment models) |
-| `netapi_bench` | planned | Network APIs & monetization (CAMARA/TMF) |
+| `netapi_bench` | **batch 1 frozen 2026-08-16** (38 q) | CAMARA/Open Gateway API mechanics, NEF/CAPIF exposure architecture, ecosystem roles (CAMARA/GSMA/TMF), monetization structure, incl. a post-cutoff 1Q26-report precision block |
 | `aiops_bench` | planned | AI-RAN & autonomous operations |
 
 ## Method

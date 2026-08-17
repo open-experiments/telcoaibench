@@ -53,6 +53,33 @@
     "sha256_16": "f19861ea3e443a85"
    },
    "scoring": "score_mcq (ANSWER: X), greedy, temp=0.0; final score = mean(A,B)"
+  },
+  "netapi_bench": {
+   "suite": "netapi_bench",
+   "batch": "1 (v3, SME corrections applied)",
+   "n": 38,
+   "frozen": "2026-08-16",
+   "shuffleA": {
+    "seed": 38001,
+    "positions": {
+     "1": 9,
+     "2": 11,
+     "0": 8,
+     "3": 10
+    },
+    "sha256_16": "7243e6a2919fd443"
+   },
+   "shuffleB": {
+    "seed": 38002,
+    "positions": {
+     "3": 8,
+     "2": 11,
+     "1": 14,
+     "0": 5
+    },
+    "sha256_16": "94f5295aa63c4859"
+   },
+   "scoring": "score_mcq, greedy, temp=0.0; score = mean(A,B)"
   }
  }
 }

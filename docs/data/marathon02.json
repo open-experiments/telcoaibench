@@ -1,10 +1,10 @@
 {
  "marathon": "02",
  "title": "Marathon #02 - 2026 Functional Track",
- "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q), AUTO-SCORED, frozen 2026-08-16",
+ "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q) + netapi_bench (38q), AUTO-SCORED, frozen",
  "scope": "Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios",
  "method": "Each model scored as the mean of two fixed answer-shuffles (A/B) of the identical frozen set; greedy decoding, temp 0. All 10 models on identical pinned serving stack except muse-glimmer-30b (day-0 engine, see its report).",
- "generated": "2026-08-16",
+ "generated": "2026-08-17",
  "results": [
   {
    "rank": 1,
@@ -12,111 +12,132 @@
    "board2025_rank": 10,
    "shuffleA": 0.9038,
    "shuffleB": 0.9231,
-   "mean": 0.929,
+   "mean": 0.9132,
    "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.9135,
-    "ntn_bench": 0.9445
+    "ntn_bench": 0.9445,
+    "netapi_bench": 0.8816
    },
    "ntn_shuffleA": 0.9111,
-   "ntn_shuffleB": 0.9778
+   "ntn_shuffleB": 0.9778,
+   "netapi_shuffleA": 0.8684,
+   "netapi_shuffleB": 0.8947
   },
   {
    "rank": 2,
-   "model": "muse-glimmer-30b",
-   "board2025_rank": 3,
-   "shuffleA": 0.9038,
-   "shuffleB": 0.9038,
-   "mean": 0.9242,
-   "origin_flag": "🇺🇸",
-   "origin": "USA",
-   "suites": {
-    "rel19_bench": 0.9038,
-    "ntn_bench": 0.9445
-   },
-   "ntn_shuffleA": 0.9556,
-   "ntn_shuffleB": 0.9333
-  },
-  {
-   "rank": 3,
-   "model": "otel2-llm-31b-it",
-   "board2025_rank": 4,
-   "shuffleA": 0.9038,
-   "shuffleB": 0.8654,
-   "mean": 0.909,
-   "origin_flag": "🇺🇸",
-   "origin": "USA",
-   "suites": {
-    "rel19_bench": 0.8846,
-    "ntn_bench": 0.9334
-   },
-   "ntn_shuffleA": 0.9111,
-   "ntn_shuffleB": 0.9556
-  },
-  {
-   "rank": 4,
-   "model": "gpt-oss-120b",
-   "board2025_rank": 6,
-   "shuffleA": 0.9038,
-   "shuffleB": 0.8846,
-   "mean": 0.9026,
-   "origin_flag": "🇺🇸",
-   "origin": "USA",
-   "suites": {
-    "rel19_bench": 0.8942,
-    "ntn_bench": 0.9111
-   },
-   "ntn_shuffleA": 0.8889,
-   "ntn_shuffleB": 0.9333
-  },
-  {
-   "rank": 5,
    "model": "gemma4-31b-it-base",
    "board2025_rank": 2,
    "shuffleA": 0.9231,
    "shuffleB": 0.9038,
-   "mean": 0.9012,
+   "mean": 0.9034,
    "origin_flag": "🇺🇸",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.9135,
-    "ntn_bench": 0.8889
+    "ntn_bench": 0.8889,
+    "netapi_bench": 0.9079
    },
    "ntn_shuffleA": 0.8889,
-   "ntn_shuffleB": 0.8889
+   "ntn_shuffleB": 0.8889,
+   "netapi_shuffleA": 0.9211,
+   "netapi_shuffleB": 0.8947
   },
   {
-   "rank": 6,
+   "rank": 3,
+   "model": "muse-glimmer-30b",
+   "board2025_rank": 3,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.9038,
+   "mean": 0.8968,
+   "origin_flag": "🇺🇸",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.9038,
+    "ntn_bench": 0.9445,
+    "netapi_bench": 0.8421
+   },
+   "ntn_shuffleA": 0.9556,
+   "ntn_shuffleB": 0.9333,
+   "netapi_shuffleA": 0.8421,
+   "netapi_shuffleB": 0.8421
+  },
+  {
+   "rank": 4,
    "model": "telecomgpt-r1",
    "board2025_rank": 1,
    "shuffleA": 0.9231,
    "shuffleB": 0.8654,
-   "mean": 0.8971,
+   "mean": 0.8919,
    "origin_flag": "🇦🇪",
    "origin": "UAE",
    "suites": {
     "rel19_bench": 0.8942,
-    "ntn_bench": 0.9
+    "ntn_bench": 0.9,
+    "netapi_bench": 0.8816
    },
    "ntn_shuffleA": 0.8667,
-   "ntn_shuffleB": 0.9333
+   "ntn_shuffleB": 0.9333,
+   "netapi_shuffleA": 0.8684,
+   "netapi_shuffleB": 0.8947
   },
   {
-   "rank": 7,
+   "rank": 5,
+   "model": "otel2-llm-31b-it",
+   "board2025_rank": 4,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.8654,
+   "mean": 0.8911,
+   "origin_flag": "🇺🇸",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.8846,
+    "ntn_bench": 0.9334,
+    "netapi_bench": 0.8552
+   },
+   "ntn_shuffleA": 0.9111,
+   "ntn_shuffleB": 0.9556,
+   "netapi_shuffleA": 0.8421,
+   "netapi_shuffleB": 0.8684
+  },
+  {
+   "rank": 6,
    "model": "qwen3-8-27b",
    "board2025_rank": 5,
    "shuffleA": 0.8846,
    "shuffleB": 0.8462,
-   "mean": 0.8882,
+   "mean": 0.8904,
    "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8654,
-    "ntn_bench": 0.9111
+    "ntn_bench": 0.9111,
+    "netapi_bench": 0.8947
    },
    "ntn_shuffleA": 0.9111,
-   "ntn_shuffleB": 0.9111
+   "ntn_shuffleB": 0.9111,
+   "netapi_shuffleA": 0.8947,
+   "netapi_shuffleB": 0.8947
+  },
+  {
+   "rank": 7,
+   "model": "gpt-oss-120b",
+   "board2025_rank": 6,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.8846,
+   "mean": 0.8825,
+   "origin_flag": "🇺🇸",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.8942,
+    "ntn_bench": 0.9111,
+    "netapi_bench": 0.8421
+   },
+   "ntn_shuffleA": 0.8889,
+   "ntn_shuffleB": 0.9333,
+   "netapi_shuffleA": 0.8421,
+   "netapi_shuffleB": 0.8421
   },
   {
    "rank": 8,
@@ -124,52 +145,62 @@
    "board2025_rank": 7,
    "shuffleA": 0.8269,
    "shuffleB": 0.8077,
-   "mean": 0.8531,
+   "mean": 0.8626,
    "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8173,
-    "ntn_bench": 0.8889
+    "ntn_bench": 0.8889,
+    "netapi_bench": 0.8816
    },
    "ntn_shuffleA": 0.9111,
-   "ntn_shuffleB": 0.8667
+   "ntn_shuffleB": 0.8667,
+   "netapi_shuffleA": 0.8947,
+   "netapi_shuffleB": 0.8684
   },
   {
    "rank": 9,
-   "model": "nemotron-3-super-120b",
-   "board2025_rank": 8,
-   "shuffleA": 0.75,
-   "shuffleB": 0.7692,
-   "mean": 0.8409,
-   "origin_flag": "🇺🇸",
-   "origin": "USA",
-   "suites": {
-    "rel19_bench": 0.7596,
-    "ntn_bench": 0.9222
-   },
-   "ntn_shuffleA": 0.9333,
-   "ntn_shuffleB": 0.9111
-  },
-  {
-   "rank": 10,
    "model": "qwq-32b",
    "board2025_rank": 9,
    "shuffleA": 0.8269,
    "shuffleB": 0.7885,
-   "mean": 0.8317,
+   "mean": 0.8527,
    "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8077,
-    "ntn_bench": 0.8556
+    "ntn_bench": 0.8556,
+    "netapi_bench": 0.8947
    },
    "ntn_shuffleA": 0.8444,
-   "ntn_shuffleB": 0.8667
+   "ntn_shuffleB": 0.8667,
+   "netapi_shuffleA": 0.9211,
+   "netapi_shuffleB": 0.8684
+  },
+  {
+   "rank": 10,
+   "model": "nemotron-3-super-120b",
+   "board2025_rank": 8,
+   "shuffleA": 0.75,
+   "shuffleB": 0.7692,
+   "mean": 0.8413,
+   "origin_flag": "🇺🇸",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.7596,
+    "ntn_bench": 0.9222,
+    "netapi_bench": 0.8421
+   },
+   "ntn_shuffleA": 0.9333,
+   "ntn_shuffleB": 0.9111,
+   "netapi_shuffleA": 0.8421,
+   "netapi_shuffleB": 0.8421
   }
  ],
  "suite_names": {
   "rel19_bench": "Rel19-Bench",
-  "ntn_bench": "NTN-Bench"
+  "ntn_bench": "NTN-Bench",
+  "netapi_bench": "NetAPI-Bench"
  },
  "scoring": "Per suite: mean of two fixed answer-shuffles (greedy, temp 0). Score = equal-weight mean across suites."
 }
