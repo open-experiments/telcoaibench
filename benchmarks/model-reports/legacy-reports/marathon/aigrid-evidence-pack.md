@@ -47,4 +47,4 @@ for the target workload rather than parameter count alone"* - is directly observ
    fitting VRAM. Both invisible to parameter-count planning; both measured here.
 
 *Full per-model reports with per-suite accuracy, generation behavior, and audit transcripts:*
-*github.com/open-experiments/telcoaibench - benchmarks/model-reports/marathon/*
+*github.com/open-experiments/telcoaibench - benchmarks/model-reports/legacy-reports/marathon/*

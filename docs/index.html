@@ -222,9 +222,11 @@
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.7">
         <b style="color:var(--dim)">What this measures.</b> AUTO-SCORED functional knowhow for operational
         telco AI: <b>Rel19-Bench</b> (52q &mdash; Rel-18/19 &amp; 6G readiness), <b>NTN-Bench</b> (45q &mdash;
-        NTN, direct-to-device, spectrum, private networks/NPN), and <b>NetAPI-Bench</b> (38q &mdash;
+        NTN, direct-to-device, spectrum, private networks/NPN), <b>NetAPI-Bench</b> (38q &mdash;
         CAMARA/Open Gateway APIs, NEF/CAPIF exposure architecture, ecosystem roles, monetization
-        structure) &mdash; authored from primary 3GPP/ETSI/CAMARA sources and SME-reviewed. Each model
+        structure), and <b>AIOps-Bench</b> (60q &mdash; autonomy levels, intent management, NWDAF,
+        RIC control loops, agentic operations, classification/prediction/scaling tasks) &mdash;
+        authored from primary 3GPP/ETSI/CAMARA/TM Forum/NGMN sources and SME-reviewed. Each model
         runs each frozen suite twice (two fixed answer orderings); a suite score is the mean of both
         runs, bounding choice-ordering variance. <b>Score</b> is the equal-weight mean across suites.
         Serving stack is the identical pinned engine for all models except muse-glimmer-30b (day-0
@@ -474,7 +476,7 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
       </div>
       <div class="card">
         <h3><span class="dot" style="background:var(--cyan)"></span>Claims need receipts</h3>
-        <p>Self-reported leaderboard numbers routinely diverge from pinned reproduction - our <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">verification report</a> and the <a href="https://github.com/open-experiments/telcoaibench/blob/main/benchmarks/model-reports/marathon/telecomgpt-r1-claims-review.md">TelecomGPT-R1 claims review</a> document exactly how protocol choices move scores by double digits. Every number here ships with its harness version, prompts, precision, and per-question transcripts.</p>
+        <p>Self-reported leaderboard numbers routinely diverge from pinned reproduction - our <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">verification report</a> and the <a href="https://github.com/open-experiments/telcoaibench/blob/main/benchmarks/model-reports/legacy-reports/marathon/telecomgpt-r1-claims-review.md">TelecomGPT-R1 claims review</a> document exactly how protocol choices move scores by double digits. Every number here ships with its harness version, prompts, precision, and per-question transcripts.</p>
       </div>
       <div class="card">
         <h3><span class="dot" style="background:var(--green)"></span>One harness, every model</h3>

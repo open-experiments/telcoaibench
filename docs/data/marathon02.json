@@ -1,8 +1,8 @@
 {
  "marathon": "02",
  "title": "Marathon #02 - 2026 Functional Track",
- "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q) + netapi_bench (38q), AUTO-SCORED, frozen",
- "scope": "Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios",
+ "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q) + netapi_bench (38q) + aiops_bench (60q) = 195q, AUTO-SCORED, frozen",
+ "scope": "Rel-18/19 & 6G-readiness, NTN, network-API exposure, and AIOps/autonomous-network functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios, classification/prediction/scaling tasks",
  "method": "Each model scored as the mean of two fixed answer-shuffles (A/B) of the identical frozen set; greedy decoding, temp 0. All 10 models on identical pinned serving stack except muse-glimmer-30b (day-0 engine, see its report).",
  "generated": "2026-08-17",
  "results": [
@@ -12,18 +12,21 @@
    "board2025_rank": 10,
    "shuffleA": 0.9038,
    "shuffleB": 0.9231,
-   "mean": 0.9132,
-   "origin_flag": "🇨🇳",
+   "mean": 0.9245,
+   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.9135,
     "ntn_bench": 0.9445,
-    "netapi_bench": 0.8816
+    "netapi_bench": 0.8816,
+    "aiops_bench": 0.9583
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.9778,
    "netapi_shuffleA": 0.8684,
-   "netapi_shuffleB": 0.8947
+   "netapi_shuffleB": 0.8947,
+   "aiops_shuffleA": 0.95,
+   "aiops_shuffleB": 0.9667
   },
   {
    "rank": 2,
@@ -31,18 +34,21 @@
    "board2025_rank": 2,
    "shuffleA": 0.9231,
    "shuffleB": 0.9038,
-   "mean": 0.9034,
-   "origin_flag": "🇺🇸",
+   "mean": 0.9193,
+   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.9135,
     "ntn_bench": 0.8889,
-    "netapi_bench": 0.9079
+    "netapi_bench": 0.9079,
+    "aiops_bench": 0.9667
    },
    "ntn_shuffleA": 0.8889,
    "ntn_shuffleB": 0.8889,
    "netapi_shuffleA": 0.9211,
-   "netapi_shuffleB": 0.8947
+   "netapi_shuffleB": 0.8947,
+   "aiops_shuffleA": 0.9667,
+   "aiops_shuffleB": 0.9667
   },
   {
    "rank": 3,
@@ -50,75 +56,87 @@
    "board2025_rank": 3,
    "shuffleA": 0.9038,
    "shuffleB": 0.9038,
-   "mean": 0.8968,
-   "origin_flag": "🇺🇸",
+   "mean": 0.9163,
+   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.9038,
     "ntn_bench": 0.9445,
-    "netapi_bench": 0.8421
+    "netapi_bench": 0.8421,
+    "aiops_bench": 0.975
    },
    "ntn_shuffleA": 0.9556,
    "ntn_shuffleB": 0.9333,
    "netapi_shuffleA": 0.8421,
-   "netapi_shuffleB": 0.8421
+   "netapi_shuffleB": 0.8421,
+   "aiops_shuffleA": 0.9667,
+   "aiops_shuffleB": 0.9833
   },
   {
    "rank": 4,
-   "model": "telecomgpt-r1",
-   "board2025_rank": 1,
-   "shuffleA": 0.9231,
-   "shuffleB": 0.8654,
-   "mean": 0.8919,
-   "origin_flag": "🇦🇪",
-   "origin": "UAE",
-   "suites": {
-    "rel19_bench": 0.8942,
-    "ntn_bench": 0.9,
-    "netapi_bench": 0.8816
-   },
-   "ntn_shuffleA": 0.8667,
-   "ntn_shuffleB": 0.9333,
-   "netapi_shuffleA": 0.8684,
-   "netapi_shuffleB": 0.8947
-  },
-  {
-   "rank": 5,
-   "model": "otel2-llm-31b-it",
-   "board2025_rank": 4,
-   "shuffleA": 0.9038,
-   "shuffleB": 0.8654,
-   "mean": 0.8911,
-   "origin_flag": "🇺🇸",
-   "origin": "USA",
-   "suites": {
-    "rel19_bench": 0.8846,
-    "ntn_bench": 0.9334,
-    "netapi_bench": 0.8552
-   },
-   "ntn_shuffleA": 0.9111,
-   "ntn_shuffleB": 0.9556,
-   "netapi_shuffleA": 0.8421,
-   "netapi_shuffleB": 0.8684
-  },
-  {
-   "rank": 6,
    "model": "qwen3-8-27b",
    "board2025_rank": 5,
    "shuffleA": 0.8846,
    "shuffleB": 0.8462,
-   "mean": 0.8904,
-   "origin_flag": "🇨🇳",
+   "mean": 0.9136,
+   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8654,
     "ntn_bench": 0.9111,
-    "netapi_bench": 0.8947
+    "netapi_bench": 0.8947,
+    "aiops_bench": 0.9833
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.9111,
    "netapi_shuffleA": 0.8947,
-   "netapi_shuffleB": 0.8947
+   "netapi_shuffleB": 0.8947,
+   "aiops_shuffleA": 1.0,
+   "aiops_shuffleB": 0.9667
+  },
+  {
+   "rank": 5,
+   "model": "telecomgpt-r1",
+   "board2025_rank": 1,
+   "shuffleA": 0.9231,
+   "shuffleB": 0.8654,
+   "mean": 0.9085,
+   "origin_flag": "\ud83c\udde6\ud83c\uddea",
+   "origin": "UAE",
+   "suites": {
+    "rel19_bench": 0.8942,
+    "ntn_bench": 0.9,
+    "netapi_bench": 0.8816,
+    "aiops_bench": 0.9583
+   },
+   "ntn_shuffleA": 0.8667,
+   "ntn_shuffleB": 0.9333,
+   "netapi_shuffleA": 0.8684,
+   "netapi_shuffleB": 0.8947,
+   "aiops_shuffleA": 0.95,
+   "aiops_shuffleB": 0.9667
+  },
+  {
+   "rank": 6,
+   "model": "otel2-llm-31b-it",
+   "board2025_rank": 4,
+   "shuffleA": 0.9038,
+   "shuffleB": 0.8654,
+   "mean": 0.9058,
+   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.8846,
+    "ntn_bench": 0.9334,
+    "netapi_bench": 0.8552,
+    "aiops_bench": 0.95
+   },
+   "ntn_shuffleA": 0.9111,
+   "ntn_shuffleB": 0.9556,
+   "netapi_shuffleA": 0.8421,
+   "netapi_shuffleB": 0.8684,
+   "aiops_shuffleA": 0.9333,
+   "aiops_shuffleB": 0.9667
   },
   {
    "rank": 7,
@@ -126,18 +144,21 @@
    "board2025_rank": 6,
    "shuffleA": 0.9038,
    "shuffleB": 0.8846,
-   "mean": 0.8825,
-   "origin_flag": "🇺🇸",
+   "mean": 0.9014,
+   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.8942,
     "ntn_bench": 0.9111,
-    "netapi_bench": 0.8421
+    "netapi_bench": 0.8421,
+    "aiops_bench": 0.9583
    },
    "ntn_shuffleA": 0.8889,
    "ntn_shuffleB": 0.9333,
    "netapi_shuffleA": 0.8421,
-   "netapi_shuffleB": 0.8421
+   "netapi_shuffleB": 0.8421,
+   "aiops_shuffleA": 0.9667,
+   "aiops_shuffleB": 0.95
   },
   {
    "rank": 8,
@@ -145,18 +166,21 @@
    "board2025_rank": 7,
    "shuffleA": 0.8269,
    "shuffleB": 0.8077,
-   "mean": 0.8626,
-   "origin_flag": "🇨🇳",
+   "mean": 0.8928,
+   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8173,
     "ntn_bench": 0.8889,
-    "netapi_bench": 0.8816
+    "netapi_bench": 0.8816,
+    "aiops_bench": 0.9833
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.8667,
    "netapi_shuffleA": 0.8947,
-   "netapi_shuffleB": 0.8684
+   "netapi_shuffleB": 0.8684,
+   "aiops_shuffleA": 1.0,
+   "aiops_shuffleB": 0.9667
   },
   {
    "rank": 9,
@@ -164,18 +188,21 @@
    "board2025_rank": 9,
    "shuffleA": 0.8269,
    "shuffleB": 0.7885,
-   "mean": 0.8527,
-   "origin_flag": "🇨🇳",
+   "mean": 0.8812,
+   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8077,
     "ntn_bench": 0.8556,
-    "netapi_bench": 0.8947
+    "netapi_bench": 0.8947,
+    "aiops_bench": 0.9667
    },
    "ntn_shuffleA": 0.8444,
    "ntn_shuffleB": 0.8667,
    "netapi_shuffleA": 0.9211,
-   "netapi_shuffleB": 0.8684
+   "netapi_shuffleB": 0.8684,
+   "aiops_shuffleA": 0.9833,
+   "aiops_shuffleB": 0.95
   },
   {
    "rank": 10,
@@ -183,24 +210,28 @@
    "board2025_rank": 8,
    "shuffleA": 0.75,
    "shuffleB": 0.7692,
-   "mean": 0.8413,
-   "origin_flag": "🇺🇸",
+   "mean": 0.8643,
+   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.7596,
     "ntn_bench": 0.9222,
-    "netapi_bench": 0.8421
+    "netapi_bench": 0.8421,
+    "aiops_bench": 0.9333
    },
    "ntn_shuffleA": 0.9333,
    "ntn_shuffleB": 0.9111,
    "netapi_shuffleA": 0.8421,
-   "netapi_shuffleB": 0.8421
+   "netapi_shuffleB": 0.8421,
+   "aiops_shuffleA": 0.9167,
+   "aiops_shuffleB": 0.95
   }
  ],
  "suite_names": {
   "rel19_bench": "Rel19-Bench",
   "ntn_bench": "NTN-Bench",
-  "netapi_bench": "NetAPI-Bench"
+  "netapi_bench": "NetAPI-Bench",
+  "aiops_bench": "AIOps-Bench"
  },
  "scoring": "Per suite: mean of two fixed answer-shuffles (greedy, temp 0). Score = equal-weight mean across suites."
 }

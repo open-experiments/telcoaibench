@@ -80,6 +80,32 @@
     "sha256_16": "94f5295aa63c4859"
    },
    "scoring": "score_mcq, greedy, temp=0.0; score = mean(A,B)"
+  },
+  "aiops_bench": {
+   "suite": "aiops_bench",
+   "batch": "1 (v4)",
+   "n": 60,
+   "frozen": "2026-08-17",
+   "shuffleA": {
+    "seed": 60001,
+    "positions": {
+     "0": 10,
+     "1": 13,
+     "3": 22,
+     "2": 15
+    },
+    "sha256_16": "bdbaa43179f5d5d8"
+   },
+   "shuffleB": {
+    "seed": 60002,
+    "positions": {
+     "2": 16,
+     "1": 15,
+     "0": 14,
+     "3": 15
+    },
+    "sha256_16": "fed9fe9a7a202c40"
+   }
   }
  }
 }

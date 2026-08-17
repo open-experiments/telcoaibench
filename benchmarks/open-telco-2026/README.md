@@ -12,7 +12,7 @@ own board (Marathon #02 onward, "2026 Functional Track" tab on the site).
 | `rel19_bench` | **batch 1 frozen 2026-08-16** (52 q) | Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec-to-function mapping, operational scenarios |
 | `ntn_bench` | **batch 1 frozen 2026-08-16** (45 q) | NTN (NR-NTN/IoT-NTN, D2D, spectrum, orbits) & private networks (SNPN/PNI-NPN, CAG, onboarding, deployment models) |
 | `netapi_bench` | **batch 1 frozen 2026-08-16** (38 q) | CAMARA/Open Gateway API mechanics, NEF/CAPIF exposure architecture, ecosystem roles (CAMARA/GSMA/TMF), monetization structure, incl. a post-cutoff 1Q26-report precision block |
-| `aiops_bench` | planned | AI-RAN & autonomous operations |
+| `aiops_bench` | **batch 1 frozen 2026-08-17** (60 q) | AIOps & autonomous networks: autonomy levels (human-participation basis, scenario-scoped L4), intent management, NWDAF, RIC control loops, AI-RAN taxonomy, agentic operations, classification/prediction/dynamic-scaling tasks, incl. a post-cutoff 2026-state precision block (TM Forum survey, NGMN Agentic AI publication) |
 
 ## Method
 
@@ -25,7 +25,7 @@ own board (Marathon #02 onward, "2026 Functional Track" tab on the site).
   score is the mean of both runs. This bounds LLM choice-ordering sensitivity, which we
   measured at up to ~7 points on a single shuffle.
 - Scoring: same parity-validated MCQ parser as open-telco (`ANSWER: X`), greedy, temp 0.
-- Per-question provenance (source + rationale) in `rel19-bench-batch1-provenance.md`.
+- Per-question provenance (source + rationale) in the per-suite `*-batch1-provenance.md` docs.
 
 ## Running
 
