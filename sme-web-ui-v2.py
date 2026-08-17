@@ -242,8 +242,29 @@ class TenantManager:
         return _hashlib.sha256((salt + password).encode()).hexdigest()
 
     # -- auth -------------------------------------------------------------
+    def _admin_override(self):
+        return self._load(state_path("admin.json"), {})
+
+    def set_admin_password(self, current: str, new: str, confirm: str):
+        if not self.auth_check(self.admin_user, current or ""):
+            return False, "Current password is incorrect."
+        if not new or len(new) < 8:
+            return False, "New password must be at least 8 characters."
+        if new != confirm:
+            return False, "New password and confirmation do not match."
+        salt = _secrets.token_hex(8)
+        with self._lock:
+            self._save(state_path("admin.json"),
+                       {"salt": salt, "pw_hash": self._hash(new, salt)})
+        self._log({"kind": "admin_password_changed"})
+        return True, ("Admin password updated (persisted on the state "
+                      "volume; survives portal restarts).")
+
     def auth_check(self, username: str, password: str) -> bool:
         if username == self.admin_user:
+            ov = self._admin_override()
+            if ov.get("pw_hash"):
+                return self._hash(password, ov["salt"]) == ov["pw_hash"]
             return password == self.admin_pass
         with self._lock:
             t = self._tenants().get(username)
@@ -6782,6 +6803,32 @@ class ChatInterface:
                         pool_add = gr.Number(label="Add pool tokens", value=0,
                                              precision=0, scale=1)
                         pool_btn = gr.Button("Top up pool", scale=1)
+                    with gr.Accordion("Admin password", open=False):
+                        gr.Markdown(
+                            "Change the **admin** login password. The new "
+                            "password is stored (salted hash) on the "
+                            "persistent state volume and overrides the "
+                            "environment default from then on.")
+                        with gr.Row():
+                            ap_cur = gr.Textbox(label="Current password",
+                                                type="password", scale=1)
+                            ap_new = gr.Textbox(label="New password (min 8)",
+                                                type="password", scale=1)
+                            ap_cnf = gr.Textbox(label="Confirm new password",
+                                                type="password", scale=1)
+                            ap_btn = gr.Button("Change password", scale=1)
+                        ap_status = gr.Markdown("")
+
+                        def _ap_change(cur, new, cnf):
+                            ok, msg = self.tenants.set_admin_password(
+                                cur, new, cnf)
+                            return (("✅ " if ok else "⛔ ") + msg,
+                                    "", "", "")
+
+                        ap_btn.click(_ap_change,
+                                     inputs=[ap_cur, ap_new, ap_cnf],
+                                     outputs=[ap_status, ap_cur, ap_new,
+                                              ap_cnf])
                     usage_plot = gr.HTML(label="Usage build-up")
 
                     def _tn_tables():
