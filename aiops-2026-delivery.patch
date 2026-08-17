@@ -1,0 +1,2284 @@
+diff --git a/benchmarks/README.md b/benchmarks/README.md
+index d7a4fb5..a727b9b 100644
+--- a/benchmarks/README.md
++++ b/benchmarks/README.md
+@@ -9,7 +9,7 @@ included - so results remain reproducible with nothing but this repository.
+ | [`open-telco/`](open-telco/) | **Self-contained Open-Telco eval framework** - the 8 GSMA telecom benchmarks (TeleQnA, TeleTables, TeleMath, TeleLogs, 3GPP-TSG, ORANBench, srsRANBench, 6G-Bench) with lite + full datasets embedded (gzipped JSONL) and a single-file runner. Parity-validated against the official Inspect AI harness (≤1pp on all 7 leaderboard tasks). Includes the 2026-08 leaderboard verification report and claim snapshots. | `cd open-telco && python3 otel_eval.py --endpoint https://<route>/v1 --model <name>` - or use the portal's **Benchmark** tab |
+ | [`vendor-genai-tests/`](vendor-genai-tests/) | Vendor GenAI deep-dives (Ericsson, Nokia, Mavenir) - **LLM-as-judge benchmark**: rubric-graded (accuracy, completeness, depth, honesty). Embedded dataset plus the original question sheets, hand-graded historical results, and Telco5G reference PDFs. | Portal Benchmark tab (`vendor_genai` + a judge model) or CLI with `--judge-endpoint/--judge-model`; see [README](vendor-genai-tests/README.md) |
+ | [`telcos-last-exam/`](telcos-last-exam/) | "Telco's Last Exam" - 10 hardest-questions telecom exam with an official answer key - **LLM-as-judge benchmark**: graded 0-10 against the reference key. Embedded dataset plus historical per-model answer sheets. | Portal Benchmark tab (`telcos_last_exam` + a judge model) or CLI with `--judge-endpoint/--judge-model`; see [README](telcos-last-exam/README.md) |
+-| [`model-reports/`](model-reports/) | **Leaderboard proof points** - one marathon report per ranked model (suite scores + stderr, generation behavior, sample misses, AI Grid fit) under [`marathon/`](model-reports/marathon/), historical pre-leaderboard reports under [`pre-marathon/`](model-reports/pre-marathon/). | See the [index](model-reports/README.md) |
++| [`model-reports/`](model-reports/) | **Leaderboard proof points** - legacy-board reports under [`legacy-reports/`](model-reports/legacy-reports/) (marathon + pre-marathon), 2026-track report cards under [`2026-reports/`](model-reports/2026-reports/). | See the [index](model-reports/README.md) |
+ 
+ ## Quick start (Open-Telco suite)
+ 
+diff --git a/benchmarks/model-reports/2026-reports/README.md b/benchmarks/model-reports/2026-reports/README.md
+new file mode 100644
+index 0000000..18764e7
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/README.md
+@@ -0,0 +1,18 @@
++# 2026 Test Suite — Model Report Cards
++
++One report card per model benchmarked on the **2026 Test Suite · 6G Within** track (four in-house AUTO-SCORED suites: Rel-19-Bench 52q, NTN-Bench 45q, NetAPI-Bench 38q, AIOps-Bench 60q — 195 questions, each run on two frozen answer shuffles). Board: [2026 tab](https://open-experiments.github.io/telcoaibench/) · data: [`marathon02.json`](../../../docs/data/marathon02.json) · frozen datasets: [`open-telco-2026/`](../../open-telco-2026/).
++
++| # | Model | Composite | Origin | Legacy rank | Report |
++|---|---|---|---|---|---|
++| 1 | qwen3-6-35b-a3b | **0.9245** | China | #10 | [report](qwen3-6-35b-a3b.md) |
++| 2 | gemma4-31b-it-base | **0.9193** | USA | #2 | [report](gemma4-31b-it-base.md) |
++| 3 | muse-glimmer-30b | **0.9163** | USA | #3 | [report](muse-glimmer-30b.md) |
++| 4 | qwen3-8-27b | **0.9136** | China | #5 | [report](qwen3-8-27b.md) |
++| 5 | telecomgpt-r1 | **0.9085** | UAE | #1 | [report](telecomgpt-r1.md) |
++| 6 | otel2-llm-31b-it | **0.9058** | USA | #4 | [report](otel2-llm-31b-it.md) |
++| 7 | gpt-oss-120b | **0.9014** | USA | #6 | [report](gpt-oss-120b.md) |
++| 8 | seed-oss-36b | **0.8928** | China | #7 | [report](seed-oss-36b.md) |
++| 9 | qwq-32b | **0.8812** | China | #9 | [report](qwq-32b.md) |
++| 10 | nemotron-3-super-120b | **0.8643** | USA | #8 | [report](nemotron-3-super-120b.md) |
++
++Legacy-board proof points live under [`../legacy-reports/`](../legacy-reports/).
+diff --git a/benchmarks/model-reports/2026-reports/gemma4-31b-it-base.md b/benchmarks/model-reports/2026-reports/gemma4-31b-it-base.md
+new file mode 100644
+index 0000000..930945c
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/gemma4-31b-it-base.md
+@@ -0,0 +1,23 @@
++# gemma4-31b-it-base — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #2
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9193**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.9231 | 0.9038 | **0.9135** |
++| NTN-Bench | 45 | 0.8889 | 0.8889 | **0.8889** |
++| NetAPI-Bench | 38 | 0.9211 | 0.8947 | **0.9079** |
++| AIOps-Bench | 60 | 0.9667 | 0.9667 | **0.9667** |
++| **Composite** | **195** | | | **0.9193** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/gpt-oss-120b.md b/benchmarks/model-reports/2026-reports/gpt-oss-120b.md
+new file mode 100644
+index 0000000..9086290
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/gpt-oss-120b.md
+@@ -0,0 +1,23 @@
++# gpt-oss-120b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #6
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9014**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.9038 | 0.8846 | **0.8942** |
++| NTN-Bench | 45 | 0.8889 | 0.9333 | **0.9111** |
++| NetAPI-Bench | 38 | 0.8421 | 0.8421 | **0.8421** |
++| AIOps-Bench | 60 | 0.9667 | 0.9500 | **0.9583** |
++| **Composite** | **195** | | | **0.9014** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/muse-glimmer-30b.md b/benchmarks/model-reports/2026-reports/muse-glimmer-30b.md
+new file mode 100644
+index 0000000..c3e8130
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/muse-glimmer-30b.md
+@@ -0,0 +1,23 @@
++# muse-glimmer-30b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #3
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9163**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.9038 | 0.9038 | **0.9038** |
++| NTN-Bench | 45 | 0.9556 | 0.9333 | **0.9445** |
++| NetAPI-Bench | 38 | 0.8421 | 0.8421 | **0.8421** |
++| AIOps-Bench | 60 | 0.9667 | 0.9833 | **0.9750** |
++| **Composite** | **195** | | | **0.9163** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/nemotron-3-super-120b.md b/benchmarks/model-reports/2026-reports/nemotron-3-super-120b.md
+new file mode 100644
+index 0000000..27fbfc9
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/nemotron-3-super-120b.md
+@@ -0,0 +1,25 @@
++# nemotron-3-super-120b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #8
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.8643**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.7500 | 0.7692 | **0.7596** |
++| NTN-Bench | 45 | 0.9333 | 0.9111 | **0.9222** |
++| NetAPI-Bench | 38 | 0.8421 | 0.8421 | **0.8421** |
++| AIOps-Bench | 60 | 0.9167 | 0.9500 | **0.9333** |
++| **Composite** | **195** | | | **0.8643** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++**Serving note:** Served with `--tensor-parallel-size=2` (both GPUs, solo leg).
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/otel2-llm-31b-it.md b/benchmarks/model-reports/2026-reports/otel2-llm-31b-it.md
+new file mode 100644
+index 0000000..ac40be1
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/otel2-llm-31b-it.md
+@@ -0,0 +1,23 @@
++# otel2-llm-31b-it — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #4
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9058**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.9038 | 0.8654 | **0.8846** |
++| NTN-Bench | 45 | 0.9111 | 0.9556 | **0.9334** |
++| NetAPI-Bench | 38 | 0.8421 | 0.8684 | **0.8552** |
++| AIOps-Bench | 60 | 0.9333 | 0.9667 | **0.9500** |
++| **Composite** | **195** | | | **0.9058** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/qwen3-6-35b-a3b.md b/benchmarks/model-reports/2026-reports/qwen3-6-35b-a3b.md
+new file mode 100644
+index 0000000..30b1eb7
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/qwen3-6-35b-a3b.md
+@@ -0,0 +1,23 @@
++# qwen3-6-35b-a3b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** China · **Legacy Test Benchmark rank:** #10
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9245**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.9038 | 0.9231 | **0.9135** |
++| NTN-Bench | 45 | 0.9111 | 0.9778 | **0.9445** |
++| NetAPI-Bench | 38 | 0.8684 | 0.8947 | **0.8816** |
++| AIOps-Bench | 60 | 0.9500 | 0.9667 | **0.9583** |
++| **Composite** | **195** | | | **0.9245** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/qwen3-8-27b.md b/benchmarks/model-reports/2026-reports/qwen3-8-27b.md
+new file mode 100644
+index 0000000..90a1413
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/qwen3-8-27b.md
+@@ -0,0 +1,25 @@
++# qwen3-8-27b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** China · **Legacy Test Benchmark rank:** #5
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9136**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.8846 | 0.8462 | **0.8654** |
++| NTN-Bench | 45 | 0.9111 | 0.9111 | **0.9111** |
++| NetAPI-Bench | 38 | 0.8947 | 0.8947 | **0.8947** |
++| AIOps-Bench | 60 | 1.0000 | 0.9667 | **0.9833** |
++| **Composite** | **195** | | | **0.9136** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++**Serving note:** Run with `chat_template_kwargs.enable_thinking=false` (golden config).
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/qwq-32b.md b/benchmarks/model-reports/2026-reports/qwq-32b.md
+new file mode 100644
+index 0000000..e6859e7
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/qwq-32b.md
+@@ -0,0 +1,23 @@
++# qwq-32b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** China · **Legacy Test Benchmark rank:** #9
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.8812**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.8269 | 0.7885 | **0.8077** |
++| NTN-Bench | 45 | 0.8444 | 0.8667 | **0.8556** |
++| NetAPI-Bench | 38 | 0.9211 | 0.8684 | **0.8947** |
++| AIOps-Bench | 60 | 0.9833 | 0.9500 | **0.9667** |
++| **Composite** | **195** | | | **0.8812** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/seed-oss-36b.md b/benchmarks/model-reports/2026-reports/seed-oss-36b.md
+new file mode 100644
+index 0000000..99e3047
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/seed-oss-36b.md
+@@ -0,0 +1,23 @@
++# seed-oss-36b — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** China · **Legacy Test Benchmark rank:** #7
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.8928**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.8269 | 0.8077 | **0.8173** |
++| NTN-Bench | 45 | 0.9111 | 0.8667 | **0.8889** |
++| NetAPI-Bench | 38 | 0.8947 | 0.8684 | **0.8816** |
++| AIOps-Bench | 60 | 1.0000 | 0.9667 | **0.9833** |
++| **Composite** | **195** | | | **0.8928** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/2026-reports/telecomgpt-r1.md b/benchmarks/model-reports/2026-reports/telecomgpt-r1.md
+new file mode 100644
+index 0000000..a354ca2
+--- /dev/null
++++ b/benchmarks/model-reports/2026-reports/telecomgpt-r1.md
+@@ -0,0 +1,23 @@
++# telecomgpt-r1 — 2026 Test Suite Report Card
++
++**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** UAE · **Legacy Test Benchmark rank:** #1
++
++Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9085**
++
++| Suite | Questions | Shuffle A | Shuffle B | Mean |
++|---|---|---|---|---|
++| Rel-19-Bench | 52 | 0.9231 | 0.8654 | **0.8942** |
++| NTN-Bench | 45 | 0.8667 | 0.9333 | **0.9000** |
++| NetAPI-Bench | 38 | 0.8684 | 0.8947 | **0.8816** |
++| AIOps-Bench | 60 | 0.9500 | 0.9667 | **0.9583** |
++| **Composite** | **195** | | | **0.9085** |
++
++## Methodology
++
++Each suite is frozen as two fixed answer-order shuffles (seeds and SHA-256 in the suite [MANIFEST](../../open-telco-2026/datasets/lite/MANIFEST.json)); every model sees identical orderings and the reported score is the mean of the two runs, neutralizing answer-position sensitivity (measured up to ~7 points on a single ordering). Scoring: exact-match `ANSWER: X` extraction, temperature 0.0, max 8192 output tokens, streaming, 6 concurrent connections. Serving: KServe RawDeployment on OpenShift (cluster `venice`, 2× RTX PRO 6000 96GB), the pinned vLLM v0.26.0 CUDA 12.9 image, weights from cluster PVCs.
++
++## Suite provenance
++
++Question sets are in-house authored functional-knowhow items (capability mechanisms, release availability, spec-to-function mapping, operational scenarios), pilot-screened on two live models and SME-reviewed before freeze. See per-suite provenance docs under [`benchmarks/open-telco-2026/`](../../open-telco-2026/).
++
++*Generated 2026-08-17 · TelcoAIBench 2026 track, batch 1 (Marathon #02)*
+diff --git a/benchmarks/model-reports/README.md b/benchmarks/model-reports/README.md
+index 66a4f5f..aa15532 100644
+--- a/benchmarks/model-reports/README.md
++++ b/benchmarks/model-reports/README.md
+@@ -1,7 +1,16 @@
+ # Model Reports - Leaderboard Proof Points
+ 
++Reports are organized by board track:
++
++| Track | Reports | Board |
++|---|---|---|
++| **Legacy Test Benchmarks** | [`legacy-reports/`](legacy-reports/) (marathon + pre-marathon) | Legacy tab |
++| **2026 Test Suite · 6G Within** | [`2026-reports/`](2026-reports/) (one card per Marathon #02 model) | 2026 tab |
++
++## Legacy Test Benchmarks
++
+ Every ranked model on the [TelcoAIBench leaderboard](../../docs/data/LEADERBOARD.md) is
+-backed by a **marathon report** in [`marathon/`](marathon/): per-suite scores with stderr,
++backed by a **marathon report** in [`legacy-reports/marathon/`](legacy-reports/marathon/): per-suite scores with stderr,
+ sample counts and dates, generation behavior, first-miss audit samples, and measured
+ [AI Grid tier fit](../../docs/data/tierfit.json). Per-sample transcripts (question /
+ answer / verdict JSONL) are archived on the portal state volume under `benchmark-results/`.
+@@ -10,50 +19,50 @@ AUTO-SCORED suites are machine-scored; `telcos_last_exam` and `vendor_genai` are
+ LLM-as-judge suites (judge: `gpt-5.6-sol` since 2026-08-15; see
+ [lessons-learned](../../docs/lessons-learned.md) on the `gpt-5.5` retirement).
+ 
+-## Index (board order)
++### Index (board order)
+ 
+ | Rank | Model | Composite (10) | Auto-8 | Coverage | Runs | Report |
+ |---|---|---|---|---|---|---|
+-| 1 | telecomgpt-r1 | **0.6802** | 0.7507 | 100% | 1 | [report](marathon/telecomgpt-r1.md) |
+-| 2 | gemma4-31b-it-base | **0.6459** | 0.6520 | 100% | 1 | [report](marathon/gemma4-31b-it-base.md) |
+-| 3 | muse-glimmer-30b | **0.6031** | 0.6040 | 100% | 1 | [report](marathon/muse-glimmer-30b.md) |
+-| 4 | otel2-llm-31b-it | **0.5993** | 0.6256 | 100% | 1 | [report](marathon/otel2-llm-31b-it.md) |
+-| 5 | qwen3-8-27b | **0.5909** | 0.6590 | 100% | best of 3 | [report](marathon/qwen3-8-27b.md) |
+-| 6 | gpt-oss-120b | **0.5601** | 0.6049 | 100% | 1 | [report](marathon/gpt-oss-120b.md) |
+-| 7 | seed-oss-36b | **0.5456** | 0.5950 | 100% | 1 | [report](marathon/seed-oss-36b.md) |
+-| 8 | nemotron-3-super-120b | **0.5456** | 0.5822 | 100% | 1 | [report](marathon/nemotron-3-super-120b.md) |
+-| 9 | qwq-32b | **0.5304** | 0.5767 | 100% | 1 | [report](marathon/qwq-32b.md) |
+-| 10 | qwen3-6-35b-a3b | **0.5284** | 0.5303 | 100% | 1 | [report](marathon/qwen3-6-35b-a3b.md) |
+-| 11 | mistral-small-3-2-24b | **0.5235** | 0.5654 | 100% | 1 | [report](marathon/mistral-small-3-2-24b.md) |
+-| 12 | magistral-small-2509 | **0.5208** | 0.5753 | 100% | 1 | [report](marathon/magistral-small-2509.md) |
+-| 13 | falcon-h1-34b | **0.5137** | 0.5514 | 100% | 1 | [report](marathon/falcon-h1-34b.md) |
+-| 14 | kimi-dev-72b | **0.5020** | 0.5392 | 100% | 1 | [report](marathon/kimi-dev-72b.md) |
+-| 15 | qwen3-6-27b | **0.4983** | 0.4818 | 100% | 1 | [report](marathon/qwen3-6-27b.md) |
+-| 16 | glm-4-5-air | **0.4820** | 0.5007 | 100% | 1 | [report](marathon/glm-4-5-air.md) |
+-| 17 | exaone-4-0-32b | **0.4755** | 0.5298 | 100% | 1 | [report](marathon/exaone-4-0-32b.md) |
+-| 18 | r1-distill-qwen-32b | **0.4754** | 0.5257 | 100% | 1 | [report](marathon/r1-distill-qwen-32b.md) |
+-| 19 | hunyuan-a13b | **0.4536** | 0.5221 | 100% | 1 | [report](marathon/hunyuan-a13b.md) |
+-| 20 | phi-4-reasoning-plus | **0.4392** | 0.4719 | 100% | 1 | [report](marathon/phi-4-reasoning-plus.md) |
+-| 21 | otel-llm-20b-it | **0.4287** | 0.4615 | 100% | 1 | [report](marathon/otel-llm-20b-it.md) |
+-| 22 | nemotron-3-nano-30b | **0.4252** | 0.4535 | 100% | 1 | [report](marathon/nemotron-3-nano-30b.md) |
++| 1 | telecomgpt-r1 | **0.6802** | 0.7507 | 100% | 1 | [report](legacy-reports/marathon/telecomgpt-r1.md) |
++| 2 | gemma4-31b-it-base | **0.6459** | 0.6520 | 100% | 1 | [report](legacy-reports/marathon/gemma4-31b-it-base.md) |
++| 3 | muse-glimmer-30b | **0.6031** | 0.6040 | 100% | 1 | [report](legacy-reports/marathon/muse-glimmer-30b.md) |
++| 4 | otel2-llm-31b-it | **0.5993** | 0.6256 | 100% | 1 | [report](legacy-reports/marathon/otel2-llm-31b-it.md) |
++| 5 | qwen3-8-27b | **0.5909** | 0.6590 | 100% | best of 3 | [report](legacy-reports/marathon/qwen3-8-27b.md) |
++| 6 | gpt-oss-120b | **0.5601** | 0.6049 | 100% | 1 | [report](legacy-reports/marathon/gpt-oss-120b.md) |
++| 7 | seed-oss-36b | **0.5456** | 0.5950 | 100% | 1 | [report](legacy-reports/marathon/seed-oss-36b.md) |
++| 8 | nemotron-3-super-120b | **0.5456** | 0.5822 | 100% | 1 | [report](legacy-reports/marathon/nemotron-3-super-120b.md) |
++| 9 | qwq-32b | **0.5304** | 0.5767 | 100% | 1 | [report](legacy-reports/marathon/qwq-32b.md) |
++| 10 | qwen3-6-35b-a3b | **0.5284** | 0.5303 | 100% | 1 | [report](legacy-reports/marathon/qwen3-6-35b-a3b.md) |
++| 11 | mistral-small-3-2-24b | **0.5235** | 0.5654 | 100% | 1 | [report](legacy-reports/marathon/mistral-small-3-2-24b.md) |
++| 12 | magistral-small-2509 | **0.5208** | 0.5753 | 100% | 1 | [report](legacy-reports/marathon/magistral-small-2509.md) |
++| 13 | falcon-h1-34b | **0.5137** | 0.5514 | 100% | 1 | [report](legacy-reports/marathon/falcon-h1-34b.md) |
++| 14 | kimi-dev-72b | **0.5020** | 0.5392 | 100% | 1 | [report](legacy-reports/marathon/kimi-dev-72b.md) |
++| 15 | qwen3-6-27b | **0.4983** | 0.4818 | 100% | 1 | [report](legacy-reports/marathon/qwen3-6-27b.md) |
++| 16 | glm-4-5-air | **0.4820** | 0.5007 | 100% | 1 | [report](legacy-reports/marathon/glm-4-5-air.md) |
++| 17 | exaone-4-0-32b | **0.4755** | 0.5298 | 100% | 1 | [report](legacy-reports/marathon/exaone-4-0-32b.md) |
++| 18 | r1-distill-qwen-32b | **0.4754** | 0.5257 | 100% | 1 | [report](legacy-reports/marathon/r1-distill-qwen-32b.md) |
++| 19 | hunyuan-a13b | **0.4536** | 0.5221 | 100% | 1 | [report](legacy-reports/marathon/hunyuan-a13b.md) |
++| 20 | phi-4-reasoning-plus | **0.4392** | 0.4719 | 100% | 1 | [report](legacy-reports/marathon/phi-4-reasoning-plus.md) |
++| 21 | otel-llm-20b-it | **0.4287** | 0.4615 | 100% | 1 | [report](legacy-reports/marathon/otel-llm-20b-it.md) |
++| 22 | nemotron-3-nano-30b | **0.4252** | 0.4535 | 100% | 1 | [report](legacy-reports/marathon/nemotron-3-nano-30b.md) |
+ | | **provisional - judged suites not yet run, ranked on Auto-8 alone** | | | | | |
+-| 23 | gpt-oss-20b | - | 0.5747 | 70% | 1 | [report](marathon/gpt-oss-20b.md) |
+-| 24 | granite-4-0-h-small | - | 0.4925 | 70% | 1 | [report](marathon/granite-4-0-h-small.md) |
+-| 25 | lfm2-5-2-6b | - | 0.4751 | 70% | 1 | [report](marathon/lfm2-5-2-6b.md) |
+-| 26 | eurollm-22b | - | 0.4515 | 70% | 1 | [report](marathon/eurollm-22b.md) |
+-| 27 | nemotron-3-5-lightning-30b | - | 0.4219 | 70% | 1 | [report](marathon/nemotron-3-5-lightning-30b.md) |
+-| 28 | apertus-8b | - | 0.3854 | 70% | 1 | [report](marathon/apertus-8b.md) |
+-| 29 | kimi-linear-48b-bf16 | - | 0.3727 | 70% | 1 | [report](marathon/kimi-linear-48b-bf16.md) |
+-| 30 | eurollm-9b | - | 0.3653 | 70% | 1 | [report](marathon/eurollm-9b.md) |
+-| 31 | kimi-vl-a3b-thinking | - | 0.3200 | 70% | 1 | [report](marathon/kimi-vl-a3b-thinking.md) |
+-
+-Cross-model evidence: [aigrid-evidence-pack.md](marathon/aigrid-evidence-pack.md) (measured
+-tier-fitment tables) and [telecomgpt-r1-claims-review.md](marathon/telecomgpt-r1-claims-review.md)
++| 23 | gpt-oss-20b | - | 0.5747 | 70% | 1 | [report](legacy-reports/marathon/gpt-oss-20b.md) |
++| 24 | granite-4-0-h-small | - | 0.4925 | 70% | 1 | [report](legacy-reports/marathon/granite-4-0-h-small.md) |
++| 25 | lfm2-5-2-6b | - | 0.4751 | 70% | 1 | [report](legacy-reports/marathon/lfm2-5-2-6b.md) |
++| 26 | eurollm-22b | - | 0.4515 | 70% | 1 | [report](legacy-reports/marathon/eurollm-22b.md) |
++| 27 | nemotron-3-5-lightning-30b | - | 0.4219 | 70% | 1 | [report](legacy-reports/marathon/nemotron-3-5-lightning-30b.md) |
++| 28 | apertus-8b | - | 0.3854 | 70% | 1 | [report](legacy-reports/marathon/apertus-8b.md) |
++| 29 | kimi-linear-48b-bf16 | - | 0.3727 | 70% | 1 | [report](legacy-reports/marathon/kimi-linear-48b-bf16.md) |
++| 30 | eurollm-9b | - | 0.3653 | 70% | 1 | [report](legacy-reports/marathon/eurollm-9b.md) |
++| 31 | kimi-vl-a3b-thinking | - | 0.3200 | 70% | 1 | [report](legacy-reports/marathon/kimi-vl-a3b-thinking.md) |
++
++Cross-model evidence: [aigrid-evidence-pack.md](legacy-reports/marathon/aigrid-evidence-pack.md) (measured
++tier-fitment tables) and [telecomgpt-r1-claims-review.md](legacy-reports/marathon/telecomgpt-r1-claims-review.md)
+ (fine-tune claims vs measurements).
+ 
+ ## Historical (pre-leaderboard)
+ 
+-[`pre-marathon/`](pre-marathon/) holds reports from before the unified marathon harness -
++[`pre-marathon/`](legacy-reports/pre-marathon/) holds reports from before the unified marathon harness -
+ different hardware, prompts, and scoring; **not comparable** with board numbers:
+ `Qwen3-30B-A3B-MoE/` (domain Q&A answer sets), `Qwen3-32B/` (notes),
+ `Seed-36B-performance/` (standalone perf test suite + results).
+diff --git a/benchmarks/model-reports/marathon/aigrid-evidence-pack.md b/benchmarks/model-reports/legacy-reports/marathon/aigrid-evidence-pack.md
+similarity index 99%
+rename from benchmarks/model-reports/marathon/aigrid-evidence-pack.md
+rename to benchmarks/model-reports/legacy-reports/marathon/aigrid-evidence-pack.md
+index 4912b6c..461b9b0 100644
+--- a/benchmarks/model-reports/marathon/aigrid-evidence-pack.md
++++ b/benchmarks/model-reports/legacy-reports/marathon/aigrid-evidence-pack.md
+@@ -47,4 +47,4 @@ for the target workload rather than parameter count alone"* - is directly observ
+    fitting VRAM. Both invisible to parameter-count planning; both measured here.
+ 
+ *Full per-model reports with per-suite accuracy, generation behavior, and audit transcripts:*
+-*github.com/open-experiments/telcoaibench - benchmarks/model-reports/marathon/*
++*github.com/open-experiments/telcoaibench - benchmarks/model-reports/legacy-reports/marathon/*
+diff --git a/benchmarks/model-reports/marathon/apertus-8b.md b/benchmarks/model-reports/legacy-reports/marathon/apertus-8b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/apertus-8b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/apertus-8b.md
+diff --git a/benchmarks/model-reports/marathon/eurollm-22b.md b/benchmarks/model-reports/legacy-reports/marathon/eurollm-22b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/eurollm-22b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/eurollm-22b.md
+diff --git a/benchmarks/model-reports/marathon/eurollm-9b.md b/benchmarks/model-reports/legacy-reports/marathon/eurollm-9b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/eurollm-9b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/eurollm-9b.md
+diff --git a/benchmarks/model-reports/marathon/exaone-4-0-32b.md b/benchmarks/model-reports/legacy-reports/marathon/exaone-4-0-32b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/exaone-4-0-32b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/exaone-4-0-32b.md
+diff --git a/benchmarks/model-reports/marathon/falcon-h1-34b.md b/benchmarks/model-reports/legacy-reports/marathon/falcon-h1-34b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/falcon-h1-34b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/falcon-h1-34b.md
+diff --git a/benchmarks/model-reports/marathon/gemma4-31b-it-base.md b/benchmarks/model-reports/legacy-reports/marathon/gemma4-31b-it-base.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/gemma4-31b-it-base.md
+rename to benchmarks/model-reports/legacy-reports/marathon/gemma4-31b-it-base.md
+diff --git a/benchmarks/model-reports/marathon/glm-4-5-air.md b/benchmarks/model-reports/legacy-reports/marathon/glm-4-5-air.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/glm-4-5-air.md
+rename to benchmarks/model-reports/legacy-reports/marathon/glm-4-5-air.md
+diff --git a/benchmarks/model-reports/marathon/gpt-oss-120b.md b/benchmarks/model-reports/legacy-reports/marathon/gpt-oss-120b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/gpt-oss-120b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/gpt-oss-120b.md
+diff --git a/benchmarks/model-reports/marathon/gpt-oss-20b.md b/benchmarks/model-reports/legacy-reports/marathon/gpt-oss-20b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/gpt-oss-20b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/gpt-oss-20b.md
+diff --git a/benchmarks/model-reports/marathon/granite-4-0-h-small.md b/benchmarks/model-reports/legacy-reports/marathon/granite-4-0-h-small.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/granite-4-0-h-small.md
+rename to benchmarks/model-reports/legacy-reports/marathon/granite-4-0-h-small.md
+diff --git a/benchmarks/model-reports/marathon/hunyuan-a13b.md b/benchmarks/model-reports/legacy-reports/marathon/hunyuan-a13b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/hunyuan-a13b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/hunyuan-a13b.md
+diff --git a/benchmarks/model-reports/marathon/kimi-dev-72b.md b/benchmarks/model-reports/legacy-reports/marathon/kimi-dev-72b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/kimi-dev-72b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/kimi-dev-72b.md
+diff --git a/benchmarks/model-reports/marathon/kimi-linear-48b-bf16.md b/benchmarks/model-reports/legacy-reports/marathon/kimi-linear-48b-bf16.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/kimi-linear-48b-bf16.md
+rename to benchmarks/model-reports/legacy-reports/marathon/kimi-linear-48b-bf16.md
+diff --git a/benchmarks/model-reports/marathon/kimi-vl-a3b-thinking.md b/benchmarks/model-reports/legacy-reports/marathon/kimi-vl-a3b-thinking.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/kimi-vl-a3b-thinking.md
+rename to benchmarks/model-reports/legacy-reports/marathon/kimi-vl-a3b-thinking.md
+diff --git a/benchmarks/model-reports/marathon/lfm2-5-2-6b.md b/benchmarks/model-reports/legacy-reports/marathon/lfm2-5-2-6b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/lfm2-5-2-6b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/lfm2-5-2-6b.md
+diff --git a/benchmarks/model-reports/marathon/magistral-small-2509.md b/benchmarks/model-reports/legacy-reports/marathon/magistral-small-2509.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/magistral-small-2509.md
+rename to benchmarks/model-reports/legacy-reports/marathon/magistral-small-2509.md
+diff --git a/benchmarks/model-reports/marathon/mistral-small-3-2-24b.md b/benchmarks/model-reports/legacy-reports/marathon/mistral-small-3-2-24b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/mistral-small-3-2-24b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/mistral-small-3-2-24b.md
+diff --git a/benchmarks/model-reports/marathon/muse-glimmer-30b.md b/benchmarks/model-reports/legacy-reports/marathon/muse-glimmer-30b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/muse-glimmer-30b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/muse-glimmer-30b.md
+diff --git a/benchmarks/model-reports/marathon/nemotron-3-5-lightning-30b.md b/benchmarks/model-reports/legacy-reports/marathon/nemotron-3-5-lightning-30b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/nemotron-3-5-lightning-30b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/nemotron-3-5-lightning-30b.md
+diff --git a/benchmarks/model-reports/marathon/nemotron-3-nano-30b.md b/benchmarks/model-reports/legacy-reports/marathon/nemotron-3-nano-30b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/nemotron-3-nano-30b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/nemotron-3-nano-30b.md
+diff --git a/benchmarks/model-reports/marathon/nemotron-3-super-120b.md b/benchmarks/model-reports/legacy-reports/marathon/nemotron-3-super-120b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/nemotron-3-super-120b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/nemotron-3-super-120b.md
+diff --git a/benchmarks/model-reports/marathon/otel-llm-20b-it.md b/benchmarks/model-reports/legacy-reports/marathon/otel-llm-20b-it.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/otel-llm-20b-it.md
+rename to benchmarks/model-reports/legacy-reports/marathon/otel-llm-20b-it.md
+diff --git a/benchmarks/model-reports/marathon/otel2-llm-31b-it.md b/benchmarks/model-reports/legacy-reports/marathon/otel2-llm-31b-it.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/otel2-llm-31b-it.md
+rename to benchmarks/model-reports/legacy-reports/marathon/otel2-llm-31b-it.md
+diff --git a/benchmarks/model-reports/marathon/phi-4-reasoning-plus.md b/benchmarks/model-reports/legacy-reports/marathon/phi-4-reasoning-plus.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/phi-4-reasoning-plus.md
+rename to benchmarks/model-reports/legacy-reports/marathon/phi-4-reasoning-plus.md
+diff --git a/benchmarks/model-reports/marathon/qwen3-6-27b.md b/benchmarks/model-reports/legacy-reports/marathon/qwen3-6-27b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/qwen3-6-27b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/qwen3-6-27b.md
+diff --git a/benchmarks/model-reports/marathon/qwen3-6-35b-a3b.md b/benchmarks/model-reports/legacy-reports/marathon/qwen3-6-35b-a3b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/qwen3-6-35b-a3b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/qwen3-6-35b-a3b.md
+diff --git a/benchmarks/model-reports/marathon/qwen3-8-27b.md b/benchmarks/model-reports/legacy-reports/marathon/qwen3-8-27b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/qwen3-8-27b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/qwen3-8-27b.md
+diff --git a/benchmarks/model-reports/marathon/qwq-32b.md b/benchmarks/model-reports/legacy-reports/marathon/qwq-32b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/qwq-32b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/qwq-32b.md
+diff --git a/benchmarks/model-reports/marathon/r1-distill-qwen-32b.md b/benchmarks/model-reports/legacy-reports/marathon/r1-distill-qwen-32b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/r1-distill-qwen-32b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/r1-distill-qwen-32b.md
+diff --git a/benchmarks/model-reports/marathon/seed-oss-36b.md b/benchmarks/model-reports/legacy-reports/marathon/seed-oss-36b.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/seed-oss-36b.md
+rename to benchmarks/model-reports/legacy-reports/marathon/seed-oss-36b.md
+diff --git a/benchmarks/model-reports/marathon/telecomgpt-r1-claims-review.md b/benchmarks/model-reports/legacy-reports/marathon/telecomgpt-r1-claims-review.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/telecomgpt-r1-claims-review.md
+rename to benchmarks/model-reports/legacy-reports/marathon/telecomgpt-r1-claims-review.md
+diff --git a/benchmarks/model-reports/marathon/telecomgpt-r1.md b/benchmarks/model-reports/legacy-reports/marathon/telecomgpt-r1.md
+similarity index 100%
+rename from benchmarks/model-reports/marathon/telecomgpt-r1.md
+rename to benchmarks/model-reports/legacy-reports/marathon/telecomgpt-r1.md
+diff --git a/benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Biz_ops-answers.MD b/benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Biz_ops-answers.MD
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Biz_ops-answers.MD
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Biz_ops-answers.MD
+diff --git a/benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Core-Answers.MD b/benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Core-Answers.MD
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Core-Answers.MD
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Core-Answers.MD
+diff --git a/benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Questions.MD b/benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Questions.MD
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Questions.MD
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Questions.MD
+diff --git a/benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Radio-Answers.md b/benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Radio-Answers.md
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Qwen3-30B-A3B-MoE/Radio-Answers.md
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-30B-A3B-MoE/Radio-Answers.md
+diff --git a/benchmarks/model-reports/pre-marathon/Qwen3-32B/ReadMe.txt b/benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-32B/ReadMe.txt
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Qwen3-32B/ReadMe.txt
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Qwen3-32B/ReadMe.txt
+diff --git a/benchmarks/model-reports/pre-marathon/Seed-36B-performance/README.md b/benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/README.md
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Seed-36B-performance/README.md
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/README.md
+diff --git a/benchmarks/model-reports/pre-marathon/Seed-36B-performance/perf_test_suite.py b/benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/perf_test_suite.py
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Seed-36B-performance/perf_test_suite.py
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/perf_test_suite.py
+diff --git a/benchmarks/model-reports/pre-marathon/Seed-36B-performance/quick_perf_report_20250828_161958.json b/benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/quick_perf_report_20250828_161958.json
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Seed-36B-performance/quick_perf_report_20250828_161958.json
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/quick_perf_report_20250828_161958.json
+diff --git a/benchmarks/model-reports/pre-marathon/Seed-36B-performance/quick_perf_test.py b/benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/quick_perf_test.py
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Seed-36B-performance/quick_perf_test.py
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/quick_perf_test.py
+diff --git a/benchmarks/model-reports/pre-marathon/Seed-36B-performance/requirements.txt b/benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/requirements.txt
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Seed-36B-performance/requirements.txt
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/requirements.txt
+diff --git a/benchmarks/model-reports/pre-marathon/Seed-36B-performance/run_perf_test.sh b/benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/run_perf_test.sh
+similarity index 100%
+rename from benchmarks/model-reports/pre-marathon/Seed-36B-performance/run_perf_test.sh
+rename to benchmarks/model-reports/legacy-reports/pre-marathon/Seed-36B-performance/run_perf_test.sh
+diff --git a/benchmarks/open-telco-2026/README.md b/benchmarks/open-telco-2026/README.md
+index cc680a8..d2b5f65 100644
+--- a/benchmarks/open-telco-2026/README.md
++++ b/benchmarks/open-telco-2026/README.md
+@@ -12,7 +12,7 @@ own board (Marathon #02 onward, "2026 Functional Track" tab on the site).
+ | `rel19_bench` | **batch 1 frozen 2026-08-16** (52 q) | Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec-to-function mapping, operational scenarios |
+ | `ntn_bench` | **batch 1 frozen 2026-08-16** (45 q) | NTN (NR-NTN/IoT-NTN, D2D, spectrum, orbits) & private networks (SNPN/PNI-NPN, CAG, onboarding, deployment models) |
+ | `netapi_bench` | **batch 1 frozen 2026-08-16** (38 q) | CAMARA/Open Gateway API mechanics, NEF/CAPIF exposure architecture, ecosystem roles (CAMARA/GSMA/TMF), monetization structure, incl. a post-cutoff 1Q26-report precision block |
+-| `aiops_bench` | planned | AI-RAN & autonomous operations |
++| `aiops_bench` | **batch 1 frozen 2026-08-17** (60 q) | AIOps & autonomous networks: autonomy levels (human-participation basis, scenario-scoped L4), intent management, NWDAF, RIC control loops, AI-RAN taxonomy, agentic operations, classification/prediction/dynamic-scaling tasks, incl. a post-cutoff 2026-state precision block (TM Forum survey, NGMN Agentic AI publication) |
+ 
+ ## Method
+ 
+@@ -25,7 +25,7 @@ own board (Marathon #02 onward, "2026 Functional Track" tab on the site).
+   score is the mean of both runs. This bounds LLM choice-ordering sensitivity, which we
+   measured at up to ~7 points on a single shuffle.
+ - Scoring: same parity-validated MCQ parser as open-telco (`ANSWER: X`), greedy, temp 0.
+-- Per-question provenance (source + rationale) in `rel19-bench-batch1-provenance.md`.
++- Per-question provenance (source + rationale) in the per-suite `*-batch1-provenance.md` docs.
+ 
+ ## Running
+ 
+diff --git a/benchmarks/open-telco-2026/aiops-bench-batch1-provenance.md b/benchmarks/open-telco-2026/aiops-bench-batch1-provenance.md
+new file mode 100644
+index 0000000..179a923
+--- /dev/null
++++ b/benchmarks/open-telco-2026/aiops-bench-batch1-provenance.md
+@@ -0,0 +1,736 @@
++# aiops_bench — Batch 1 v4 (60 questions) — FROZEN 2026-08-17
++
++SME-reviewed (L3/L4 human-participation correction, capability-depth block added,
++2026 block trimmed to survey/operator facts); pilot-screened on two live models
++(58/60 both; only misses in the post-cutoff 2026 block; NGMN eight-area key
++source-verified). Frozen as `aiops_bench_A/_B` (seeds 60001/60002, sha256 in
++[`datasets/lite/MANIFEST.json`](datasets/lite/MANIFEST.json)).
++
++**Scope:** TM Forum/3GPP autonomy levels (L3/L4 boundary emphasis), intent-driven
++management (TS 28.312), NWDAF (TS 23.288, AnLF/MTLF), O-RAN RIC control loops
++(timescales, A1/E2/O1, xApps/rApps), AI-RAN Alliance taxonomy, agentic-NOC patterns
++(guardrails, HITL, change verification, drift, digital twins).
++Deliberately distinct from rel19_bench's AI/ML-air-interface coverage.
++Correct answer shown as A (shuffled at freeze). Pilot results delivered alongside.
++
++---
++
++## Q1 · Autonomy levels · expert
++
++The defining difference between TM Forum/3GPP autonomous-network Level 3 and Level 4 is:
++
++- **A)** L3: conditional autonomy where execution still materially relies on human supervision/decision participation; L4: within the assessed scenario the system analyzes, decides, executes and adapts, with humans governing and handling exceptions ✅
++- **B)** L3 is manual with tooling; L4 adds scripted automation
++- **C)** L3 covers one domain; L4 requires every network domain simultaneously
++- **D)** There is no functional difference - L4 is a marketing label
++
++*Why:* [CORRECTED per SME: the discriminator is the degree of human participation in the loop, NOT scenario breadth - TM Forum certifies L4 in specific high-value scenarios.]
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q2 · Autonomy levels · expert
++
++An operator's assurance system auto-resolves fiber-cut reroutes end-to-end, but only for its transport domain and only for pre-modeled failure types. On the autonomy ladder this is best classified as:
++
++- **A)** Level 4 for that scenario - the system perceives, decides, executes and adapts end-to-end with humans handling only exceptions; L4 is assessed per scenario, not per whole network ✅
++- **B)** Level 3 - being limited to one domain caps it at L3
++- **C)** Level 2 - because humans defined the failure types
++- **D)** Level 5 - within its domain it is fully autonomous
++
++*Why:* [KEY CORRECTED per SME: scenario-scoped L4 is exactly how TM Forum certifies it (cross-domain fault mgmt, private-line assurance, RAN energy). The breadth-caps-it-at-L3 distractor is the misconception being tested.]
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q3 · Autonomy levels · advanced
++
++In the level framework, what distinguishes Level 5?
++
++- **A)** Full autonomy across all scenarios and lifecycle phases - no human operational involvement ✅
++- **B)** Autonomy for consumer services only
++- **C)** A certified AI model in every network function
++- **D)** Real-time closed loops under 10 ms
++
++*Why:* L5 is the across-all-scenarios endpoint; loop speed and model placement are orthogonal.
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q4 · Autonomy levels · expert
++
++Per 2026 TM Forum reporting, the industry milestone reached by leading operators is best described as:
++
++- **A)** Early Level-4 autonomous operations in production domains - a 'significant change' from L2/L3 pilots ✅
++- **B)** Industry-wide Level 5 completion
++- **C)** Abandonment of the level framework
++- **D)** Regression to Level 2 after AI failures
++
++*Why:* [Date-stamped 2026] The L4-in-production milestone is the current state marker.
++*Source:* TM Forum autonomous networks framework (IG1218 family; agentic NOC PoC, inform.tmforum.org 2026)
++
++## Q5 · Intent management · expert
++
++In 3GPP intent-driven management (TS 28.312), an intent expresses:
++
++- **A)** The desired outcome/expectations (e.g., coverage or QoS targets) - leaving the how to the management system, which continuously evaluates fulfillment ✅
++- **B)** A step-by-step configuration script
++- **C)** A one-time CLI command batch
++- **D)** A hardware purchase order
++
++*Why:* Outcome-not-procedure is the definitional core; continuous fulfillment evaluation is what separates intent from a ticket.
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q6 · Intent management · expert
++
++Two intents conflict: an energy-saving intent wants cells sleeping; a coverage-assurance intent wants them awake. Architecturally, the resolution belongs in:
++
++- **A)** The intent management function, which detects conflicts and arbitrates by priority/policy before actuation - not in the individual closed loops ✅
++- **B)** Whichever closed loop acts last
++- **C)** The RAN scheduler at symbol level
++- **D)** Manual NOC tickets, always
++
++*Why:* Conflict arbitration ABOVE the loops is the design principle; last-writer-wins is the failure mode being prevented.
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q7 · Intent management · advanced
++
++The operational benefit of intent abstraction for an AIOps platform is:
++
++- **A)** Outcomes remain stable while the system freely re-plans the means - automation can evolve without rewriting the operator's expressed goals ✅
++- **B)** It removes the need for monitoring
++- **C)** It guarantees zero misconfigurations
++- **D)** It replaces all northbound APIs
++
++*Why:* Stability-of-goals vs freedom-of-means is why intent scales where scripts do not.
++*Source:* TM Forum autonomous networks framework (IG1218 family; agentic NOC PoC, inform.tmforum.org 2026)
++
++## Q8 · NWDAF architecture · expert
++
++The NWDAF functional split in TS 23.288 separates:
++
++- **A)** AnLF (analytics logical function - inference/serving analytics) from MTLF (model training logical function - training and provisioning models) ✅
++- **B)** Data collection from data storage
++- **C)** RAN analytics from core analytics
++- **D)** Batch from streaming pipelines
++
++*Why:* The AnLF/MTLF split is 3GPP's train-vs-serve separation - the architectural fact behind scalable in-network analytics.
++*Source:* 3GPP TS 23.288 (NWDAF architecture: AnLF/MTLF)
++
++## Q9 · NWDAF architecture · expert
++
++An NWDAF consumer asks for 'UE mobility analytics'. What can it request, per the analytics framework?
++
++- **A)** Either statistics (about the past) or predictions (about the future) for the analytics ID, with confidence information on predictions ✅
++- **B)** Only raw event streams
++- **C)** Only real-time alerts
++- **D)** Direct SQL access to UDR
++
++*Why:* Statistics-vs-predictions duality with confidence is the consumption model; raw data access is exactly what NWDAF abstracts away.
++*Source:* 3GPP TS 23.288 (NWDAF architecture: AnLF/MTLF)
++
++## Q10 · NWDAF architecture · advanced
++
++Which pairing correctly maps the analytics chain in a 5GC closed loop?
++
++- **A)** UPF/NFs expose events -> NWDAF derives analytics/predictions -> PCF/NSSF/consumers adjust policy or selection -> enforcement follows policy ✅
++- **B)** NWDAF configures the RAN scheduler directly
++- **C)** PCF trains models; NWDAF enforces QoS
++- **D)** UDM performs analytics; NWDAF stores subscriptions
++
++*Why:* Who-does-what in the loop; distractors give NWDAF enforcement powers it does not have.
++*Source:* 3GPP TS 23.288 (NWDAF architecture: AnLF/MTLF)
++
++## Q11 · RIC control loops · expert
++
++The O-RAN control-loop timescale mapping is:
++
++- **A)** Non-RT RIC (in SMO): >1 s loops via rApps and A1 policies; Near-RT RIC: 10 ms-1 s loops via xApps over E2; sub-10 ms stays in the RAN nodes themselves ✅
++- **B)** Non-RT RIC: sub-10 ms; Near-RT RIC: >1 s; RAN nodes: 10 ms-1 s
++- **C)** All three operate at the same timescale with different vendors
++- **D)** xApps run in the SMO; rApps run in the DU
++
++*Why:* The three-timescale split with app/interface placement is THE O-RAN architecture join; option B rotates it.
++*Source:* O-RAN architecture (Non-RT RIC/SMO, Near-RT RIC, A1/E2/O1, xApps/rApps)
++
++## Q12 · RIC control loops · expert
++
++An AI model that steers traffic between cells every ~200 ms belongs where in the O-RAN architecture?
++
++- **A)** As an xApp on the Near-RT RIC, acting over E2 ✅
++- **B)** As an rApp on the Non-RT RIC, acting over A1
++- **C)** Inside the O-DU scheduler
++- **D)** In the SMO inventory function
++
++*Why:* 200 ms falls squarely in the Near-RT window - placement-by-timescale is the practical skill.
++*Source:* O-RAN architecture (Non-RT RIC/SMO, Near-RT RIC, A1/E2/O1, xApps/rApps)
++
++## Q13 · RIC control loops · expert
++
++The A1 interface's role is:
++
++- **A)** Non-RT RIC conveying policies, enrichment information, and ML model guidance down to the Near-RT RIC ✅
++- **B)** Near-RT RIC controlling CU/DU directly
++- **C)** SMO performing FCAPS on O-RUs
++- **D)** Inter-RIC state replication
++
++*Why:* A1 = policy/enrichment/model guidance downlink between the two RICs; E2 is node control, O1 is FCAPS.
++*Source:* O-RAN architecture (Non-RT RIC/SMO, Near-RT RIC, A1/E2/O1, xApps/rApps)
++
++## Q14 · RIC control loops · expert
++
++Why does energy-saving cell-sleeping logic typically live as an rApp rather than an xApp?
++
++- **A)** Sleep decisions ride hourly/daily traffic patterns - slow loops with SMO-wide data visibility fit the Non-RT RIC; sub-second E2 control adds nothing to a decision made on hours-scale evidence ✅
++- **B)** xApps cannot access energy data
++- **C)** rApps are cheaper to license
++- **D)** Sleeping cells requires human approval by regulation
++
++*Why:* Matching loop speed to decision cadence - the reasoning behind app placement rather than the rule itself.
++*Source:* O-RAN architecture (Non-RT RIC/SMO, Near-RT RIC, A1/E2/O1, xApps/rApps)
++
++## Q15 · AI-RAN taxonomy · expert
++
++The AI-RAN Alliance's three concept pillars are:
++
++- **A)** AI-for-RAN (AI improving RAN performance/efficiency), AI-on-RAN (AI applications running on RAN infrastructure), AI-and-RAN (shared infrastructure orchestrating AI and RAN workloads together) ✅
++- **B)** AI-in-RAN, AI-out-RAN, AI-around-RAN
++- **C)** Train-RAN, Serve-RAN, Share-RAN
++- **D)** The alliance defines no taxonomy
++
++*Why:* The three prepositions carry real architectural meaning: optimize the RAN, host on the RAN, co-schedule with the RAN.
++*Source:* AI-RAN Alliance published taxonomy (AI-for-RAN / AI-on-RAN / AI-and-RAN)
++
++## Q16 · AI-RAN taxonomy · expert
++
++An operator monetizes idle RAN GPU capacity by selling inference services alongside RAN workloads with dynamic sharing. In alliance terms this is:
++
++- **A)** AI-and-RAN - shared, co-orchestrated infrastructure for AI and RAN workloads ✅
++- **B)** AI-for-RAN - it improves the RAN's economics
++- **C)** AI-on-RAN - any AI near a base station qualifies
++- **D)** None - GPU sharing is out of scope
++
++*Why:* The taxonomy classification trap: revenue improvement tempts 'for-RAN', but workload co-scheduling is the and-RAN definition.
++*Source:* AI-RAN Alliance published taxonomy (AI-for-RAN / AI-on-RAN / AI-and-RAN)
++
++## Q17 · Agentic operations · expert
++
++In 2026 TM Forum agentic-NOC material, deployed agent autonomy is bounded by:
++
++- **A)** Guardrails plus human-in-the-loop oversight: agents recommend, validate, and trigger actions within defined limits rather than acting unboundedly ✅
++- **B)** Nothing - full autonomy is the demonstrated state
++- **C)** A regulation forbidding any automated network change
++- **D)** Read-only access for all agents
++
++*Why:* [Date-stamped 2026] Guardrailed-agency-with-HITL is the actual deployed pattern - both extremes are wrong.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q18 · Agentic operations · expert
++
++A closed-loop assurance system connects which three record types with service-aware context, per the agentic-NOC pattern?
++
++- **A)** Incidents, problems, and configuration changes ✅
++- **B)** Invoices, contracts, and SLAs
++- **C)** Alarms, logs, and traces only
++- **D)** Tickets, emails, and calls
++
++*Why:* The incident-problem-change triangle with service context is what turns siloed ITSM into closed-loop autonomy.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q19 · Agentic operations · expert
++
++An autonomous change window applies a config push that degrades KPIs 40 minutes later. The design element that limits blast radius is:
++
++- **A)** Post-change KPI verification tied to automatic rollback triggers - the change is not 'done' until its observation window closes clean ✅
++- **B)** Requiring larger, less frequent change batches
++- **C)** Disabling KPI collection during changes to avoid noise
++- **D)** Waiting for customer complaints as the signal
++
++*Why:* Change-verification-with-rollback is closed-loop discipline applied to the automation itself.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q20 · Agentic operations · expert
++
++Model drift silently degrades a traffic-prediction model feeding a scaling loop. The AIOps control that catches this class of failure is:
++
++- **A)** Continuous model performance monitoring against ground truth with degradation thresholds triggering retraining or fallback to non-ML operation ✅
++- **B)** Retraining on a fixed annual schedule regardless of signals
++- **C)** Increasing the loop's actuation frequency
++- **D)** Averaging the model's output with last year's
++
++*Why:* Monitor-against-outcomes with fallback mirrors 3GPP's AI/ML LCM philosophy applied at the ops layer.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q21 · Agentic operations · expert
++
++Why do digital twins appear in autonomous-network architectures, per the Catalyst material?
++
++- **A)** To qualify service changes against forecast network state before touching the production network - pre-deployment validation for closed loops ✅
++- **B)** As 3D visualizations for executives
++- **C)** To replace the OSS inventory entirely
++- **D)** As backup networks during outages
++
++*Why:* Pre-actuation qualification is the twin's role in the control loop - simulation as a guardrail.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q22 · NOT-form · expert
++
++Which is NOT part of the NWDAF's standardized role?
++
++- **A)** Enforcing QoS decisions on user-plane packets ✅
++- **B)** Producing analytics statistics and predictions for consumers
++- **C)** Model training via its MTLF function
++- **D)** Collecting data from network functions and OAM
++
++*Why:* NWDAF informs; PCF decides; UPF enforces - giving NWDAF enforcement is the classic architecture error.
++*Source:* 3GPP TS 23.288 (NWDAF architecture: AnLF/MTLF)
++
++## Q23 · NOT-form · expert
++
++Which is NOT an O-RAN interface-role pairing?
++
++- **A)** E2: SMO performing FCAPS management on the Near-RT RIC ✅
++- **B)** A1: Non-RT RIC policy guidance to the Near-RT RIC
++- **C)** E2: Near-RT RIC control/subscription toward CU/DU nodes
++- **D)** O1: SMO management-plane access to O-RAN functions
++
++*Why:* E2 belongs between Near-RT RIC and nodes; FCAPS is O1's job - the swap is the trap.
++*Source:* O-RAN architecture (Non-RT RIC/SMO, Near-RT RIC, A1/E2/O1, xApps/rApps)
++
++## Q24 · NOT-form · advanced
++
++Which is NOT a realistic property of current (2026) agentic NOC deployments?
++
++- **A)** Unsupervised agents rewriting network policy without guardrails or review ✅
++- **B)** Agents triggering pre-approved runbook actions
++- **C)** Human exception-handling in the loop
++- **D)** Closed-loop incident-problem-change correlation
++
++*Why:* [Date-stamped] The industry explicitly reports guardrailed patterns; unbounded agency is the overclaim.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q25 · NOT-form · expert
++
++Which is NOT how intent differs from policy in management architecture?
++
++- **A)** Intent is always expressed in natural language while policy must be JSON ✅
++- **B)** Intent states outcomes; policies/configurations are among the means
++- **C)** Intent fulfillment is continuously evaluated over time
++- **D)** Multiple policies may be derived and re-derived from one intent
++
++*Why:* The format claim is false (intent models are structured, e.g., TS 28.312 information models); the other three are the real distinctions.
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q26 · Operational scenario · expert
++
++An operator wants an LLM to draft RAN parameter changes from incident context, with changes applied automatically. Which architecture keeps this deployable under current autonomy practice?
++
++- **A)** LLM proposes within a bounded action catalogue -> automated pre-checks (twin/qualification) -> guardrail policy decides auto-apply vs human approval by risk class -> post-change verification with rollback ✅
++- **B)** Direct LLM shell access to network elements for speed
++- **C)** LLM output emailed to engineers for manual retyping
++- **D)** Block all LLM involvement in operations
++
++*Why:* The graduated-autonomy pipeline is the deployable middle between the two extremes - and maps to L3-to-L4 progression.
++*Source:* TM Forum agentic-NOC Catalyst material (2026): guardrailed agents, human-in-the-loop
++
++## Q27 · Operational scenario · expert
++
++A RAN vendor claims 'L4 autonomy' because their SON auto-tunes handover parameters network-wide. The sharpest technical challenge to this claim is:
++
++- **A)** Degree of human participation: parameter auto-tuning under human supervision and review is L2/L3-class automation - L4 requires the system to analyze, decide, execute and adapt in the scenario with humans only governing and handling exceptions ✅
++- **B)** SON is prohibited above L2
++- **C)** Handover tuning cannot be automated safely
++- **D)** L4 requires covering every network domain at once
++
++*Why:* [CORRECTED per SME: the challenge is who participates in decisions/exceptions, not scenario breadth - and the breadth argument now appears as a distractor.]
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q28 · Operational scenario · expert
++
++During an AI-and-RAN deployment, RAN load spikes while a colocated inference job runs. The orchestration principle that must hold is:
++
++- **A)** RAN workload priority: the co-scheduler preempts or migrates AI workloads to protect radio processing deadlines - monetization capacity is whatever the RAN leaves over ✅
++- **B)** AI jobs finish first because customers paid for them
++- **C)** Static 50/50 GPU partitioning at all times
++- **D)** The conflict cannot occur on shared infrastructure
++
++*Why:* RAN-first preemption is the invariant that makes shared infrastructure viable; static splits waste exactly the capacity being monetized.
++*Source:* AI-RAN Alliance published taxonomy (AI-for-RAN / AI-on-RAN / AI-and-RAN)
++
++## Q29 · Operational scenario · expert
++
++An operator's automation journey plan reads: 'assisted scripted runbooks -> rule-triggered partial automation -> conditional closed loops with human decision participation -> highly autonomous loops where humans handle exceptions only.' Mapped to autonomy levels this progression is:
++
++- **A)** Roughly L1 -> L2 -> L3 -> L4 ✅
++- **B)** L2 -> L3 -> L4 -> L5
++- **C)** L0 -> L1 -> L2 -> L3
++- **D)** The steps do not correspond to levels
++
++*Why:* [REWORDED per SME: steps defined by human participation, not scenario breadth] Assisted, partial, conditional, high autonomy = L1-L4.
++*Source:* 3GPP TS 28.100 (autonomous network levels); TS 28.312 (intent-driven management)
++
++## Q30 · 2026 state precision · expert
++
++NGMN's 2026 agentic-AI publication identifies how many critical challenge areas for agent-based autonomous networks?
++
++- **A)** Eight ✅
++- **B)** Five
++- **C)** Twelve
++- **D)** Three
++
++*Why:* The eight-area framework (fragmentation, interoperability, knowledge-sharing standards, information modeling, security/trust, HMI, governance/lifecycle, economic/organizational readiness).
++*Source:* NGMN Agentic AI for Autonomous Mobile Networks publication, 11 Aug 2026 (ngmn.org) - enumeration questions cite the publication itself
++
++## Q31 · 2026 state precision · expert
++
++Which is NOT among NGMN's 2026 named challenge areas for agentic autonomous networks?
++
++- **A)** Insufficient GPU supply for agent inference ✅
++- **B)** Lack of standards for agent knowledge/context sharing
++- **C)** Missing end-to-end security, identity and trust frameworks
++- **D)** Under-addressed economic and organizational readiness
++
++*Why:* GPU supply is the plausible-but-absent option; the listed three are verbatim challenge areas.
++*Source:* NGMN Agentic AI for Autonomous Mobile Networks publication, 11 Aug 2026 (ngmn.org) - enumeration questions cite the publication itself
++
++## Q32 · 2026 state precision · expert
++
++NGMN's 'Zero-Trust Agent Ecosystem' concept comprises:
++
++- **A)** Secure identity, authentication, authorization, policy enforcement, audit logging, and runtime monitoring for agents ✅
++- **B)** Air-gapped agents with no network access
++- **C)** A single-vendor certified agent stack
++- **D)** Blockchain consensus between agents
++
++*Why:* The six-element zero-trust enumeration applied to agents - governance mechanics, not isolation.
++*Source:* NGMN Agentic AI for Autonomous Mobile Networks publication, 11 Aug 2026 (ngmn.org) - enumeration questions cite the publication itself
++
++## Q33 · 2026 state precision · expert
++
++NGMN's core diagnosis of why agents alone cannot deliver autonomous networks is:
++
++- **A)** Ecosystem fragmentation - different vendor data models and terminology prevent agents from forming consistent cross-domain network understanding ✅
++- **B)** Agents are too expensive to run
++- **C)** Regulation prohibits agent-driven changes
++- **D)** LLMs cannot parse telemetry formats
++
++*Why:* The shared-semantics gap is the headline warning - agents need interoperable meaning, not just APIs.
++*Source:* NGMN Agentic AI for Autonomous Mobile Networks publication, 11 Aug 2026 (ngmn.org) - enumeration questions cite the publication itself
++
++## Q34 · 2026 state precision · expert
++
++Per TM Forum's 2026 survey (125 respondents, 80 companies), the share of respondents operating at Level 3 or above is:
++
++- **A)** 21%, up from 19% the prior year ✅
++- **B)** 32%, up from 21%
++- **C)** 12%, down from 19%
++- **D)** 51%, up from 37%
++
++*Why:* The 21/19 pair; 32% is the genAI-deployment figure from the same survey - the cross-trap.
++*Source:* TM Forum 2026 autonomous-networks report coverage (survey + L4 certifications)
++
++## Q35 · 2026 state precision · expert
++
++China Mobile's certified L4 achievement is scoped to which domain, with which reported outcomes?
++
++- **A)** Network operations centers - ~30% backend O&M workforce reduction and ~30% MTTR reduction ✅
++- **B)** Radio access network - 50% energy reduction
++- **C)** Core network - zero-touch slice creation
++- **D)** Transport - 99.999% availability
++
++*Why:* Domain + the 30/30 pair; distractors relocate the achievement to plausible other domains.
++*Source:* TM Forum 2026 autonomous-networks report coverage (survey + L4 certifications)
++
++## Q36 · 2026 state precision · expert
++
++Telkomsel's reported east-Indonesia autonomous-operations trial results were:
++
++- **A)** 12.6% wireless traffic-loss reduction, 6% MTTR improvement, 14.7% customer-experience index increase ✅
++- **B)** 6% traffic-loss reduction, 12.6% MTTR improvement, 14.7% CX increase
++- **C)** 30% workforce reduction and 30% MTTR reduction
++- **D)** No quantified results were reported
++
++*Why:* Triple join; option B swaps two real numbers; option C is China Mobile's result - the attribution trap.
++*Source:* TM Forum 2026 autonomous-networks report coverage (survey + L4 certifications)
++
++## Q37 · 2026 state precision · expert
++
++Which obstacle triple does 2026 TM Forum reporting name for autonomy progression?
++
++- **A)** Legacy BSS/OSS systems, limited talent availability, and subjective high-level testing criteria ✅
++- **B)** GPU shortages, spectrum costs, and handset fragmentation
++- **C)** Regulation, unionization, and vendor lock-in
++- **D)** No obstacles were identified
++
++*Why:* The named obstacle set incl. the testing-criteria critique (ANLET) - distractors are plausible industry complaints not in the report.
++*Source:* TM Forum 2026 autonomous-networks report coverage (survey + L4 certifications)
++
++## Q38 · Classification tasks · expert
++
++An alarm storm floods the NOC: one fiber cut raises 4,000 alarms across layers. The ML/automation task that reduces this to one actionable incident is:
++
++- **A)** Alarm correlation/root-cause classification - grouping sympathetic alarms under the causal event using topology and temporal features ✅
++- **B)** Forecasting tomorrow's alarm volume
++- **C)** Auto-acknowledging all alarms above a rate threshold
++- **D)** Sentiment analysis of alarm text
++
++*Why:* Storm-to-incident reduction is correlation + root-cause classification, powered by topology context - the highest-value NOC classification job.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q39 · Classification tasks · expert
++
++You must group historical alarms into recurring patterns, but no one has ever labeled them. The appropriate technique family is:
++
++- **A)** Unsupervised clustering - structure discovery without labels; labels can be assigned to clusters afterwards ✅
++- **B)** Supervised classification - train on the labels
++- **C)** Reinforcement learning against a reward
++- **D)** Linear regression on alarm counts
++
++*Why:* No labels = no supervised training; the labeled-vs-unlabeled fork is the first technique decision in every AIOps project.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q40 · Classification tasks · expert
++
++Trouble tickets arrive as free text and must route to RAN, transport, core, or IT queues. As an ML task this is:
++
++- **A)** Supervised multi-class text classification, trained on historically routed tickets - with periodic drift review as products and vocabulary change ✅
++- **B)** Binary anomaly detection
++- **C)** Time-series forecasting
++- **D)** Unsupervised clustering only - routing needs no labels
++
++*Why:* Historical routing decisions ARE the labels; drift review is the ops-hygiene half of the answer.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q41 · Classification tasks · expert
++
++Anomaly DETECTION and failure CLASSIFICATION differ operationally in that:
++
++- **A)** Detection identifies deviation without necessarily knowing the fault type; supervised failure classification learns mappings to known failure categories from labeled examples ✅
++- **B)** They are synonyms
++- **C)** Detection requires more labels than classification
++- **D)** Classification always runs before detection
++
++*Why:* The label-requirement asymmetry decides which is deployable when failure history is thin - detect first, classify as labels accumulate.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q42 · Predictive operations · expert
++
++For hardware failure prediction (optics, fans, PSUs), plain accuracy is a misleading metric because:
++
++- **A)** Failures are rare, so a model predicting 'no failure' everywhere achieves very high headline accuracy while having zero recall on the failure class; precision/recall on failures with cost-weighted thresholds is the honest measure ✅
++- **B)** Accuracy cannot be computed for hardware
++- **C)** Hardware telemetry is always mislabeled
++- **D)** Regulators require F1 scores
++
++*Why:* Class imbalance is THE trap in predictive maintenance evaluation - the 99%-accurate useless model.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q43 · Predictive operations · expert
++
++An optics-degradation predictor is being tuned. Which threshold-setting logic is operationally correct?
++
++- **A)** Weigh the asymmetric costs: a missed failure means an outage and truck roll, a false alarm means an early planned swap - so bias toward recall on failures within the maintenance-capacity budget ✅
++- **B)** Maximize overall accuracy regardless of class
++- **C)** Set the threshold at 0.5 because probabilities are calibrated by definition
++- **D)** Alert only on 100%-certain predictions
++
++*Why:* Cost-asymmetric thresholding tied to maintenance capacity is how prediction becomes an operations tool rather than a dashboard.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q44 · Predictive operations · expert
++
++What supervision signal trains a hardware-failure predictor, and what horizon makes it useful?
++
++- **A)** Labels from historical failure/replacement records joined to preceding telemetry; a prediction horizon at least as long as the maintenance planning-and-dispatch lead time ✅
++- **B)** Synthetic labels generated by the model itself; any horizon
++- **C)** Vendor datasheets; a 5-year horizon
++- **D)** Real-time alarms; a zero-second horizon
++
++*Why:* Label provenance (maintenance history) + horizon-matched-to-lead-time is the deployability pair - predicting 10 minutes ahead helps nobody dispatch a crew.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q45 · Predictive operations · expert
++
++Capacity forecasting for a metro aggregation ring should be framed as:
++
++- **A)** Time-series forecasting with trend and seasonality, at a horizon matching upgrade lead time - so augmentation orders land before exhaustion ✅
++- **B)** Binary classification of full/not-full
++- **C)** Clustering of link utilizations
++- **D)** A lookup of last year's peak plus 10%
++
++*Why:* Forecast-horizon = procurement-lead-time is the planning insight; the +10% heuristic is the legacy practice being replaced.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q46 · Dynamic scaling · expert
++
++A UPF's traffic doubles during evening peaks. Reactive CPU-threshold autoscaling keeps arriving late because new instances need minutes to warm and attract sessions. The corrective design is:
++
++- **A)** Predictive scaling: forecast the recurring peak and pre-scale ahead of it by at least the instance warm-up time, keeping reactive scaling as backstop ✅
++- **B)** Lower the CPU threshold to 10%
++- **C)** Remove the warm-up by skipping health checks
++- **D)** Scale only manually during business hours
++
++*Why:* Forecast-driven pre-provisioning offset by warm-up time is the canonical fix for slow-to-warm NFs - reactive stays as the safety net.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q47 · Dynamic scaling · expert
++
++Scaling DOWN a stateful network function (e.g., UPF with active sessions) safely requires:
++
++- **A)** Draining: stop assigning new sessions to the instance, let existing sessions complete or migrate, then remove it - the scale-in direction carries the service risk ✅
++- **B)** Immediate termination - sessions reconnect anyway
++- **C)** Scaling down only at midnight
++- **D)** Never scaling down once scaled up
++
++*Why:* Graceful drain is what makes elasticity compatible with session state; the asymmetry (up is easy, down is risky) is the operational knowhow.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q48 · Dynamic scaling · expert
++
++An autoscaler oscillates: scale-up at 70% load, scale-down at 65%, repeating every few minutes. The standard controls are:
++
++- **A)** Hysteresis (wider gap between up and down thresholds) plus cooldown windows between actions - damping the control loop ✅
++- **B)** Faster polling so it reacts even quicker
++- **C)** Removing the scale-down rule entirely
++- **D)** Alerting a human for every scaling decision
++
++*Why:* Flapping is a control-loop stability problem; hysteresis + cooldown is the damping answer, not more speed.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q49 · Dynamic scaling · expert
++
++RAN energy-saving automation sleeps capacity cells at night. The guard that must pair with the sleep decision is:
++
++- **A)** A wake trigger with guaranteed coverage continuity: coverage-layer cells stay on, and demand or event triggers restore sleeping capacity within the service constraint ✅
++- **B)** Sleeping all cells including the coverage layer for maximum savings
++- **C)** A fixed 8-hour sleep regardless of demand
++- **D)** Disabling emergency call handling during sleep
++
++*Why:* Sleep is only autonomous when the wake path and coverage floor are part of the same loop - savings without stranded users.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q50 · Task-technique mapping · expert
++
++Which task-to-technique mapping is fully correct?
++
++- **A)** Ticket routing -> supervised text classification; unlabeled alarm grouping -> clustering; hardware failure -> supervised prediction with imbalance handling; capacity -> time-series forecasting ✅
++- **B)** Ticket routing -> clustering; alarm grouping -> forecasting; hardware failure -> unsupervised detection; capacity -> classification
++- **C)** Everything -> reinforcement learning
++- **D)** Everything -> a single anomaly-detection model
++
++*Why:* The four-way mapping join - each element must be right; option B rotates them plausibly.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q51 · Task-technique mapping · expert
++
++A network scaling loop moves from 'human approves every action' to 'human reviews exceptions weekly'. In autonomy-level and risk terms, what must have been added to justify the change?
++
++- **A)** Demonstrated loop reliability plus guardrails: bounded action ranges, automatic rollback on KPI regression, and audit trails - the controls that convert L2/L3 supervision into L4 exception handling ✅
++- **B)** A faster GPU
++- **C)** A larger action space with no bounds
++- **D)** Removal of KPI monitoring to reduce noise
++
++*Why:* [Per SME framing] The shift from human decision-participation (L2/L3) to human exception-handling (L4) is earned through demonstrated reliability and guardrails - not declared.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q52 · Classification depth · expert
++
++A ticket can simultaneously carry Domain=Transport, Technology=IP/MPLS, Category=Congestion, Impact=Enterprise VPN, Priority=P1. Which ML formulation fits, and why is plain multi-class wrong?
++
++- **A)** Hierarchical/multi-output classification - several dependent label dimensions are predicted per ticket; multi-class forces exactly one label from one flat set and cannot represent this ✅
++- **B)** Multi-class classification - concatenate everything into one label
++- **C)** Clustering - labels emerge automatically
++- **D)** Binary classification per ticket: problem / no problem
++
++*Why:* [SME-requested] Telecom classifications are rarely flat; the multi-class reflex is the trap being caught.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q53 · Classification depth · expert
++
++A ticket reads: 'Enterprise slice latency jumped from 18 ms to 75 ms after UPF maintenance; 140 premium users affected.' A competent AIOps classifier should output:
++
++- **A)** A structured multi-field result: domain=5GC/user-plane; category=performance degradation; probable cause=change-related; affected service=enterprise slice; priority from service impact; resolver=packet core ✅
++- **B)** The single label 'latency'
++- **C)** A binary anomaly flag
++- **D)** A cluster ID with no interpretation
++
++*Why:* [SME-authored example] Real intent/ticket classification is structured extraction across dimensions - not one label.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q54 · Classification depth · expert
++
++Operator NL requests hit an AIOps front-end: 'why is Cluster-7 slow?' vs 'add capacity to Cluster-7' vs 'show Cluster-7 KPIs'. Intent classification must at minimum separate:
++
++- **A)** The action class (observe vs diagnose vs recommend vs execute) and the target/parameters - because execution intents trigger guarded workflows that observation intents must never enter ✅
++- **B)** The user's seniority level
++- **C)** Message length categories
++- **D)** Grammatical mood only
++
++*Why:* [SME dimension] Observe/diagnose/recommend/execute is the safety-relevant intent axis; parameter extraction makes it actionable.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q55 · Classification depth · expert
++
++A new network function emits alarms whose embeddings sit far outside all known incident classes; the classifier's top class probability is 0.37. The correct system behavior is:
++
++- **A)** Abstain: route to an unknown/OOD queue for human labeling, and do NOT auto-execute any remediation tied to a weak classification ✅
++- **B)** Execute the remediation of the 0.37 class - it is still the argmax
++- **C)** Suppress the alarms as noise
++- **D)** Retrain immediately on the unlabeled alarms
++
++*Why:* [SME-authored] Calibrated abstention + OOD routing + no-action-on-weak-confidence in one check - the safe-autonomy reflex.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q56 · Predictive operations · expert
++
++A hardware-failure model reports 0.99 AUC. Investigation finds one feature is 'maintenance ticket opened in previous 30 minutes'. Why is the result invalid?
++
++- **A)** Target/temporal leakage - the feature contains information downstream of the event being predicted, so the model 'predicts' failures that humans already discovered ✅
++- **B)** AUC cannot exceed 0.95 legitimately
++- **C)** Maintenance tickets are always mislabeled
++- **D)** The model needs more epochs
++
++*Why:* [SME-authored] Leakage detection separates predictive-operations competence from algorithm knowledge.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q57 · Root-cause ranking · expert
++
++Given a correlated event group (200 alarms, 12 candidate causes), the evidence that should RANK root-cause candidates is:
++
++- **A)** Topological position (upstream of the symptom spread), temporal precedence (first in the causal window), and consistency of the predicted impact set with observed symptoms - not raw alarm frequency ✅
++- **B)** Alarm count per candidate - the loudest cause wins
++- **C)** Alphabetical order of network elements
++- **D)** The candidate with the most recent software version
++
++*Why:* [SME gap #4] Upstream+first+consistent is causal ranking; loudest-wins is the frequency fallacy that misroutes NOCs.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q58 · Action-risk policy · expert
++
++Which proposed-action risk classification correctly separates auto-execution from human approval?
++
++- **A)** Restart one stateless pod: low risk, auto-executable; drain one redundant UPF: medium, auto with enhanced verification; alter national routing policy or bulk-rewrite RAN parameters: high, human approval required ✅
++- **B)** All four are equally safe once a model proposes them
++- **C)** All four require CEO approval
++- **D)** Risk depends only on the time of day
++
++*Why:* [SME-authored] Blast-radius classification IS the decision behind 'less human intervention' - graduated execution policy by reversibility and scope.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q59 · Ops maturity ladder · expert
++
++The analytics-to-autonomy progression in operations is:
++
++- **A)** Descriptive (what happened) -> diagnostic (why) -> predictive (what will happen) -> prescriptive (what to do) -> autonomous (act and verify under policy/guardrails) ✅
++- **B)** Predictive -> descriptive -> autonomous -> diagnostic
++- **C)** All five are synonyms for monitoring
++- **D)** Prescriptive comes before diagnostic
++
++*Why:* [SME backbone] observe -> classify -> correlate -> diagnose -> predict -> decide -> act -> verify -> learn; the ladder orders the capability stack.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
++
++## Q60 · Scaling objective · expert
++
++Two autoscaling policies both meet the latency SLO: Policy A uses 30% more GPUs and never violates; Policy B uses less compute with 0.5% SLO violations. The autonomous controller should:
++
++- **A)** Neither can be chosen without the operator's expressed intent - the SLO/violation tolerance and cost function decide; the controller optimizes the stated objective, it does not invent one ✅
++- **B)** Always choose A - SLOs are sacred
++- **C)** Always choose B - cost wins
++- **D)** Alternate between them hourly
++
++*Why:* [SME-authored] Scaling optimizes a multi-term objective (SLO risk, cost, headroom, action frequency) supplied by intent - simplistic models pick a side.
++*Source:* Operational ML practice for network automation (established AIOps task taxonomy)
+diff --git a/benchmarks/open-telco-2026/datasets/lite/MANIFEST.json b/benchmarks/open-telco-2026/datasets/lite/MANIFEST.json
+index a9886cd..0901906 100644
+--- a/benchmarks/open-telco-2026/datasets/lite/MANIFEST.json
++++ b/benchmarks/open-telco-2026/datasets/lite/MANIFEST.json
+@@ -80,6 +80,32 @@
+     "sha256_16": "94f5295aa63c4859"
+    },
+    "scoring": "score_mcq, greedy, temp=0.0; score = mean(A,B)"
++  },
++  "aiops_bench": {
++   "suite": "aiops_bench",
++   "batch": "1 (v4)",
++   "n": 60,
++   "frozen": "2026-08-17",
++   "shuffleA": {
++    "seed": 60001,
++    "positions": {
++     "0": 10,
++     "1": 13,
++     "3": 22,
++     "2": 15
++    },
++    "sha256_16": "bdbaa43179f5d5d8"
++   },
++   "shuffleB": {
++    "seed": 60002,
++    "positions": {
++     "2": 16,
++     "1": 15,
++     "0": 14,
++     "3": 15
++    },
++    "sha256_16": "fed9fe9a7a202c40"
++   }
+   }
+  }
+ }
+\ No newline at end of file
+diff --git a/benchmarks/open-telco-2026/datasets/lite/aiops_bench_A.jsonl.gz b/benchmarks/open-telco-2026/datasets/lite/aiops_bench_A.jsonl.gz
+new file mode 100644
+index 0000000000000000000000000000000000000000..5913579d4c610a786d72bc8f272db52191fdd11c
+GIT binary patch
+literal 13295
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/benchmarks/open-telco-2026/datasets/lite/aiops_bench_B.jsonl.gz b/benchmarks/open-telco-2026/datasets/lite/aiops_bench_B.jsonl.gz
+new file mode 100644
+index 0000000000000000000000000000000000000000..b7e15a8ccbf7b1b92adeed5c82d2ca4b8be0aaa7
+GIT binary patch
+literal 13291
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/docs/data/marathon02.json b/docs/data/marathon02.json
+index b120cf5..2ed78ba 100644
+--- a/docs/data/marathon02.json
++++ b/docs/data/marathon02.json
+@@ -1,8 +1,8 @@
+ {
+  "marathon": "02",
+  "title": "Marathon #02 - 2026 Functional Track",
+- "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q) + netapi_bench (38q), AUTO-SCORED, frozen",
+- "scope": "Rel-18/19 & 6G-readiness functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios",
++ "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q) + netapi_bench (38q) + aiops_bench (60q) = 195q, AUTO-SCORED, frozen",
++ "scope": "Rel-18/19 & 6G-readiness, NTN, network-API exposure, and AIOps/autonomous-network functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios, classification/prediction/scaling tasks",
+  "method": "Each model scored as the mean of two fixed answer-shuffles (A/B) of the identical frozen set; greedy decoding, temp 0. All 10 models on identical pinned serving stack except muse-glimmer-30b (day-0 engine, see its report).",
+  "generated": "2026-08-17",
+  "results": [
+@@ -12,18 +12,21 @@
+    "board2025_rank": 10,
+    "shuffleA": 0.9038,
+    "shuffleB": 0.9231,
+-   "mean": 0.9132,
+-   "origin_flag": "🇨🇳",
++   "mean": 0.9245,
++   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+    "origin": "China",
+    "suites": {
+     "rel19_bench": 0.9135,
+     "ntn_bench": 0.9445,
+-    "netapi_bench": 0.8816
++    "netapi_bench": 0.8816,
++    "aiops_bench": 0.9583
+    },
+    "ntn_shuffleA": 0.9111,
+    "ntn_shuffleB": 0.9778,
+    "netapi_shuffleA": 0.8684,
+-   "netapi_shuffleB": 0.8947
++   "netapi_shuffleB": 0.8947,
++   "aiops_shuffleA": 0.95,
++   "aiops_shuffleB": 0.9667
+   },
+   {
+    "rank": 2,
+@@ -31,18 +34,21 @@
+    "board2025_rank": 2,
+    "shuffleA": 0.9231,
+    "shuffleB": 0.9038,
+-   "mean": 0.9034,
+-   "origin_flag": "🇺🇸",
++   "mean": 0.9193,
++   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+    "origin": "USA",
+    "suites": {
+     "rel19_bench": 0.9135,
+     "ntn_bench": 0.8889,
+-    "netapi_bench": 0.9079
++    "netapi_bench": 0.9079,
++    "aiops_bench": 0.9667
+    },
+    "ntn_shuffleA": 0.8889,
+    "ntn_shuffleB": 0.8889,
+    "netapi_shuffleA": 0.9211,
+-   "netapi_shuffleB": 0.8947
++   "netapi_shuffleB": 0.8947,
++   "aiops_shuffleA": 0.9667,
++   "aiops_shuffleB": 0.9667
+   },
+   {
+    "rank": 3,
+@@ -50,75 +56,87 @@
+    "board2025_rank": 3,
+    "shuffleA": 0.9038,
+    "shuffleB": 0.9038,
+-   "mean": 0.8968,
+-   "origin_flag": "🇺🇸",
++   "mean": 0.9163,
++   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+    "origin": "USA",
+    "suites": {
+     "rel19_bench": 0.9038,
+     "ntn_bench": 0.9445,
+-    "netapi_bench": 0.8421
++    "netapi_bench": 0.8421,
++    "aiops_bench": 0.975
+    },
+    "ntn_shuffleA": 0.9556,
+    "ntn_shuffleB": 0.9333,
+    "netapi_shuffleA": 0.8421,
+-   "netapi_shuffleB": 0.8421
++   "netapi_shuffleB": 0.8421,
++   "aiops_shuffleA": 0.9667,
++   "aiops_shuffleB": 0.9833
+   },
+   {
+    "rank": 4,
++   "model": "qwen3-8-27b",
++   "board2025_rank": 5,
++   "shuffleA": 0.8846,
++   "shuffleB": 0.8462,
++   "mean": 0.9136,
++   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
++   "origin": "China",
++   "suites": {
++    "rel19_bench": 0.8654,
++    "ntn_bench": 0.9111,
++    "netapi_bench": 0.8947,
++    "aiops_bench": 0.9833
++   },
++   "ntn_shuffleA": 0.9111,
++   "ntn_shuffleB": 0.9111,
++   "netapi_shuffleA": 0.8947,
++   "netapi_shuffleB": 0.8947,
++   "aiops_shuffleA": 1.0,
++   "aiops_shuffleB": 0.9667
++  },
++  {
++   "rank": 5,
+    "model": "telecomgpt-r1",
+    "board2025_rank": 1,
+    "shuffleA": 0.9231,
+    "shuffleB": 0.8654,
+-   "mean": 0.8919,
+-   "origin_flag": "🇦🇪",
++   "mean": 0.9085,
++   "origin_flag": "\ud83c\udde6\ud83c\uddea",
+    "origin": "UAE",
+    "suites": {
+     "rel19_bench": 0.8942,
+     "ntn_bench": 0.9,
+-    "netapi_bench": 0.8816
++    "netapi_bench": 0.8816,
++    "aiops_bench": 0.9583
+    },
+    "ntn_shuffleA": 0.8667,
+    "ntn_shuffleB": 0.9333,
+    "netapi_shuffleA": 0.8684,
+-   "netapi_shuffleB": 0.8947
++   "netapi_shuffleB": 0.8947,
++   "aiops_shuffleA": 0.95,
++   "aiops_shuffleB": 0.9667
+   },
+   {
+-   "rank": 5,
++   "rank": 6,
+    "model": "otel2-llm-31b-it",
+    "board2025_rank": 4,
+    "shuffleA": 0.9038,
+    "shuffleB": 0.8654,
+-   "mean": 0.8911,
+-   "origin_flag": "🇺🇸",
++   "mean": 0.9058,
++   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+    "origin": "USA",
+    "suites": {
+     "rel19_bench": 0.8846,
+     "ntn_bench": 0.9334,
+-    "netapi_bench": 0.8552
++    "netapi_bench": 0.8552,
++    "aiops_bench": 0.95
+    },
+    "ntn_shuffleA": 0.9111,
+    "ntn_shuffleB": 0.9556,
+    "netapi_shuffleA": 0.8421,
+-   "netapi_shuffleB": 0.8684
+-  },
+-  {
+-   "rank": 6,
+-   "model": "qwen3-8-27b",
+-   "board2025_rank": 5,
+-   "shuffleA": 0.8846,
+-   "shuffleB": 0.8462,
+-   "mean": 0.8904,
+-   "origin_flag": "🇨🇳",
+-   "origin": "China",
+-   "suites": {
+-    "rel19_bench": 0.8654,
+-    "ntn_bench": 0.9111,
+-    "netapi_bench": 0.8947
+-   },
+-   "ntn_shuffleA": 0.9111,
+-   "ntn_shuffleB": 0.9111,
+-   "netapi_shuffleA": 0.8947,
+-   "netapi_shuffleB": 0.8947
++   "netapi_shuffleB": 0.8684,
++   "aiops_shuffleA": 0.9333,
++   "aiops_shuffleB": 0.9667
+   },
+   {
+    "rank": 7,
+@@ -126,18 +144,21 @@
+    "board2025_rank": 6,
+    "shuffleA": 0.9038,
+    "shuffleB": 0.8846,
+-   "mean": 0.8825,
+-   "origin_flag": "🇺🇸",
++   "mean": 0.9014,
++   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+    "origin": "USA",
+    "suites": {
+     "rel19_bench": 0.8942,
+     "ntn_bench": 0.9111,
+-    "netapi_bench": 0.8421
++    "netapi_bench": 0.8421,
++    "aiops_bench": 0.9583
+    },
+    "ntn_shuffleA": 0.8889,
+    "ntn_shuffleB": 0.9333,
+    "netapi_shuffleA": 0.8421,
+-   "netapi_shuffleB": 0.8421
++   "netapi_shuffleB": 0.8421,
++   "aiops_shuffleA": 0.9667,
++   "aiops_shuffleB": 0.95
+   },
+   {
+    "rank": 8,
+@@ -145,18 +166,21 @@
+    "board2025_rank": 7,
+    "shuffleA": 0.8269,
+    "shuffleB": 0.8077,
+-   "mean": 0.8626,
+-   "origin_flag": "🇨🇳",
++   "mean": 0.8928,
++   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+    "origin": "China",
+    "suites": {
+     "rel19_bench": 0.8173,
+     "ntn_bench": 0.8889,
+-    "netapi_bench": 0.8816
++    "netapi_bench": 0.8816,
++    "aiops_bench": 0.9833
+    },
+    "ntn_shuffleA": 0.9111,
+    "ntn_shuffleB": 0.8667,
+    "netapi_shuffleA": 0.8947,
+-   "netapi_shuffleB": 0.8684
++   "netapi_shuffleB": 0.8684,
++   "aiops_shuffleA": 1.0,
++   "aiops_shuffleB": 0.9667
+   },
+   {
+    "rank": 9,
+@@ -164,18 +188,21 @@
+    "board2025_rank": 9,
+    "shuffleA": 0.8269,
+    "shuffleB": 0.7885,
+-   "mean": 0.8527,
+-   "origin_flag": "🇨🇳",
++   "mean": 0.8812,
++   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+    "origin": "China",
+    "suites": {
+     "rel19_bench": 0.8077,
+     "ntn_bench": 0.8556,
+-    "netapi_bench": 0.8947
++    "netapi_bench": 0.8947,
++    "aiops_bench": 0.9667
+    },
+    "ntn_shuffleA": 0.8444,
+    "ntn_shuffleB": 0.8667,
+    "netapi_shuffleA": 0.9211,
+-   "netapi_shuffleB": 0.8684
++   "netapi_shuffleB": 0.8684,
++   "aiops_shuffleA": 0.9833,
++   "aiops_shuffleB": 0.95
+   },
+   {
+    "rank": 10,
+@@ -183,24 +210,28 @@
+    "board2025_rank": 8,
+    "shuffleA": 0.75,
+    "shuffleB": 0.7692,
+-   "mean": 0.8413,
+-   "origin_flag": "🇺🇸",
++   "mean": 0.8643,
++   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+    "origin": "USA",
+    "suites": {
+     "rel19_bench": 0.7596,
+     "ntn_bench": 0.9222,
+-    "netapi_bench": 0.8421
++    "netapi_bench": 0.8421,
++    "aiops_bench": 0.9333
+    },
+    "ntn_shuffleA": 0.9333,
+    "ntn_shuffleB": 0.9111,
+    "netapi_shuffleA": 0.8421,
+-   "netapi_shuffleB": 0.8421
++   "netapi_shuffleB": 0.8421,
++   "aiops_shuffleA": 0.9167,
++   "aiops_shuffleB": 0.95
+   }
+  ],
+  "suite_names": {
+   "rel19_bench": "Rel19-Bench",
+   "ntn_bench": "NTN-Bench",
+-  "netapi_bench": "NetAPI-Bench"
++  "netapi_bench": "NetAPI-Bench",
++  "aiops_bench": "AIOps-Bench"
+  },
+  "scoring": "Per suite: mean of two fixed answer-shuffles (greedy, temp 0). Score = equal-weight mean across suites."
+ }
+\ No newline at end of file
+diff --git a/docs/index.html b/docs/index.html
+index 658978c..bd7ee25 100644
+--- a/docs/index.html
++++ b/docs/index.html
+@@ -222,9 +222,11 @@
+       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.7">
+         <b style="color:var(--dim)">What this measures.</b> AUTO-SCORED functional knowhow for operational
+         telco AI: <b>Rel19-Bench</b> (52q &mdash; Rel-18/19 &amp; 6G readiness), <b>NTN-Bench</b> (45q &mdash;
+-        NTN, direct-to-device, spectrum, private networks/NPN), and <b>NetAPI-Bench</b> (38q &mdash;
++        NTN, direct-to-device, spectrum, private networks/NPN), <b>NetAPI-Bench</b> (38q &mdash;
+         CAMARA/Open Gateway APIs, NEF/CAPIF exposure architecture, ecosystem roles, monetization
+-        structure) &mdash; authored from primary 3GPP/ETSI/CAMARA sources and SME-reviewed. Each model
++        structure), and <b>AIOps-Bench</b> (60q &mdash; autonomy levels, intent management, NWDAF,
++        RIC control loops, agentic operations, classification/prediction/scaling tasks) &mdash;
++        authored from primary 3GPP/ETSI/CAMARA/TM Forum/NGMN sources and SME-reviewed. Each model
+         runs each frozen suite twice (two fixed answer orderings); a suite score is the mean of both
+         runs, bounding choice-ordering variance. <b>Score</b> is the equal-weight mean across suites.
+         Serving stack is the identical pinned engine for all models except muse-glimmer-30b (day-0
+@@ -474,7 +476,7 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
+       </div>
+       <div class="card">
+         <h3><span class="dot" style="background:var(--cyan)"></span>Claims need receipts</h3>
+-        <p>Self-reported leaderboard numbers routinely diverge from pinned reproduction - our <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">verification report</a> and the <a href="https://github.com/open-experiments/telcoaibench/blob/main/benchmarks/model-reports/marathon/telecomgpt-r1-claims-review.md">TelecomGPT-R1 claims review</a> document exactly how protocol choices move scores by double digits. Every number here ships with its harness version, prompts, precision, and per-question transcripts.</p>
++        <p>Self-reported leaderboard numbers routinely diverge from pinned reproduction - our <a href="https://github.com/open-experiments/telcoaibench/tree/main/benchmarks/open-telco/reference">verification report</a> and the <a href="https://github.com/open-experiments/telcoaibench/blob/main/benchmarks/model-reports/legacy-reports/marathon/telecomgpt-r1-claims-review.md">TelecomGPT-R1 claims review</a> document exactly how protocol choices move scores by double digits. Every number here ships with its harness version, prompts, precision, and per-question transcripts.</p>
+       </div>
+       <div class="card">
+         <h3><span class="dot" style="background:var(--green)"></span>One harness, every model</h3>
