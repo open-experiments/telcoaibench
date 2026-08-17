@@ -2,7 +2,7 @@
 
 **Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #2
 
-Composite (equal-weight mean of 4 suites, 195 questions, each scored on two frozen answer shuffles): **0.9193**
+Composite (equal-weight mean of 4 AUTO-SCORED suites, 195 questions, each scored on two frozen answer shuffles): **0.9193** · Exam-2026 judged score (informational): **0.6808**
 
 | Suite | Questions | Shuffle A | Shuffle B | Mean |
 |---|---|---|---|---|
@@ -10,7 +10,8 @@ Composite (equal-weight mean of 4 suites, 195 questions, each scored on two froz
 | NTN-Bench | 45 | 0.8889 | 0.8889 | **0.8889** |
 | NetAPI-Bench | 38 | 0.9211 | 0.8947 | **0.9079** |
 | AIOps-Bench | 60 | 0.9667 | 0.9667 | **0.9667** |
-| **Composite** | **195** | | | **0.9193** |
+| **Composite (AUTO-SCORED)** | **195** | | | **0.9193** |
+| Exam-2026 (judged, 30q/260pts) | 30 | | | 0.6808 |
 
 ## Methodology
 

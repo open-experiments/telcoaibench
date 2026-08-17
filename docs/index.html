@@ -228,7 +228,12 @@
         RIC control loops, agentic operations, classification/prediction/scaling tasks) &mdash;
         authored from primary 3GPP/ETSI/CAMARA/TM Forum/NGMN sources and SME-reviewed. Each model
         runs each frozen suite twice (two fixed answer orderings); a suite score is the mean of both
-        runs, bounding choice-ordering variance. <b>Score</b> is the equal-weight mean across suites.
+        runs, bounding choice-ordering variance. <b>Score</b> is the equal-weight mean across the four
+        AUTO-SCORED suites. <b>Exam-2026 · judged</b> is the 2026 expansion of Telco's Last Exam
+        (30 expert open-ended questions, 260 pts &mdash; IMS/voice, OSS/BSS, regulatory, AI-ops, NTN,
+        energy + expert deepeners), graded 0-10 by the board judge (gpt-5.6-sol) against worked
+        reference answers and reported points-weighted; it is shown for information and does not
+        enter Score until the judged track completes (vendor-genai-2026 pending).
         Serving stack is the identical pinned engine for all models except muse-glimmer-30b (day-0
         engine &mdash; see its marathon report). &Delta; = movement vs the model's Legacy Test Benchmark rank.
       </div>

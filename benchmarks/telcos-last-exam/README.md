@@ -23,6 +23,23 @@ Regulatory Services, AI & Autonomous Ops, NTN, Energy & Sustainability, plus exp
 deepeners in the legacy domains. The legacy 30-question exam stays frozen 1:1; the full
 2026 exam is both tasks combined, points-weighted (506 points total).
 
+### Batch-1 marathon results (judge: gpt-5.6-sol, 2026-08-17)
+
+| # | Model | Points-weighted | Mean/question |
+|---|---|---|---|
+| 1 | muse-glimmer-30b | **0.6842** | 0.6823 |
+| 2 | gemma4-31b-it-base | **0.6808** | 0.6783 |
+| 3 | otel2-llm-31b-it | **0.6488** | 0.6440 |
+| 4 | qwen3-8-27b | **0.5823** | 0.5797 |
+| 5 | qwen3-6-35b-a3b | **0.5778** | 0.5723 |
+| 6 | telecomgpt-r1 | **0.5658** | 0.5610 |
+| 7 | qwq-32b | **0.5080** | 0.5020 |
+| 8 | gpt-oss-120b | **0.5073** | 0.5013 |
+| 9 | seed-oss-36b | **0.5006** | 0.4960 |
+| 10 | nemotron-3-super-120b | **0.4894** | 0.4840 |
+
+All 10 board models, 30 questions each, zero request/judge errors. Hardest domains across the field: Timing & Sync (0.35), Regulatory Services (0.38); easiest: Energy & Sustainability (0.82), Cloud-Native (0.79). Shown on the 2026 board tab as the `Exam-2026 · judged` column (informational — not in the composite until the judged track completes).
+
 ## Layout
 
 ```
