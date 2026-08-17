@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images/logo.svg" alt="TelcoAIBench" width="480"/>
+<img src="docs/assets/logo.svg" alt="TelcoAIBench" width="480"/>
 
 **A self-contained portal & benchmark suite to measure any telco AI model - chat with it, watch it, benchmark it.**
 
@@ -10,9 +10,9 @@
 [![Benchmarks](https://img.shields.io/badge/Benchmarks-10%20telco%20suites-FBBF24.svg)](benchmarks/README.md)
 [![Datasets](https://img.shields.io/badge/Datasets-embedded%2C%20zero%20deps-10B981.svg)](benchmarks/open-telco/datasets/PROVENANCE.md)
 
-<img src="images/icons/icon-portal.svg" width="18" align="top"/> [Landing Page](https://open-experiments.github.io/telcoaibench/) &nbsp;|&nbsp; <img src="images/icons/icon-article.svg" width="18" align="top"/> [Article](https://medium.com/open-5g-hypercore/episode-xxix-the-prompt-engineering-how-to-make-a-toddler-act-talk-nice-83e9aab2e3b9) &nbsp;|&nbsp; <img src="images/icons/icon-suite.svg" width="18" align="top"/> [Benchmark Suites](benchmarks/README.md) &nbsp;|&nbsp; <img src="images/icons/icon-report.svg" width="18" align="top"/> [Verification Report](benchmarks/open-telco/reference/)
+<img src="docs/assets/icons/icon-portal.svg" width="18" align="top"/> [Landing Page](https://open-experiments.github.io/telcoaibench/) &nbsp;|&nbsp; <img src="docs/assets/icons/icon-article.svg" width="18" align="top"/> [Article](https://medium.com/open-5g-hypercore/episode-xxix-the-prompt-engineering-how-to-make-a-toddler-act-talk-nice-83e9aab2e3b9) &nbsp;|&nbsp; <img src="docs/assets/icons/icon-suite.svg" width="18" align="top"/> [Benchmark Suites](benchmarks/README.md) &nbsp;|&nbsp; <img src="docs/assets/icons/icon-report.svg" width="18" align="top"/> [Verification Report](benchmarks/open-telco/reference/)
 
-<img src="images/tab-benchmark-done.png" alt="Benchmark tab - live results" width="920"/>
+<img src="docs/assets/tab-benchmark-done.png" alt="Benchmark tab - live results" width="920"/>
 
 </div>
 
@@ -23,7 +23,7 @@
 Point it at **any OpenAI-compatible endpoint** (vLLM, RHOAI/KServe, TGI, SaaS)
 with two environment variables, and you get three things:
 
-| <img src="images/icons/icon-portal.svg" width="20" align="top"/> **Portal** | <img src="images/icons/icon-bench.svg" width="20" align="top"/> **Benchmark Suite** | <img src="images/icons/icon-report.svg" width="20" align="top"/> **Receipts** |
+| <img src="docs/assets/icons/icon-portal.svg" width="20" align="top"/> **Portal** | <img src="docs/assets/icons/icon-bench.svg" width="20" align="top"/> **Benchmark Suite** | <img src="docs/assets/icons/icon-report.svg" width="20" align="top"/> **Receipts** |
 |---|---|---|
 | Expert telco chat personas and a live vLLM observability dashboard - persistent sessions, streaming, file upload. | The 8 Open-Telco benchmarks (TeleQnA, TeleTables, TeleMath, TeleLogs, 3GPP-TSG, ORANBench, srsRANBench, 6G-Bench) plus 2 **LLM-as-judge suites** (Telco's Last Exam, Vendor GenAI deep-dives) with **datasets embedded in this repo** - run from the UI or CLI, no external dependencies, ever. | Scoring parity-validated against the official GSMA harness (≤1pp on all 7 leaderboard tasks), plus a full leaderboard-claim verification report showing why pinned, reproducible evals matter. |
 
@@ -66,10 +66,10 @@ the datasets ship inside the repo.
 ## The Portal
 
 <details>
-<summary><img src="images/icons/icon-chat.svg" width="20" align="top"/> <b>Chat - expert telco conversations</b></summary>
+<summary><img src="docs/assets/icons/icon-chat.svg" width="20" align="top"/> <b>Chat - expert telco conversations</b></summary>
 <br/>
 
-![Chat tab](images/tab-chat.png)
+![Chat tab](docs/assets/tab-chat.png)
 
 Multi-persona chat (Telco / Network / Cloud / Storage experts, intent
 classification, or your own), persistent shareable sessions, auto-streaming
@@ -78,20 +78,20 @@ for large contexts, live temperature/token controls, and document upload
 </details>
 
 <details>
-<summary><img src="images/icons/icon-prompt.svg" width="20" align="top"/> <b>Prompt Manager - persona engineering</b></summary>
+<summary><img src="docs/assets/icons/icon-prompt.svg" width="20" align="top"/> <b>Prompt Manager - persona engineering</b></summary>
 <br/>
 
-![Prompt Manager tab](images/tab-prompts.png)
+![Prompt Manager tab](docs/assets/tab-prompts.png)
 
 Create, edit, and persist system-prompt personas (`system_prompts.json`)
 without touching code - instantly available in Chat.
 </details>
 
 <details>
-<summary><img src="images/icons/icon-observe.svg" width="20" align="top"/> <b>Observability - live vLLM metrics</b></summary>
+<summary><img src="docs/assets/icons/icon-observe.svg" width="20" align="top"/> <b>Observability - live vLLM metrics</b></summary>
 <br/>
 
-![Observability tab](images/tab-observability.png)
+![Observability tab](docs/assets/tab-observability.png)
 
 Dual-API dashboard polling the model server's `/metrics`: request rates,
 latency, token throughput, cache utilization, health, efficiency analysis,
@@ -99,10 +99,10 @@ and diagnostics - with Plotly visualizations.
 </details>
 
 <details open>
-<summary><img src="images/icons/icon-bench.svg" width="20" align="top"/> <b>Benchmark - leaderboard-grade evals, one click</b></summary>
+<summary><img src="docs/assets/icons/icon-bench.svg" width="20" align="top"/> <b>Benchmark - leaderboard-grade evals, one click</b></summary>
 <br/>
 
-![Benchmark tab running](images/tab-benchmark-live.png)
+![Benchmark tab running](docs/assets/tab-benchmark-live.png)
 
 Pick benchmarks, tier (lite = leaderboard default, or full), sample limit,
 parallelism, and token cap - results stream in live with per-task progress
@@ -119,7 +119,7 @@ are cancelled on the server within seconds, with partial results reported
 honestly as "stopped (partial)". Runs whose browser page closes are
 auto-cancelled too - no orphaned GPU load.
 
-![Benchmark tab - two models side by side](images/tab-benchmark-multi.png)
+![Benchmark tab - two models side by side](docs/assets/tab-benchmark-multi.png)
 
 **Judged suites.** `telcos_last_exam` (a 30-question telecom exam across
 8 domains and 3 difficulty tiers, graded against an official answer key
@@ -133,7 +133,7 @@ name - leave the name empty and the endpoint's models are discovered into
 a dropdown); judge endpoints never become benchmark target cards and
 persist on the state volume.
 
-![Judge model provisioning](images/tab-benchmark-judge.png)
+![Judge model provisioning](docs/assets/tab-benchmark-judge.png)
 
 **Breakdowns and failure reports.** Every judged run ends with per-domain,
 per-difficulty, per-vendor and per-criterion breakdowns inline, plus a
@@ -141,7 +141,7 @@ downloadable **run report** (HTML + markdown) listing every question
 worst-first with its score, verdict, what was missed, and the judge's
 written rationale.
 
-![Run report](images/tab-benchmark-report.png)
+![Run report](docs/assets/tab-benchmark-report.png)
 
 **Leaderboard.** Every clean, full-set run is recorded automatically into a
 persistent leaderboard (state volume). The **Leaderboard tab** ranks models
@@ -179,11 +179,11 @@ telcoaibench/
 ├── requirements-v2.txt     # Python dependencies (gradio pinned <6)
 ├── benchmarks/             # All benchmark & eval assets
 │   ├── open-telco/         #   embedded eval framework: runner + datasets + reports
+│   ├── open-telco-2026/    #   2026 AUTO-SCORED track: frozen suites + provenance
 │   ├── vendor-genai-tests/ #   Ericsson / Nokia / Mavenir + Telco5G
-│   ├── telcos-last-exam/   #   telco exam + per-model answers
-│   └── model-reports/      #   leaderboard proof points: marathon/ + pre-marathon/
-├── archive/                # Legacy v1 application
-└── images/                 # Logo & screenshots
+│   ├── telcos-last-exam/   #   telco exam (legacy + 2026 expansion) + per-model answers
+│   └── model-reports/      #   proof points: legacy-reports/ + 2026-reports/
+└── docs/                   # GitHub Pages site: leaderboard, assets, videos, data
 ```
 
 <details>
