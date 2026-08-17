@@ -344,7 +344,8 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
   const m02means=(d.results||[]).map(r=>r.mean);
   const m02mn=Math.min.apply(null,m02means), m02mx=Math.max.apply(null,m02means);
   for(const r of d.results||[]){
-    const delta=r.board2025_rank-r.rank;
+    const hasLegacy=(r.board2025_rank!=null);
+    const delta=hasLegacy?(r.board2025_rank-r.rank):NaN;
     const ds=delta>0?'<span style="color:var(--green)">&#9650; '+delta+'</span>'
             :delta<0?'<span style="color:var(--amber)">&#9660; '+(-delta)+'</span>'
             :'<span style="color:var(--faint)">&ndash;</span>';
@@ -356,7 +357,7 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
       +'<td style="padding:7px 8px"><span class="m02-bar" style="width:'+Math.round(18+(m02mx>m02mn?(r.mean-m02mn)/(m02mx-m02mn):1)*102)+'px"></span></td>'
       +suiteKeys.map(k=>{const v=(r.suites||{})[k];return v==null?'<td style="padding:7px 8px;color:var(--faint)">&ndash;</td>'
         :'<td style="padding:7px 8px"><span class="lb-cell" style="'+m02heat(v)+'">'+v.toFixed(4)+'</span></td>';}).join('')
-      +'<td style="padding:7px 8px;color:var(--faint)">#'+r.board2025_rank+'</td>'
+      +'<td style="padding:7px 8px;color:var(--faint)">'+(hasLegacy?('#'+r.board2025_rank):'new')+'</td>'
       +'<td style="padding:7px 8px">'+ds+'</td></tr>';
   }
   document.getElementById('m02-board').innerHTML=h+'</table>';

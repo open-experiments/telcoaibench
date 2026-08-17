@@ -37,8 +37,18 @@ deepeners in the legacy domains. The legacy 30-question exam stays frozen 1:1; t
 | 8 | gpt-oss-120b | **0.5073** | 0.5013 |
 | 9 | seed-oss-36b | **0.5006** | 0.4960 |
 | 10 | nemotron-3-super-120b | **0.4894** | 0.4840 |
+| 11 | mistral-small-3-2-24b | **0.4872** | 0.4837 |
+| 12 | qwen3-5-9b-base | **0.4702** | 0.4673 |
+| 13 | llama31-nemotron-70b | **0.4678** | 0.4623 |
+| 14 | falcon-h1-34b | **0.4658** | 0.4597 |
+| 15 | synlogic-mix-3-32b | **0.4468** | 0.4430 |
+| 16 | nemotron-3-5-lightning-30b | **0.4438** | 0.4393 |
+| 17 | nemotron-cascade-2-30b | **0.3614** | 0.3603 |
+| 18 | lfm2-5-8b-a1b | **0.2482** | 0.2453 |
+| 19 | lfm2-5-2-6b-base | **0.2096** | 0.2120 |
+| 20 | lfm2-5-vl-3b | **0.1718** | 0.1720 |
 
-All 10 board models, 30 questions each, zero request/judge errors. Hardest domains across the field: Timing & Sync (0.35), Regulatory Services (0.38); easiest: Energy & Sustainability (0.82), Cloud-Native (0.79). Shown on the 2026 board tab as the `Exam-2026 · judged` column (informational — not in the composite until the judged track completes).
+All 20 board models, 30 questions each, zero request/judge errors. Hardest domains across the field: Timing & Sync, Regulatory Services; easiest: Energy & Sustainability, Cloud-Native. Shown on the 2026 board tab as the `Exam-2026 · judged` column (informational — not in the composite until the judged track completes).
 
 ## Layout
 
