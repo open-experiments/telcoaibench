@@ -266,6 +266,21 @@ TASKS = {
     # LLM-as-judge suites (need --judge-* / a judge model in the portal)
     "telcos_last_exam": {"prompt": build_exam_prompt, "judged": "reference",
                          "path": "telcos-last-exam/datasets/telcos_last_exam.jsonl.gz"},
+    # --- 2026 Test Suite (AUTO-SCORED, frozen; see benchmarks/open-telco-2026/) ---
+    # each task concatenates both frozen answer shuffles (_A + _B): one run
+    # reproduces the board's two-shuffle-mean protocol exactly
+    "rel19_bench":  {"prompt": build_mcq_prompt, "score": score_mcq,
+                     "paths": ["open-telco-2026/datasets/lite/rel19_bench_A.jsonl.gz",
+                               "open-telco-2026/datasets/lite/rel19_bench_B.jsonl.gz"]},
+    "ntn_bench":    {"prompt": build_mcq_prompt, "score": score_mcq,
+                     "paths": ["open-telco-2026/datasets/lite/ntn_bench_A.jsonl.gz",
+                               "open-telco-2026/datasets/lite/ntn_bench_B.jsonl.gz"]},
+    "netapi_bench": {"prompt": build_mcq_prompt, "score": score_mcq,
+                     "paths": ["open-telco-2026/datasets/lite/netapi_bench_A.jsonl.gz",
+                               "open-telco-2026/datasets/lite/netapi_bench_B.jsonl.gz"]},
+    "aiops_bench":  {"prompt": build_mcq_prompt, "score": score_mcq,
+                     "paths": ["open-telco-2026/datasets/lite/aiops_bench_A.jsonl.gz",
+                               "open-telco-2026/datasets/lite/aiops_bench_B.jsonl.gz"]},
     # 2026 expansion batch 1 (30 expert q, 260 pts); full 2026 exam = this + legacy, points-weighted
     "telcos_last_exam_2026": {"prompt": build_exam_prompt, "judged": "reference",
                          "path": "telcos-last-exam/datasets/telcos_last_exam_2026.jsonl.gz"},
@@ -283,17 +298,23 @@ LEADERBOARD_TASKS = [
 
 def load_dataset(task: str, tier: str, limit=None):
     spec = TASKS.get(task, {})
-    if spec.get("path"):
+    if spec.get("paths"):
+        # multi-file dataset (2026 frozen shuffles: _A + _B concatenated, so a
+        # single run scores both fixed answer orderings; accuracy over the
+        # concatenation equals the two-shuffle mean used on the 2026 board)
+        paths = [os.path.join(os.path.dirname(HERE), p) for p in spec["paths"]]
+    elif spec.get("path"):
         # suite datasets live under benchmarks/<suite>/ (sibling of open-telco)
-        path = os.path.join(os.path.dirname(HERE), spec["path"])
+        paths = [os.path.join(os.path.dirname(HERE), spec["path"])]
     else:
-        path = os.path.join(HERE, "datasets", tier, f"{task}.jsonl.gz")
+        paths = [os.path.join(HERE, "datasets", tier, f"{task}.jsonl.gz")]
     records = []
-    with gzip.open(path, "rt", encoding="utf-8") as f:
-        for line in f:
-            records.append(json.loads(line))
-            if limit and len(records) >= limit:
-                break
+    for path in paths:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            for line in f:
+                records.append(json.loads(line))
+                if limit and len(records) >= limit:
+                    return records
     return records
 
 

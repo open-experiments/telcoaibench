@@ -43,12 +43,13 @@ deepeners in the legacy domains. The legacy 30-question exam stays frozen 1:1; t
 | 14 | falcon-h1-34b | **0.4658** | 0.4597 |
 | 15 | synlogic-mix-3-32b | **0.4468** | 0.4430 |
 | 16 | nemotron-3-5-lightning-30b | **0.4438** | 0.4393 |
-| 17 | nemotron-cascade-2-30b | **0.3614** | 0.3603 |
-| 18 | lfm2-5-8b-a1b | **0.2482** | 0.2453 |
-| 19 | lfm2-5-2-6b-base | **0.2096** | 0.2120 |
-| 20 | lfm2-5-vl-3b | **0.1718** | 0.1720 |
+| 17 | glm-4-7-flash | **0.3846** | 0.3827 |
+| 18 | nemotron-cascade-2-30b | **0.3614** | 0.3603 |
+| 19 | lfm2-5-8b-a1b | **0.2482** | 0.2453 |
+| 20 | lfm2-5-2-6b-base | **0.2096** | 0.2120 |
+| 21 | lfm2-5-vl-3b | **0.1718** | 0.1720 |
 
-All 20 board models, 30 questions each, zero request/judge errors. Hardest domains across the field: Timing & Sync, Regulatory Services; easiest: Energy & Sustainability, Cloud-Native. Shown on the 2026 board tab as the `Exam-2026 · judged` column (informational — not in the composite until the judged track completes).
+All 21 board models, 30 questions each, zero request/judge errors. Hardest domains across the field: Timing & Sync, Regulatory Services; easiest: Energy & Sustainability, Cloud-Native. Shown on the 2026 board tab as the `Exam-2026 · judged` column (informational — not in the composite until the judged track completes).
 
 ## Layout
 

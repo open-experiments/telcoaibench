@@ -439,6 +439,30 @@
    "exam2026_judged": 0.4894
   },
   {
+   "model": "glm-4-7-flash",
+   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin": "China",
+   "board2025_rank": null,
+   "suites": {
+    "rel19_bench": 0.8269,
+    "ntn_bench": 0.8333,
+    "netapi_bench": 0.8289,
+    "aiops_bench": 0.9583,
+    "exam2026": 0.3846
+   },
+   "mean": 0.8619,
+   "exam2026_judged": 0.3846,
+   "shuffleA": 0.8269,
+   "shuffleB": 0.8269,
+   "ntn_shuffleA": 0.8,
+   "ntn_shuffleB": 0.8667,
+   "netapi_shuffleA": 0.7895,
+   "netapi_shuffleB": 0.8684,
+   "aiops_shuffleA": 0.9667,
+   "aiops_shuffleB": 0.95,
+   "rank": 19
+  },
+  {
    "model": "lfm2-5-vl-3b",
    "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
    "origin": "USA",
@@ -460,7 +484,7 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 19
+   "rank": 20
   },
   {
    "model": "lfm2-5-2-6b-base",
@@ -484,7 +508,7 @@
    "netapi_shuffleB": 0.7632,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 20
+   "rank": 21
   }
  ],
  "suite_names": {

@@ -22,7 +22,8 @@ One report card per model benchmarked on the **2026 Test Suite · 6G Within** tr
 | 16 | nemotron-cascade-2-30b | **0.8670** | USA | #None | [report](nemotron-cascade-2-30b.md) |
 | 17 | mistral-small-3-2-24b | **0.8666** | France | #11 | [report](mistral-small-3-2-24b.md) |
 | 18 | nemotron-3-super-120b | **0.8643** | USA | #8 | [report](nemotron-3-super-120b.md) |
-| 19 | lfm2-5-vl-3b | **0.8407** | USA | #None | [report](lfm2-5-vl-3b.md) |
-| 20 | lfm2-5-2-6b-base | **0.8336** | USA | #None | [report](lfm2-5-2-6b-base.md) |
+| 19 | glm-4-7-flash | **0.8619** | China | #None | [report](glm-4-7-flash.md) |
+| 20 | lfm2-5-vl-3b | **0.8407** | USA | #None | [report](lfm2-5-vl-3b.md) |
+| 21 | lfm2-5-2-6b-base | **0.8336** | USA | #None | [report](lfm2-5-2-6b-base.md) |
 
 Legacy-board proof points live under [`../legacy-reports/`](../legacy-reports/).

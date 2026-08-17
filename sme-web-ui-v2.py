@@ -5938,14 +5938,21 @@ class ChatInterface:
             
                 with gr.TabItem("Benchmark"):
                     gr.Markdown(
-                        "Run the **embedded Open-Telco benchmark suite** "
-                        "(`benchmarks/open-telco/`) against any provisioned "
-                        "OpenAI-compatible model endpoint, with live progress. "
-                        "Datasets are embedded in this repository - no external "
-                        "dependencies. Scoring is parity-validated against the "
-                        "official GSMA harness. Every provisioned target gets "
-                        "its own card below; up to "
-                        "two can run in parallel."
+                        "Run the **embedded benchmark tracks** against any "
+                        "model endpoint - in-cluster models are discovered "
+                        "automatically, remote OpenAI-compatible endpoints "
+                        "provision below - with live progress. Two distinct "
+                        "suites: **Legacy Test Benchmarks** "
+                        "(`benchmarks/open-telco/`, GSMA-parity, scoring "
+                        "parity-validated against the official harness) and "
+                        "the **2026 Test Suite - 6G Within** "
+                        "(`benchmarks/open-telco-2026/` + the 2026 exam "
+                        "expansion, frozen; AUTO-SCORED tasks run both fixed "
+                        "answer shuffles in one pass, so reported accuracy "
+                        "equals the board's two-shuffle mean). Datasets are "
+                        "embedded in this repository - no external "
+                        "dependencies. Every provisioned target gets its own "
+                        "card below; up to two can run in parallel."
                     )
                     bench_keys_init = self._bench_registry_init()
                     self._judge_registry_init()
@@ -6011,16 +6018,28 @@ class ChatInterface:
                             "target card below; the registry persists in "
                             "`benchmark_endpoints.json`.")
                     with gr.Row():
-                        bench_tasks = gr.CheckboxGroup(
-                            choices=["teleqna", "teletables", "oranbench",
-                                     "srsranbench", "telemath", "telelogs",
-                                     "3gpp", "6g_bench",
-                                     "telcos_last_exam",
-                                     "telcos_last_exam_2026", "vendor_genai"],
-                            value=["teleqna", "telemath", "telelogs"],
-                            interactive=True,
-                            label="Benchmarks to run"
-                        )
+                        with gr.Column(scale=1):
+                            bench_tasks_legacy = gr.CheckboxGroup(
+                                choices=["teleqna", "teletables", "oranbench",
+                                         "srsranbench", "telemath", "telelogs",
+                                         "3gpp", "6g_bench",
+                                         "telcos_last_exam", "vendor_genai"],
+                                value=["teleqna", "telemath", "telelogs"],
+                                interactive=True,
+                                label="Legacy Test Benchmarks (GSMA-parity; "
+                                      "judged: telcos_last_exam, vendor_genai)"
+                            )
+                        with gr.Column(scale=1):
+                            bench_tasks_2026 = gr.CheckboxGroup(
+                                choices=["rel19_bench", "ntn_bench",
+                                         "netapi_bench", "aiops_bench",
+                                         "telcos_last_exam_2026"],
+                                value=[],
+                                interactive=True,
+                                label="2026 Test Suite - 6G Within (frozen; "
+                                      "AUTO-SCORED suites run both answer "
+                                      "shuffles; judged: telcos_last_exam_2026)"
+                            )
                     with gr.Row():
                         bench_tier = gr.Radio(
                             choices=["lite", "full"], value="lite", interactive=True,
@@ -6127,9 +6146,12 @@ class ChatInterface:
                                             interactive=False, visible=False)
 
                                         def _mk_run(k):
-                                            def _run(tasks, tier, limit,
+                                            def _run(tasks_legacy, tasks_2026,
+                                                     tier, limit,
                                                      conns, mtok, judge_key,
                                                      thinking):
+                                                tasks = (list(tasks_legacy or [])
+                                                         + list(tasks_2026 or []))
                                                 for out in self.run_benchmark(
                                                         k, k, tasks, tier,
                                                         limit, conns, mtok,
@@ -6173,7 +6195,9 @@ class ChatInterface:
                                         # ones queue, see run_benchmark)
                                         bench_run_sel.click(
                                             fn=_mk_run(key),
-                                            inputs=[bench_tasks, bench_tier,
+                                            inputs=[bench_tasks_legacy,
+                                                    bench_tasks_2026,
+                                                    bench_tier,
                                                     bench_limit, bench_conns,
                                                     bench_max_tokens,
                                                     bench_judge,
@@ -6183,7 +6207,9 @@ class ChatInterface:
                                         )
                                         run_btn.click(
                                             fn=_mk_run(key),
-                                            inputs=[bench_tasks, bench_tier,
+                                            inputs=[bench_tasks_legacy,
+                                                    bench_tasks_2026,
+                                                    bench_tier,
                                                     bench_limit, bench_conns,
                                                     bench_max_tokens,
                                                     bench_judge,
