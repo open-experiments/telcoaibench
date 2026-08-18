@@ -4,7 +4,7 @@
  "suite": "2026 Test Suite: rel19_bench (52q) + ntn_bench (45q) + netapi_bench (38q) + aiops_bench (60q) = 195q, AUTO-SCORED, frozen",
  "scope": "Rel-18/19 & 6G-readiness, NTN, network-API exposure, and AIOps/autonomous-network functional knowhow: capability limits, mechanisms, release availability, spec mapping, operational scenarios, classification/prediction/scaling tasks",
  "method": "Each model scored as the mean of two fixed answer-shuffles (A/B) of the identical frozen set; greedy decoding, temp 0. All 10 models on identical pinned serving stack except muse-glimmer-30b (day-0 engine, see its report).",
- "generated": "2026-08-17",
+ "generated": "2026-08-18",
  "results": [
   {
    "rank": 1,
@@ -13,7 +13,7 @@
    "shuffleA": 0.9038,
    "shuffleB": 0.9231,
    "mean": 0.9245,
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.9135,
@@ -39,7 +39,7 @@
    "shuffleA": 0.9231,
    "shuffleB": 0.9038,
    "mean": 0.9193,
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.9135,
@@ -65,7 +65,7 @@
    "shuffleA": 0.9038,
    "shuffleB": 0.9038,
    "mean": 0.9163,
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.9038,
@@ -91,7 +91,7 @@
    "shuffleA": 0.8846,
    "shuffleB": 0.8462,
    "mean": 0.9136,
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8654,
@@ -117,7 +117,7 @@
    "shuffleA": 0.9231,
    "shuffleB": 0.8654,
    "mean": 0.9085,
-   "origin_flag": "\ud83c\udde6\ud83c\uddea",
+   "origin_flag": "🇦🇪",
    "origin": "UAE",
    "suites": {
     "rel19_bench": 0.8942,
@@ -143,7 +143,7 @@
    "shuffleA": 0.9038,
    "shuffleB": 0.8654,
    "mean": 0.9058,
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.8846,
@@ -169,7 +169,7 @@
    "shuffleA": 0.9038,
    "shuffleB": 0.8846,
    "mean": 0.9014,
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.8942,
@@ -190,7 +190,7 @@
   },
   {
    "model": "llama31-nemotron-70b",
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "board2025_rank": null,
    "suites": {
@@ -221,7 +221,7 @@
    "shuffleA": 0.8269,
    "shuffleB": 0.8077,
    "mean": 0.8928,
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8173,
@@ -242,7 +242,7 @@
   },
   {
    "model": "nemotron-3-5-lightning-30b",
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "board2025_rank": 27,
    "suites": {
@@ -268,7 +268,7 @@
   },
   {
    "model": "qwen3-5-9b-base",
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "board2025_rank": null,
    "suites": {
@@ -299,7 +299,7 @@
    "shuffleA": 0.8269,
    "shuffleB": 0.7885,
    "mean": 0.8812,
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "suites": {
     "rel19_bench": 0.8077,
@@ -320,7 +320,7 @@
   },
   {
    "model": "falcon-h1-34b",
-   "origin_flag": "\ud83c\udde6\ud83c\uddea",
+   "origin_flag": "🇦🇪",
    "origin": "UAE",
    "board2025_rank": 13,
    "suites": {
@@ -346,7 +346,7 @@
   },
   {
    "model": "lfm2-5-8b-a1b",
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "board2025_rank": null,
    "suites": {
@@ -372,7 +372,7 @@
   },
   {
    "model": "synlogic-mix-3-32b",
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "board2025_rank": null,
    "suites": {
@@ -398,7 +398,7 @@
   },
   {
    "model": "nemotron-cascade-2-30b",
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "board2025_rank": null,
    "suites": {
@@ -424,7 +424,7 @@
   },
   {
    "model": "mistral-small-3-2-24b",
-   "origin_flag": "\ud83c\uddeb\ud83c\uddf7",
+   "origin_flag": "🇫🇷",
    "origin": "France",
    "board2025_rank": 11,
    "suites": {
@@ -455,7 +455,7 @@
    "shuffleA": 0.75,
    "shuffleB": 0.7692,
    "mean": 0.8643,
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "suites": {
     "rel19_bench": 0.7596,
@@ -476,7 +476,7 @@
   },
   {
    "model": "glm-4-7-flash",
-   "origin_flag": "\ud83c\udde8\ud83c\uddf3",
+   "origin_flag": "🇨🇳",
    "origin": "China",
    "board2025_rank": null,
    "suites": {
@@ -501,8 +501,34 @@
    "vendor2026_judged": 0.2194
   },
   {
+   "rank": 20,
+   "model": "moonlight-16b-a3b-it",
+   "board2025_rank": null,
+   "shuffleA": 0.7885,
+   "shuffleB": 0.7115,
+   "mean": 0.8438,
+   "origin_flag": "🇨🇳",
+   "origin": "China",
+   "suites": {
+    "rel19_bench": 0.75,
+    "ntn_bench": 0.8,
+    "netapi_bench": 0.8421,
+    "aiops_bench": 0.9833,
+    "exam2026": 0.2907,
+    "vendor2026": 0.2288
+   },
+   "ntn_shuffleA": 0.8222,
+   "ntn_shuffleB": 0.7778,
+   "netapi_shuffleA": 0.8158,
+   "netapi_shuffleB": 0.8684,
+   "aiops_shuffleA": 1.0,
+   "aiops_shuffleB": 0.9667,
+   "exam2026_judged": 0.2907,
+   "vendor2026_judged": 0.2288
+  },
+  {
    "model": "lfm2-5-vl-3b",
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "board2025_rank": null,
    "suites": {
@@ -523,12 +549,12 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 20,
+   "rank": 21,
    "vendor2026_judged": 0.1996
   },
   {
    "model": "lfm2-5-2-6b-base",
-   "origin_flag": "\ud83c\uddfa\ud83c\uddf8",
+   "origin_flag": "🇺🇸",
    "origin": "USA",
    "board2025_rank": null,
    "suites": {
@@ -549,7 +575,7 @@
    "netapi_shuffleB": 0.7632,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 21,
+   "rank": 22,
    "vendor2026_judged": 0.155
   }
  ],
@@ -558,8 +584,8 @@
   "ntn_bench": "NTN-Bench",
   "netapi_bench": "NetAPI-Bench",
   "aiops_bench": "AIOps-Bench",
-  "exam2026": "Exam-2026 \u00b7 judged",
-  "vendor2026": "Vendor-2026 \u00b7 judged"
+  "exam2026": "Exam-2026 · judged",
+  "vendor2026": "Vendor-2026 · judged"
  },
  "scoring": "Per AUTO-SCORED suite: mean of two fixed answer-shuffles (greedy, temp 0); Score = equal-weight mean across the four auto-scored suites. Judged columns (Exam-2026, Vendor-2026): LLM-as-judge (gpt-5.6-sol) grading - exam vs worked references (points-weighted), vendor vs anchored rubric (accuracy/completeness/depth/honesty 0.40/0.20/0.15/0.25); informational, not in Score."
 }

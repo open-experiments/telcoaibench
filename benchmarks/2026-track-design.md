@@ -1,7 +1,7 @@
 # TelcoAIBench 2026 Track — Design
 
 **Status:** approved 2026-08-16 · auto-scored track delivered (195q frozen, Marathon #02
-complete) · exam-2026 delivered (21-model judged marathon) · vendor-genai-2026 frozen, marathon in progress.
+complete) · exam-2026 + vendor-genai-2026 delivered (full judged marathons) · 22 models on the 2026 board.
 
 ## Why
 
@@ -61,6 +61,22 @@ official reports.
    a time (one per GPU), JSON-verified serving swaps.
 6. **Publish** — board column + per-model [report cards](model-reports/2026-reports/),
    frozen datasets + provenance in the suite folder, one git patch per delivery.
+
+## Parse amendment v1.1 (2026 suites only, 2026-08-18)
+
+Some instruct models answer MCQs in the natural `B) <restated choice>` style and
+systematically ignore the `ANSWER: X` protocol line even when instructed verbatim
+(first observed: Moonlight-16B-A3B-Instruct — 15/15 correct letters on the rel19
+pilot, 0/15 protocol-compliant). The 2026 AUTO-SCORED suites therefore use
+`score_mcq_2026`: identical to the verbatim-port scorer, plus a fallback that
+accepts a single leading choice letter at the start of the reply **only when no
+`ANSWER: X` line is present anywhere**. The legacy GSMA-parity suites keep the
+verbatim-port scorer untouched.
+
+Adoption gate: a re-parse audit of all 21 board models' stored 2026 transcripts
+(8,190 rows = 195 questions x 2 shuffles x 21 models) confirmed the fallback
+fires 0 times on existing runs — published scores are byte-identical under v1.0
+and v1.1.
 
 ## Board
 

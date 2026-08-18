@@ -171,7 +171,7 @@ renders the public board from the versioned snapshot.
 
 ## Benchmark Suites
 
-<img src="docs/assets/board-2026.png" alt="2026 Test Suite board - 21 models" width="920"/>
+<img src="docs/assets/board-2026.png" alt="2026 Test Suite board" width="920"/>
 
 All benchmark assets live under [`benchmarks/`](benchmarks/README.md):
 

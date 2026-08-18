@@ -196,6 +196,28 @@ def score_mcq(completion: str, record: dict):
     return parsed == target, parsed, target
 
 
+# 2026-track parse amendment v1.1 (2026 suites ONLY - the legacy GSMA-parity
+# suites above keep the verbatim-port scorer). Some instruct models answer
+# MCQs in the natural "B) <restated choice>" style and systematically ignore
+# the 'ANSWER: X' protocol line (first observed: Moonlight-16B-A3B-Instruct,
+# 15/15 correct letters, 0/15 protocol-compliant). When and only when no
+# 'ANSWER: X' line is present, fall back to a single leading choice letter at
+# the start of the reply. Adopted 2026-08-18 after a zero-drift audit
+# re-parsing all 21 board models' stored 2026 transcripts (see
+# benchmarks/2026-track-design.md).
+LEADING_LETTER = re.compile(r"^\s*[*_#]{0,3}\(?([A-Za-z])\)?\s*(?:[).:,-]|$)")
+
+
+def score_mcq_2026(completion: str, record: dict):
+    """score_mcq + leading-letter fallback (parse v1.1, 2026 suites only)."""
+    ok, parsed, target = score_mcq(completion, record)
+    if not parsed:
+        m = LEADING_LETTER.match(completion or "")
+        if m:
+            parsed = m.group(1).upper()
+    return parsed == target, parsed, target
+
+
 def score_telemath(completion: str, record: dict):
     """Boxed numeric answer, correct if within 1% rel or 0.01 abs."""
     target = str(record["answer"])
@@ -269,16 +291,16 @@ TASKS = {
     # --- 2026 Test Suite (AUTO-SCORED, frozen; see benchmarks/open-telco-2026/) ---
     # each task concatenates both frozen answer shuffles (_A + _B): one run
     # reproduces the board's two-shuffle-mean protocol exactly
-    "rel19_bench":  {"prompt": build_mcq_prompt, "score": score_mcq,
+    "rel19_bench":  {"prompt": build_mcq_prompt, "score": score_mcq_2026,
                      "paths": ["open-telco-2026/datasets/lite/rel19_bench_A.jsonl.gz",
                                "open-telco-2026/datasets/lite/rel19_bench_B.jsonl.gz"]},
     "ntn_bench":    {"prompt": build_mcq_prompt, "score": score_mcq,
                      "paths": ["open-telco-2026/datasets/lite/ntn_bench_A.jsonl.gz",
                                "open-telco-2026/datasets/lite/ntn_bench_B.jsonl.gz"]},
-    "netapi_bench": {"prompt": build_mcq_prompt, "score": score_mcq,
+    "netapi_bench": {"prompt": build_mcq_prompt, "score": score_mcq_2026,
                      "paths": ["open-telco-2026/datasets/lite/netapi_bench_A.jsonl.gz",
                                "open-telco-2026/datasets/lite/netapi_bench_B.jsonl.gz"]},
-    "aiops_bench":  {"prompt": build_mcq_prompt, "score": score_mcq,
+    "aiops_bench":  {"prompt": build_mcq_prompt, "score": score_mcq_2026,
                      "paths": ["open-telco-2026/datasets/lite/aiops_bench_A.jsonl.gz",
                                "open-telco-2026/datasets/lite/aiops_bench_B.jsonl.gz"]},
     # 2026 expansion batch 1 (30 expert q, 260 pts); full 2026 exam = this + legacy, points-weighted

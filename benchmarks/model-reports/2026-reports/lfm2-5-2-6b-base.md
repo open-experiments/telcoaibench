@@ -1,6 +1,6 @@
 # lfm2-5-2-6b-base — 2026 Test Suite Report Card
 
-**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** #None
+**Track:** 2026 Test Suite · 6G Within (AUTO-SCORED) · **Origin:** USA · **Legacy Test Benchmark rank:** new
 
 Composite (equal-weight mean of 4 AUTO-SCORED suites, 195 questions, each scored on two frozen answer shuffles): **0.8336** · Exam-2026 judged score (informational): **0.2096**
 
