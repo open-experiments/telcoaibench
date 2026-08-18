@@ -339,6 +339,8 @@
   .lb-cell{display:inline-block;min-width:46px;text-align:center;padding:3px 7px;border-radius:6px;
     font-variant-numeric:tabular-nums;font-size:13px;color:var(--txt)}
   .lb-cell.na{color:var(--faint)}
+  #lb-board tr.lb-fold{display:none}
+  #lb-board.lb-expanded tr.lb-fold{display:table-row}
 </style>
 <script>
 function lbTab(n){
@@ -347,11 +349,12 @@ function lbTab(n){
   document.getElementById('lb-tab1').classList.toggle('active', n===1);
   document.getElementById('lb-tab2').classList.toggle('active', n===2);
 }
-var _m02d=null, _m02sort={key:'mean', dir:-1};
+var _m02d=null, _m02sort={key:'mean', dir:-1}, _m02ShowAll=false, M02_FOLD=10;
 function m02Sort(key){
   if(_m02sort.key===key){_m02sort.dir=-_m02sort.dir;}else{_m02sort={key:key,dir:-1};}
   renderM02();
 }
+function m02Toggle(){ _m02ShowAll=!_m02ShowAll; renderM02(); }
 function renderM02(){
   const d=_m02d; if(!d) return;
   const suiteKeys=Object.keys(d.suite_names||{});
@@ -379,7 +382,8 @@ function renderM02(){
     +th('&Delta;')+'</tr>';
   const m02means=(d.results||[]).map(r=>r.mean);
   const m02mn=Math.min.apply(null,m02means), m02mx=Math.max.apply(null,m02means);
-  for(const r of rows){
+  const shown=_m02ShowAll?rows:rows.slice(0,M02_FOLD);
+  for(const r of shown){
     const hasLegacy=(r.board2025_rank!=null);
     const delta=hasLegacy?(r.board2025_rank-r.rank):NaN;
     const ds=delta>0?'<span style="color:var(--green)">&#9650; '+delta+'</span>'
@@ -397,7 +401,15 @@ function renderM02(){
       +'<td style="padding:7px 6px;color:var(--faint)">'+(hasLegacy?('#'+r.board2025_rank):'new')+'</td>'
       +'<td style="padding:7px 6px">'+ds+'</td></tr>';
   }
-  document.getElementById('m02-board').innerHTML=h+'</table>';
+  h+='</table>';
+  if(rows.length>M02_FOLD){
+    h+='<div style="text-align:center;margin-top:12px"><button onclick="m02Toggle()" '
+      +'style="background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);'
+      +'padding:7px 18px;font-size:13px;cursor:pointer">'
+      +(_m02ShowAll?'Show top '+M02_FOLD+' &#9652;':'Show all '+rows.length+' models &#9662;')
+      +'</button></div>';
+  }
+  document.getElementById('m02-board').innerHTML=h;
 }
 fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
   _m02d=d;
@@ -475,8 +487,11 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
   const heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
   let h='<div class="lbx"><table><tr><th class="colstick" style="z-index:3">Rank &nbsp; Model</th><th>Origin</th><th title="importance-weighted mean of all 10 suites - only defined once both judge-graded suites are recorded">Composite<span class="lb-sub">all 10 &middot; &Delta; vs Auto-8</span></th><th title="importance-weighted mean of the 8 machine-scored suites - defined for every model on the board, so this column IS comparable top to bottom">Auto-8<span class="lb-sub">same basis for all</span></th>';
   h+=tasks.map(t=>'<th title="'+t+'">'+(short[t]||t)+'</th>').join('')+'</tr>';
-  let i=0, bandBreak=false;
+  let i=0, bandBreak=false, rowN=0;
+  const LB_FOLD=10;
   for(const r of rows){
+    rowN++;
+    const foldCls=rowN>LB_FOLD?' class="lb-fold"':'';
     const isRanked=ranked.includes(r); i+=isRanked?1:0;
     // Verified = both judge-graded suites recorded. Everything below that line
     // is scored on 8 of 10 suites, missing the two hardest, so its composite
@@ -484,14 +499,14 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     // let the reader infer a sorting bug from the jump at the band boundary.
     const ver=r.verified===true;
     if(isRanked && !ver && !bandBreak){ bandBreak=true;
-      h+='<tr class="lb-band"><td colspan="'+(4+tasks.length)+'">Provisional &middot; judged suites not yet run &ndash; ranked on Auto-8 alone</td></tr>'; }
+      h+='<tr class="lb-band'+(rowN>LB_FOLD?' lb-fold':'')+'"><td colspan="'+(4+tasks.length)+'">Provisional &middot; judged suites not yet run &ndash; ranked on Auto-8 alone</td></tr>'; }
     const rk=isRanked?'<span class="lb-rank r'+i+'">'+i+'</span>':'<span class="lb-rank">&ndash;</span>';
     const cov=Math.round((r.coverage||0)*100);
     const chip=cov>=100?'<span class="lb-chip full">FULL + JUDGED</span>'
       :isRanked?'<span class="lb-chip mcq">AUTO-SCORED</span>'
       :'<span class="lb-chip part">'+cov+'% &middot; IN PROGRESS</span>';
     const og=origin[r.model]||['\u{1F310}','\u2013'];
-    h+='<tr><td class="colstick">'+rk+' &nbsp;<span class="lb-model">'+r.model+'</span>'+chip+'</td>';
+    h+='<tr'+foldCls+'><td class="colstick">'+rk+' &nbsp;<span class="lb-model">'+r.model+'</span>'+chip+'</td>';
     h+='<td><span style="font-size:17px;vertical-align:-2px">'+og[0]+'</span> <span style="color:var(--dim);font-size:13px">'+og[1]+'</span></td>';
     // The full composite appears ONLY where all 10 suites exist. Anywhere else
     // it would be a weighted mean over a different, easier denominator - a
@@ -521,6 +536,14 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
     }).join('')+'</tr>';
   }
   h+='</table></div>';
+  if(rows.length>LB_FOLD){
+    h+='<div style="text-align:center;margin-top:12px"><button id="lb-foldbtn" '
+      +'style="background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);'
+      +'padding:7px 18px;font-size:13px;cursor:pointer" '
+      +'onclick="var f=this.parentNode.parentNode.classList.toggle(\'lb-expanded\');'
+      +'this.innerHTML=f?\'Show top '+LB_FOLD+' &#9652;\':\'Show all '+rows.length+' models &#9662;\';">'
+      +'Show all '+rows.length+' models &#9662;</button></div>';
+  }
   host.innerHTML=h;
   document.getElementById('lb-legend').style.display='flex';
 }).catch(()=>{document.getElementById('lb-meta').textContent='Leaderboard snapshot not available.';});
@@ -578,7 +601,10 @@ fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
   .tf-empty{margin:auto;text-align:center;color:var(--faint);font-size:12px;padding:16px 8px}
 </style>
 <script>
-fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
+var _tfd=null, _tfOpen={}, TF_FOLD=3;
+function tfToggle(t){ _tfOpen[t]=!_tfOpen[t]; renderTF(); }
+function renderTF(){
+  const d=_tfd; if(!d) return;
   const cols=[
     {t:0,name:'Tier 0 - RAN-Embedded',color:'#2DD4BF',env:'<1ms slot-scale &middot; <10M params &middot; CPU/NPU'},
     {t:1,name:'Tier 1 - User Edge',color:'var(--amber)',env:'10-50ms TTFT &middot; small models &middot; 1-4 GPUs'},
@@ -604,7 +630,8 @@ fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
     } else if(!list.length){
       h+='<div class="tf-empty">No model measured<br/>into this envelope yet.</div>';
     } else {
-      for(const [m,v] of list){
+      const vis=_tfOpen[c.t]?list:list.slice(0,TF_FOLD);
+      for(const [m,v] of vis){
         const trk=(v.score_track==='2026')
           ?'<span style="color:var(--cyan);font-size:9.5px;border:1px solid rgba(34,211,238,.35);border-radius:6px;padding:0 4px;margin-left:5px;vertical-align:1px">2026</span>'
           :'<span style="color:var(--faint);font-size:9.5px;border:1px solid var(--line);border-radius:6px;padding:0 4px;margin-left:5px;vertical-align:1px">legacy</span>';
@@ -617,11 +644,19 @@ fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
           +(v.notes?'<div class="note">'+v.notes+'</div>':'')
           +'</div>';
       }
+      if(list.length>TF_FOLD){
+        h+='<button onclick="tfToggle('+c.t+')" style="background:none;border:1px dashed var(--line);'
+          +'border-radius:8px;color:var(--faint);padding:5px 0;font-size:11px;cursor:pointer;width:100%">'
+          +(_tfOpen[c.t]?'Show top '+TF_FOLD+' &#9652;':'+'+(list.length-TF_FOLD)+' more &#9662;')
+          +'</button>';
+      }
     }
     h+='</div></div>';
   }
   document.getElementById('tf-grid').innerHTML=h;
-}).catch(()=>{document.getElementById('tf-meta').textContent='Tier fitment data not available yet.';});
+}
+fetch('data/tierfit.json').then(r=>r.json()).then(d=>{ _tfd=d; renderTF(); })
+.catch(()=>{document.getElementById('tf-meta').textContent='Tier fitment data not available yet.';});
 </script>
 
 <section id="reports">
