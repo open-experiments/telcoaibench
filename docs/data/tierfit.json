@@ -1,6 +1,6 @@
 {
- "generated": "2026-08-15 23:05",
- "phase": "Judged pass complete (judge: gpt-5.6-sol) - 31 models fitted",
+ "generated": "2026-08-18",
+ "phase": "43 models fitted - 2026-board composites where available, legacy composites tagged",
  "tiers": {
   "0": "RAN-embedded <10M CPU/NPU - generative LLMs excluded by design",
   "1": "User edge - small models, 1-4 GPUs, 10-50ms",
@@ -10,7 +10,7 @@
  },
  "models": {
   "telecomgpt-r1": {
-   "composite": 0.6802,
+   "composite": 0.9085,
    "coverage": 1.0,
    "params_b": 27,
    "weights_gb": 55,
@@ -28,10 +28,11 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "2026"
   },
   "gemma4-31b-it-base": {
-   "composite": 0.6459,
+   "composite": 0.9193,
    "coverage": 1.0,
    "params_b": 31,
    "weights_gb": 62,
@@ -49,10 +50,11 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "2026"
   },
   "otel2-llm-31b-it": {
-   "composite": 0.5993,
+   "composite": 0.9058,
    "coverage": 1.0,
    "params_b": 31,
    "weights_gb": 62,
@@ -70,10 +72,11 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "2026"
   },
   "gpt-oss-120b": {
-   "composite": 0.5601,
+   "composite": 0.9014,
    "coverage": 1.0,
    "params_b": 117,
    "weights_gb": 63,
@@ -91,10 +94,11 @@
    },
    "fit_tier": 4,
    "size_band_tier": 4,
-   "notes": "117B places it at Tier 4 on size, but it runs in 63GB MXFP4 on a single GPU and answers in ~6.6s - by far the cheapest and fastest 100B+ model measured; served quantized (mxfp4)"
+   "notes": "117B places it at Tier 4 on size, but it runs in 63GB MXFP4 on a single GPU and answers in ~6.6s - by far the cheapest and fastest 100B+ model measured; served quantized (mxfp4)",
+   "score_track": "2026"
   },
   "seed-oss-36b": {
-   "composite": 0.5456,
+   "composite": 0.8928,
    "coverage": 1.0,
    "params_b": 36,
    "weights_gb": 72,
@@ -112,10 +116,11 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "2026"
   },
   "nemotron-3-super-120b": {
-   "composite": 0.5456,
+   "composite": 0.8643,
    "coverage": 1.0,
    "params_b": 124,
    "weights_gb": 124,
@@ -133,10 +138,11 @@
    },
    "fit_tier": 4,
    "size_band_tier": 4,
-   "notes": "served quantized (fp8 moe(12B act))"
+   "notes": "served quantized (fp8 moe(12B act))",
+   "score_track": "2026"
   },
   "qwq-32b": {
-   "composite": 0.5304,
+   "composite": 0.8812,
    "coverage": 1.0,
    "params_b": 32,
    "weights_gb": 66,
@@ -154,10 +160,11 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "2026"
   },
   "qwen3-6-35b-a3b": {
-   "composite": 0.5284,
+   "composite": 0.9245,
    "coverage": 1.0,
    "params_b": 35,
    "weights_gb": 72,
@@ -175,10 +182,11 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "2026"
   },
   "mistral-small-3-2-24b": {
-   "composite": 0.5235,
+   "composite": 0.8666,
    "coverage": 1.0,
    "params_b": 24,
    "weights_gb": 48,
@@ -196,7 +204,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "2026"
   },
   "magistral-small-2509": {
    "composite": 0.5208,
@@ -217,10 +226,11 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "falcon-h1-34b": {
-   "composite": 0.5137,
+   "composite": 0.8764,
    "coverage": 1.0,
    "params_b": 34,
    "weights_gb": 67,
@@ -238,7 +248,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "2026"
   },
   "kimi-dev-72b": {
    "composite": 0.502,
@@ -259,7 +270,8 @@
    },
    "fit_tier": 4,
    "size_band_tier": 3,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit)"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (awq-4bit)",
+   "score_track": "legacy"
   },
   "qwen3-6-27b": {
    "composite": 0.4983,
@@ -280,7 +292,8 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "legacy"
   },
   "glm-4-5-air": {
    "composite": 0.482,
@@ -301,7 +314,8 @@
    },
    "fit_tier": 4,
    "size_band_tier": 4,
-   "notes": "served quantized (awq-4bit moe(12B act))"
+   "notes": "served quantized (awq-4bit moe(12B act))",
+   "score_track": "legacy"
   },
   "exaone-4-0-32b": {
    "composite": 0.4755,
@@ -322,7 +336,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "r1-distill-qwen-32b": {
    "composite": 0.4754,
@@ -343,7 +358,8 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "legacy"
   },
   "hunyuan-a13b": {
    "composite": 0.4536,
@@ -364,7 +380,8 @@
    },
    "fit_tier": 4,
    "size_band_tier": 3,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (fp8 moe(13B act))"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up; served quantized (fp8 moe(13B act))",
+   "score_track": "legacy"
   },
   "phi-4-reasoning-plus": {
    "composite": 0.4392,
@@ -385,7 +402,8 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "legacy"
   },
   "otel-llm-20b-it": {
    "composite": 0.4287,
@@ -406,7 +424,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "nemotron-3-nano-30b": {
    "composite": 0.4252,
@@ -427,7 +446,8 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "legacy"
   },
   "gpt-oss-20b": {
    "composite": 0.5747,
@@ -448,7 +468,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": "served quantized (mxfp4)"
+   "notes": "served quantized (mxfp4)",
+   "score_track": "legacy"
   },
   "granite-4-0-h-small": {
    "composite": 0.4925,
@@ -469,7 +490,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "lfm2-5-2-6b": {
    "composite": 0.4751,
@@ -490,7 +512,8 @@
    },
    "fit_tier": 1,
    "size_band_tier": 1,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "eurollm-22b": {
    "composite": 0.4515,
@@ -511,10 +534,11 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "nemotron-3-5-lightning-30b": {
-   "composite": 0.4219,
+   "composite": 0.8869,
    "coverage": 0.696,
    "params_b": 31,
    "weights_gb": 63,
@@ -532,7 +556,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "2026"
   },
   "apertus-8b": {
    "composite": 0.3854,
@@ -553,7 +578,8 @@
    },
    "fit_tier": 1,
    "size_band_tier": 1,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "kimi-linear-48b-bf16": {
    "composite": 0.3727,
@@ -574,7 +600,8 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": ""
+   "notes": "",
+   "score_track": "legacy"
   },
   "eurollm-9b": {
    "composite": 0.3653,
@@ -595,7 +622,8 @@
    },
    "fit_tier": 1,
    "size_band_tier": 1,
-   "notes": "4096-token context: long-context suites need the answer budget capped at 512 tokens to fit prompt+answer"
+   "notes": "4096-token context: long-context suites need the answer budget capped at 512 tokens to fit prompt+answer",
+   "score_track": "legacy"
   },
   "kimi-vl-a3b-thinking": {
    "composite": 0.32,
@@ -616,10 +644,11 @@
    },
    "fit_tier": 3,
    "size_band_tier": 2,
-   "notes": "verbose/slow decode - latency envelope only fits a tier up"
+   "notes": "verbose/slow decode - latency envelope only fits a tier up",
+   "score_track": "legacy"
   },
   "muse-glimmer-30b": {
-   "composite": 0.6031,
+   "composite": 0.9163,
    "coverage": 1.0,
    "params_b": 30,
    "weights_gb": 60,
@@ -637,10 +666,11 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": "near-zero judged-auto gap (-0.003); runs on vLLM day-0 image 0.26.1rc1.dev608 (MuseGlimmerForConditionalGeneration not in pinned v0.26.0) - engine not stack-comparable with the rest of the board"
+   "notes": "near-zero judged-auto gap (-0.003); runs on vLLM day-0 image 0.26.1rc1.dev608 (MuseGlimmerForConditionalGeneration not in pinned v0.26.0) - engine not stack-comparable with the rest of the board",
+   "score_track": "2026"
   },
   "qwen3-8-27b": {
-   "composite": 0.5909,
+   "composite": 0.9136,
    "coverage": 1.0,
    "params_b": 27,
    "weights_gb": 56,
@@ -658,7 +688,164 @@
    },
    "fit_tier": 2,
    "size_band_tier": 2,
-   "notes": "golden config: reasoning disabled (chat_template_kwargs enable_thinking=false); board score is best of 3 configs - winning run used the no-thinking config"
+   "notes": "golden config: reasoning disabled (chat_template_kwargs enable_thinking=false); board score is best of 3 configs - winning run used the no-thinking config",
+   "score_track": "2026"
+  },
+  "qwen3-5-4b": {
+   "composite": 0.8836,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 4.7,
+   "weights_gb": 10,
+   "precision": "bf16",
+   "mean_latency_s": 0.9,
+   "mean_output_tokens": 5,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "Hybrid GDN + sparse-MoE User-Edge model; thinking disabled (golden config); ~5-token answers."
+  },
+  "gemma4-e2b-it": {
+   "composite": 0.8624,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 5.1,
+   "weights_gb": 10,
+   "precision": "bf16",
+   "mean_latency_s": 2.8,
+   "mean_output_tokens": 407,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "~2.3B-effective selective activation; text-only eval; widest measured shuffle sensitivity (9.6 pts on Rel-19)."
+  },
+  "phi-4-mini": {
+   "composite": 0.7859,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 3.8,
+   "weights_gb": 8,
+   "precision": "bf16",
+   "mean_latency_s": 0.8,
+   "mean_output_tokens": 21,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "MIT-licensed 3.8B; standard serving on the pinned engine."
+  },
+  "lfm2-5-2-6b-base": {
+   "composite": 0.8336,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 2.7,
+   "weights_gb": 5,
+   "precision": "bf16",
+   "mean_latency_s": 1.7,
+   "mean_output_tokens": 105,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "Base edge model; follows ANSWER: X with occasional LaTeX wrapping."
+  },
+  "lfm2-5-vl-3b": {
+   "composite": 0.8407,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 3.1,
+   "weights_gb": 6,
+   "precision": "bf16",
+   "mean_latency_s": 1.3,
+   "mean_output_tokens": 132,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "VL edge model, text-only eval; --trust-remote-code."
+  },
+  "lfm2-5-8b-a1b": {
+   "composite": 0.8708,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 8.5,
+   "weights_gb": 16,
+   "precision": "bf16",
+   "mean_latency_s": 7.7,
+   "mean_output_tokens": 1067,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "Hybrid conv/GQA MoE 8B/1B-active; chain-of-thought baked into template (~1k tokens/answer)."
+  },
+  "qwen3-5-9b-base": {
+   "composite": 0.8826,
+   "score_track": "2026",
+   "fit_tier": 1,
+   "size_band_tier": 1,
+   "params_b": 9.7,
+   "weights_gb": 18,
+   "precision": "bf16",
+   "mean_latency_s": 8.8,
+   "mean_output_tokens": 1142,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "Base model, verbose (~1.1k tokens/answer) but protocol-compliant."
+  },
+  "moonlight-16b-a3b-it": {
+   "composite": 0.8438,
+   "score_track": "2026",
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "params_b": 16.0,
+   "weights_gb": 30,
+   "precision": "bf16",
+   "mean_latency_s": 0.9,
+   "mean_output_tokens": 22,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "DeepSeek-V3-arch MoE 16B/3B-active; 8K context (max_tokens=4096 golden config); scored under 2026 parse v1.1."
+  },
+  "glm-4-7-flash": {
+   "composite": 0.8619,
+   "score_track": "2026",
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "params_b": 31.2,
+   "weights_gb": 62,
+   "precision": "bf16",
+   "mean_latency_s": 0.8,
+   "mean_output_tokens": 5,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "Thinking disabled (golden config); ultra-terse at temp 0."
+  },
+  "nemotron-cascade-2-30b": {
+   "composite": 0.867,
+   "score_track": "2026",
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "params_b": 31.6,
+   "weights_gb": 63,
+   "precision": "bf16",
+   "mean_latency_s": 0.8,
+   "mean_output_tokens": 6,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "MoE 30B/A3B; thinking disabled (golden config)."
+  },
+  "synlogic-mix-3-32b": {
+   "composite": 0.8692,
+   "score_track": "2026",
+   "fit_tier": 2,
+   "size_band_tier": 2,
+   "params_b": 32.8,
+   "weights_gb": 66,
+   "precision": "bf16",
+   "mean_latency_s": 0.9,
+   "mean_output_tokens": 6,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "RL reasoning-tuned; ultra-terse (~6 tokens) at temp 0."
+  },
+  "llama31-nemotron-70b": {
+   "composite": 0.8969,
+   "score_track": "2026",
+   "fit_tier": 3,
+   "size_band_tier": 3,
+   "params_b": 70.6,
+   "weights_gb": 141,
+   "precision": "bf16",
+   "mean_latency_s": 1.2,
+   "mean_output_tokens": 5,
+   "latency_source": "marathon transcripts p50, conc 8, temp 0",
+   "notes": "Served with --tensor-parallel-size=2 (both GPUs); terse aligned answers."
   }
  }
 }

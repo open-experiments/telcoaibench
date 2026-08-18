@@ -585,12 +585,16 @@ fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
     {t:2,name:'Tier 2 - Provider Edge',color:'var(--cyan)',env:'50-150ms &middot; 13-70B &middot; P/D disagg'},
     {t:3,name:'Tier 3 - Region',color:'var(--violet)',env:'100-300ms &middot; 70-405B &middot; complex tasks'},
     {t:4,name:'Tier 4 - Core DC',color:'var(--green)',env:'Throughput SLO &middot; 405B+ &middot; frontier'}];
-  document.getElementById('tf-meta').textContent=(d.phase||'')+'  |  snapshot '+(d.generated||'');
+  document.getElementById('tf-meta').textContent=(d.phase||'')+'  |  snapshot '+(d.generated||'')
+    +'  |  score tag: 2026 = 2026 Test Suite composite, legacy = Legacy Test Benchmark composite (different scales)';
   const byTier={1:[],2:[],3:[],4:[]};
   for(const [m,v] of Object.entries(d.models||{})) if(v.fit_tier) byTier[v.fit_tier].push([m,v]);
   let h='';
   for(const c of cols){
-    const list=(byTier[c.t]||[]).sort((a,b)=>(b[1].composite||0)-(a[1].composite||0));
+    const list=(byTier[c.t]||[]).sort((a,b)=>{
+      const ta=(a[1].score_track==='2026')?0:1, tb=(b[1].score_track==='2026')?0:1;
+      return ta!==tb ? ta-tb : (b[1].composite||0)-(a[1].composite||0);
+    });
     h+='<div class="tf-col"><div class="tf-head" style="border-top-color:'+c.color+'">'
       +'<span class="cnt">'+(c.t===0?'n/a':list.length)+'</span>'
       +'<h3 style="color:'+c.color+'">'+c.name+'</h3>'
@@ -601,9 +605,12 @@ fetch('data/tierfit.json').then(r=>r.json()).then(d=>{
       h+='<div class="tf-empty">No model measured<br/>into this envelope yet.</div>';
     } else {
       for(const [m,v] of list){
+        const trk=(v.score_track==='2026')
+          ?'<span style="color:var(--cyan);font-size:9.5px;border:1px solid rgba(34,211,238,.35);border-radius:6px;padding:0 4px;margin-left:5px;vertical-align:1px">2026</span>'
+          :'<span style="color:var(--faint);font-size:9.5px;border:1px solid var(--line);border-radius:6px;padding:0 4px;margin-left:5px;vertical-align:1px">legacy</span>';
         h+='<div class="tf-m" title="'+(v.notes||'').replace(/"/g,'&quot;')+'">'
           +'<b>'+m+'</b>'
-          +'<div class="st"><span class="comp">'+(v.composite!=null?v.composite.toFixed(3):'-')+'</span>'
+          +'<div class="st"><span class="comp">'+(v.composite!=null?v.composite.toFixed(3):'-')+'</span>'+trk
           +' &middot; '+(v.params_b||'?')+'B &middot; '+(v.weights_gb||'?')+'GB'
           +'<br/>'+(v.precision||'').split(' ')[0]
           +(v.mean_latency_s?' &middot; ~'+v.mean_latency_s+'s/ans':'')+'</div>'
