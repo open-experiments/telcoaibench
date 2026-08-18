@@ -1,7 +1,13 @@
 # TelcoAIBench 2026 Track — Design
 
 **Status:** approved 2026-08-16 · auto-scored track delivered (195q frozen, Marathon #02
-complete) · exam-2026 + vendor-genai-2026 delivered (full judged marathons) · 22 models on the 2026 board.
+complete) · exam-2026 + vendor-genai-2026 delivered (full judged marathons) · 25 models on the 2026 board.
+
+**Known-incompatible candidates:** `inclusionAI/Ling-3.0-tiny` (7.9B/1.3B-active MoE,
+`BailingMoeV3ForCausalLM` + hybrid KDA-MLA attention) does not load on the pinned
+vLLM v0.26.0 engine (arch unsupported; the in-image transformers fallback also fails -
+no `auto_map` in the model config). Weights are cached on `lb-ling-3-tiny`; revisit at
+the next engine bump.
 
 ## Why
 

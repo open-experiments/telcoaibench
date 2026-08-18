@@ -267,6 +267,32 @@
    "vendor2026_judged": 0.3088
   },
   {
+   "rank": 11,
+   "model": "qwen3-5-4b",
+   "board2025_rank": null,
+   "shuffleA": 0.8077,
+   "shuffleB": 0.8269,
+   "mean": 0.8836,
+   "origin_flag": "🇨🇳",
+   "origin": "China",
+   "suites": {
+    "rel19_bench": 0.8173,
+    "ntn_bench": 0.9,
+    "netapi_bench": 0.8421,
+    "aiops_bench": 0.975,
+    "exam2026": 0.4374,
+    "vendor2026": 0.2271
+   },
+   "ntn_shuffleA": 0.8889,
+   "ntn_shuffleB": 0.9111,
+   "netapi_shuffleA": 0.7895,
+   "netapi_shuffleB": 0.8947,
+   "aiops_shuffleA": 0.9833,
+   "aiops_shuffleB": 0.9667,
+   "exam2026_judged": 0.4374,
+   "vendor2026_judged": 0.2271
+  },
+  {
    "model": "qwen3-5-9b-base",
    "origin_flag": "🇨🇳",
    "origin": "China",
@@ -289,11 +315,11 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.9667,
-   "rank": 11,
+   "rank": 12,
    "vendor2026_judged": 0.2454
   },
   {
-   "rank": 12,
+   "rank": 13,
    "model": "qwq-32b",
    "board2025_rank": 9,
    "shuffleA": 0.8269,
@@ -341,7 +367,7 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.95,
-   "rank": 13,
+   "rank": 14,
    "vendor2026_judged": 0.2796
   },
   {
@@ -367,7 +393,7 @@
    "netapi_shuffleB": 0.9211,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.9333,
-   "rank": 14,
+   "rank": 15,
    "vendor2026_judged": 0.206
   },
   {
@@ -393,7 +419,7 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.95,
    "aiops_shuffleB": 0.9667,
-   "rank": 15,
+   "rank": 16,
    "vendor2026_judged": 0.316
   },
   {
@@ -419,7 +445,7 @@
    "netapi_shuffleB": 0.9211,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.9667,
-   "rank": 16,
+   "rank": 17,
    "vendor2026_judged": 0.2135
   },
   {
@@ -445,11 +471,11 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.9667,
-   "rank": 17,
+   "rank": 18,
    "vendor2026_judged": 0.2652
   },
   {
-   "rank": 18,
+   "rank": 19,
    "model": "nemotron-3-super-120b",
    "board2025_rank": 8,
    "shuffleA": 0.75,
@@ -475,6 +501,32 @@
    "vendor2026_judged": 0.2919
   },
   {
+   "rank": 20,
+   "model": "gemma4-e2b-it",
+   "board2025_rank": null,
+   "shuffleA": 0.7885,
+   "shuffleB": 0.8846,
+   "mean": 0.8624,
+   "origin_flag": "🇺🇸",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.8365,
+    "ntn_bench": 0.8222,
+    "netapi_bench": 0.8158,
+    "aiops_bench": 0.975,
+    "exam2026": 0.4158,
+    "vendor2026": 0.374
+   },
+   "ntn_shuffleA": 0.7778,
+   "ntn_shuffleB": 0.8667,
+   "netapi_shuffleA": 0.8158,
+   "netapi_shuffleB": 0.8158,
+   "aiops_shuffleA": 0.9833,
+   "aiops_shuffleB": 0.9667,
+   "exam2026_judged": 0.4158,
+   "vendor2026_judged": 0.374
+  },
+  {
    "model": "glm-4-7-flash",
    "origin_flag": "🇨🇳",
    "origin": "China",
@@ -497,11 +549,11 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.95,
-   "rank": 19,
+   "rank": 21,
    "vendor2026_judged": 0.2194
   },
   {
-   "rank": 20,
+   "rank": 22,
    "model": "moonlight-16b-a3b-it",
    "board2025_rank": null,
    "shuffleA": 0.7885,
@@ -549,7 +601,7 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 21,
+   "rank": 23,
    "vendor2026_judged": 0.1996
   },
   {
@@ -575,8 +627,34 @@
    "netapi_shuffleB": 0.7632,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 22,
+   "rank": 24,
    "vendor2026_judged": 0.155
+  },
+  {
+   "rank": 25,
+   "model": "phi-4-mini",
+   "board2025_rank": null,
+   "shuffleA": 0.7115,
+   "shuffleB": 0.6923,
+   "mean": 0.7859,
+   "origin_flag": "🇺🇸",
+   "origin": "USA",
+   "suites": {
+    "rel19_bench": 0.7019,
+    "ntn_bench": 0.7889,
+    "netapi_bench": 0.8026,
+    "aiops_bench": 0.85,
+    "exam2026": 0.2482,
+    "vendor2026": 0.1754
+   },
+   "ntn_shuffleA": 0.7778,
+   "ntn_shuffleB": 0.8,
+   "netapi_shuffleA": 0.7105,
+   "netapi_shuffleB": 0.8947,
+   "aiops_shuffleA": 0.8333,
+   "aiops_shuffleB": 0.8667,
+   "exam2026_judged": 0.2482,
+   "vendor2026_judged": 0.1754
   }
  ],
  "suite_names": {
