@@ -347,21 +347,39 @@ function lbTab(n){
   document.getElementById('lb-tab1').classList.toggle('active', n===1);
   document.getElementById('lb-tab2').classList.toggle('active', n===2);
 }
-fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
+var _m02d=null, _m02sort={key:'mean', dir:-1};
+function m02Sort(key){
+  if(_m02sort.key===key){_m02sort.dir=-_m02sort.dir;}else{_m02sort={key:key,dir:-1};}
+  renderM02();
+}
+function renderM02(){
+  const d=_m02d; if(!d) return;
   const suiteKeys=Object.keys(d.suite_names||{});
   const m02heat=v=>'background:rgba(139,92,246,'+(0.07+0.78*Math.max(0,Math.min(1,v)))+')';
-  document.getElementById('m02-meta').textContent =
-    (d.suite||'')+'  |  generated '+(d.generated||'')+'  |  '+(d.results||[]).length+' models';
+  const sk=_m02sort.key, dir=_m02sort.dir;
+  const val=r=> sk==='mean' ? r.mean : (r.suites||{})[sk];
+  const rows=(d.results||[]).slice().sort((a,b)=>{
+    const va=val(a), vb=val(b);
+    if(va==null&&vb==null) return a.rank-b.rank;
+    if(va==null) return 1; if(vb==null) return -1;
+    if(va===vb) return a.rank-b.rank;
+    return dir*((va>vb)?1:-1);
+  });
+  const arrow=k=> sk===k?('<span style="color:var(--violet)"> '+(dir===-1?'&#9660;':'&#9650;')+'</span>'):'';
+  const th=(label,key)=> key
+    ?'<th style="padding:6px 8px;cursor:pointer;user-select:none'+(sk===key?';color:var(--txt)':'')+'" '
+      +'title="Click to sort" onclick="m02Sort(\''+key+'\')">'+label+arrow(key)+'</th>'
+    :'<th style="padding:6px 8px">'+label+'</th>';
   let h='<table style="width:100%;border-collapse:collapse;font-size:13.5px">'
-    +'<tr style="color:var(--faint);text-align:left"><th style="padding:6px 8px">Rank</th>'
-    +'<th style="padding:6px 8px">Model</th><th style="padding:6px 8px">Origin</th><th style="padding:6px 8px">Score</th>'
+    +'<tr style="color:var(--faint);text-align:left">'+th('Rank')
+    +th('Model')+th('Origin')+th('Score','mean')
     +'<th style="padding:6px 8px"></th>'
-    +suiteKeys.map(k=>'<th style="padding:6px 8px">'+(d.suite_names||{})[k]+'</th>').join('')
-    +'<th style="padding:6px 8px">Legacy Test Benchmark</th>'
-    +'<th style="padding:6px 8px">&Delta;</th></tr>';
+    +suiteKeys.map(k=>th((d.suite_names||{})[k],k)).join('')
+    +th('Legacy Test Benchmark')
+    +th('&Delta;')+'</tr>';
   const m02means=(d.results||[]).map(r=>r.mean);
   const m02mn=Math.min.apply(null,m02means), m02mx=Math.max.apply(null,m02means);
-  for(const r of d.results||[]){
+  for(const r of rows){
     const hasLegacy=(r.board2025_rank!=null);
     const delta=hasLegacy?(r.board2025_rank-r.rank):NaN;
     const ds=delta>0?'<span style="color:var(--green)">&#9650; '+delta+'</span>'
@@ -373,12 +391,20 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
       +'<td style="padding:7px 6px;color:var(--dim);white-space:nowrap">'+(r.origin_flag||'')+' '+(r.origin||'')+'</td>'
       +'<td style="padding:7px 6px;font-variant-numeric:tabular-nums"><b>'+r.mean.toFixed(4)+'</b></td>'
       +'<td style="padding:7px 6px"><span class="m02-bar" style="width:'+Math.round(18+(m02mx>m02mn?(r.mean-m02mn)/(m02mx-m02mn):1)*102)+'px"></span></td>'
-      +suiteKeys.map(k=>{const v=(r.suites||{})[k];return v==null?'<td style="padding:7px 6px;color:var(--faint)">&ndash;</td>'
-        :'<td style="padding:7px 6px"><span class="lb-cell" style="'+m02heat(v)+'">'+v.toFixed(4)+'</span></td>';}).join('')
+      +suiteKeys.map(k=>{const v=(r.suites||{})[k];const hot=(sk===k)?';outline:1px solid rgba(139,92,246,.55)':'';
+        return v==null?'<td style="padding:7px 6px;color:var(--faint)">&ndash;</td>'
+        :'<td style="padding:7px 6px"><span class="lb-cell" style="'+m02heat(v)+hot+'">'+v.toFixed(4)+'</span></td>';}).join('')
       +'<td style="padding:7px 6px;color:var(--faint)">'+(hasLegacy?('#'+r.board2025_rank):'new')+'</td>'
       +'<td style="padding:7px 6px">'+ds+'</td></tr>';
   }
   document.getElementById('m02-board').innerHTML=h+'</table>';
+}
+fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
+  _m02d=d;
+  document.getElementById('m02-meta').textContent =
+    (d.suite||'')+'  |  generated '+(d.generated||'')+'  |  '+(d.results||[]).length+' models'
+    +'  |  click a score column to re-order';
+  renderM02();
 }).catch(()=>{document.getElementById('m02-meta').textContent='Marathon #02 data not available yet.';});
 fetch('data/leaderboard.json').then(r=>r.json()).then(d=>{
   const meta=document.getElementById('lb-meta'), host=document.getElementById('lb-board');
