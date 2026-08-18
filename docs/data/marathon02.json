@@ -20,7 +20,8 @@
     "ntn_bench": 0.9445,
     "netapi_bench": 0.8816,
     "aiops_bench": 0.9583,
-    "exam2026": 0.5778
+    "exam2026": 0.5778,
+    "vendor2026": 0.275
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.9778,
@@ -28,7 +29,8 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.95,
    "aiops_shuffleB": 0.9667,
-   "exam2026_judged": 0.5778
+   "exam2026_judged": 0.5778,
+   "vendor2026_judged": 0.275
   },
   {
    "rank": 2,
@@ -44,7 +46,8 @@
     "ntn_bench": 0.8889,
     "netapi_bench": 0.9079,
     "aiops_bench": 0.9667,
-    "exam2026": 0.6808
+    "exam2026": 0.6808,
+    "vendor2026": 0.4279
    },
    "ntn_shuffleA": 0.8889,
    "ntn_shuffleB": 0.8889,
@@ -52,7 +55,8 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.9667,
-   "exam2026_judged": 0.6808
+   "exam2026_judged": 0.6808,
+   "vendor2026_judged": 0.4279
   },
   {
    "rank": 3,
@@ -68,7 +72,8 @@
     "ntn_bench": 0.9445,
     "netapi_bench": 0.8421,
     "aiops_bench": 0.975,
-    "exam2026": 0.6842
+    "exam2026": 0.6842,
+    "vendor2026": 0.4208
    },
    "ntn_shuffleA": 0.9556,
    "ntn_shuffleB": 0.9333,
@@ -76,7 +81,8 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.9833,
-   "exam2026_judged": 0.6842
+   "exam2026_judged": 0.6842,
+   "vendor2026_judged": 0.4208
   },
   {
    "rank": 4,
@@ -92,7 +98,8 @@
     "ntn_bench": 0.9111,
     "netapi_bench": 0.8947,
     "aiops_bench": 0.9833,
-    "exam2026": 0.5823
+    "exam2026": 0.5823,
+    "vendor2026": 0.2875
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.9111,
@@ -100,7 +107,8 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 1.0,
    "aiops_shuffleB": 0.9667,
-   "exam2026_judged": 0.5823
+   "exam2026_judged": 0.5823,
+   "vendor2026_judged": 0.2875
   },
   {
    "rank": 5,
@@ -116,7 +124,8 @@
     "ntn_bench": 0.9,
     "netapi_bench": 0.8816,
     "aiops_bench": 0.9583,
-    "exam2026": 0.5658
+    "exam2026": 0.5658,
+    "vendor2026": 0.2656
    },
    "ntn_shuffleA": 0.8667,
    "ntn_shuffleB": 0.9333,
@@ -124,7 +133,8 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.95,
    "aiops_shuffleB": 0.9667,
-   "exam2026_judged": 0.5658
+   "exam2026_judged": 0.5658,
+   "vendor2026_judged": 0.2656
   },
   {
    "rank": 6,
@@ -140,7 +150,8 @@
     "ntn_bench": 0.9334,
     "netapi_bench": 0.8552,
     "aiops_bench": 0.95,
-    "exam2026": 0.6488
+    "exam2026": 0.6488,
+    "vendor2026": 0.3325
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.9556,
@@ -148,7 +159,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9667,
-   "exam2026_judged": 0.6488
+   "exam2026_judged": 0.6488,
+   "vendor2026_judged": 0.3325
   },
   {
    "rank": 7,
@@ -164,7 +176,8 @@
     "ntn_bench": 0.9111,
     "netapi_bench": 0.8421,
     "aiops_bench": 0.9583,
-    "exam2026": 0.5073
+    "exam2026": 0.5073,
+    "vendor2026": 0.2354
    },
    "ntn_shuffleA": 0.8889,
    "ntn_shuffleB": 0.9333,
@@ -172,7 +185,8 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.95,
-   "exam2026_judged": 0.5073
+   "exam2026_judged": 0.5073,
+   "vendor2026_judged": 0.2354
   },
   {
    "model": "llama31-nemotron-70b",
@@ -184,7 +198,8 @@
     "ntn_bench": 0.9,
     "netapi_bench": 0.8553,
     "aiops_bench": 0.9667,
-    "exam2026": 0.4678
+    "exam2026": 0.4678,
+    "vendor2026": 0.2944
    },
    "mean": 0.8969,
    "exam2026_judged": 0.4678,
@@ -196,7 +211,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.95,
    "aiops_shuffleB": 0.9833,
-   "rank": 8
+   "rank": 8,
+   "vendor2026_judged": 0.2944
   },
   {
    "rank": 9,
@@ -212,7 +228,8 @@
     "ntn_bench": 0.8889,
     "netapi_bench": 0.8816,
     "aiops_bench": 0.9833,
-    "exam2026": 0.5006
+    "exam2026": 0.5006,
+    "vendor2026": 0.2548
    },
    "ntn_shuffleA": 0.9111,
    "ntn_shuffleB": 0.8667,
@@ -220,7 +237,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 1.0,
    "aiops_shuffleB": 0.9667,
-   "exam2026_judged": 0.5006
+   "exam2026_judged": 0.5006,
+   "vendor2026_judged": 0.2548
   },
   {
    "model": "nemotron-3-5-lightning-30b",
@@ -232,7 +250,8 @@
     "ntn_bench": 0.8889,
     "netapi_bench": 0.8553,
     "aiops_bench": 0.9667,
-    "exam2026": 0.4438
+    "exam2026": 0.4438,
+    "vendor2026": 0.3088
    },
    "mean": 0.8869,
    "exam2026_judged": 0.4438,
@@ -244,7 +263,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.9667,
-   "rank": 10
+   "rank": 10,
+   "vendor2026_judged": 0.3088
   },
   {
    "model": "qwen3-5-9b-base",
@@ -256,7 +276,8 @@
     "ntn_bench": 0.8889,
     "netapi_bench": 0.8684,
     "aiops_bench": 0.975,
-    "exam2026": 0.4702
+    "exam2026": 0.4702,
+    "vendor2026": 0.2454
    },
    "mean": 0.8826,
    "exam2026_judged": 0.4702,
@@ -268,7 +289,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.9667,
-   "rank": 11
+   "rank": 11,
+   "vendor2026_judged": 0.2454
   },
   {
    "rank": 12,
@@ -284,7 +306,8 @@
     "ntn_bench": 0.8556,
     "netapi_bench": 0.8947,
     "aiops_bench": 0.9667,
-    "exam2026": 0.508
+    "exam2026": 0.508,
+    "vendor2026": 0.266
    },
    "ntn_shuffleA": 0.8444,
    "ntn_shuffleB": 0.8667,
@@ -292,7 +315,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.95,
-   "exam2026_judged": 0.508
+   "exam2026_judged": 0.508,
+   "vendor2026_judged": 0.266
   },
   {
    "model": "falcon-h1-34b",
@@ -304,7 +328,8 @@
     "ntn_bench": 0.9,
     "netapi_bench": 0.8684,
     "aiops_bench": 0.9583,
-    "exam2026": 0.4658
+    "exam2026": 0.4658,
+    "vendor2026": 0.2796
    },
    "mean": 0.8764,
    "exam2026_judged": 0.4658,
@@ -316,7 +341,8 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.95,
-   "rank": 13
+   "rank": 13,
+   "vendor2026_judged": 0.2796
   },
   {
    "model": "lfm2-5-8b-a1b",
@@ -328,7 +354,8 @@
     "ntn_bench": 0.8778,
     "netapi_bench": 0.8684,
     "aiops_bench": 0.9583,
-    "exam2026": 0.2482
+    "exam2026": 0.2482,
+    "vendor2026": 0.206
    },
    "mean": 0.8708,
    "exam2026_judged": 0.2482,
@@ -340,7 +367,8 @@
    "netapi_shuffleB": 0.9211,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.9333,
-   "rank": 14
+   "rank": 14,
+   "vendor2026_judged": 0.206
   },
   {
    "model": "synlogic-mix-3-32b",
@@ -352,7 +380,8 @@
     "ntn_bench": 0.8556,
     "netapi_bench": 0.8553,
     "aiops_bench": 0.9583,
-    "exam2026": 0.4468
+    "exam2026": 0.4468,
+    "vendor2026": 0.316
    },
    "mean": 0.8692,
    "exam2026_judged": 0.4468,
@@ -364,7 +393,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.95,
    "aiops_shuffleB": 0.9667,
-   "rank": 15
+   "rank": 15,
+   "vendor2026_judged": 0.316
   },
   {
    "model": "nemotron-cascade-2-30b",
@@ -376,7 +406,8 @@
     "ntn_bench": 0.8556,
     "netapi_bench": 0.8684,
     "aiops_bench": 0.975,
-    "exam2026": 0.3614
+    "exam2026": 0.3614,
+    "vendor2026": 0.2135
    },
    "mean": 0.867,
    "exam2026_judged": 0.3614,
@@ -388,7 +419,8 @@
    "netapi_shuffleB": 0.9211,
    "aiops_shuffleA": 0.9833,
    "aiops_shuffleB": 0.9667,
-   "rank": 16
+   "rank": 16,
+   "vendor2026_judged": 0.2135
   },
   {
    "model": "mistral-small-3-2-24b",
@@ -400,7 +432,8 @@
     "ntn_bench": 0.8333,
     "netapi_bench": 0.8684,
     "aiops_bench": 0.9667,
-    "exam2026": 0.4872
+    "exam2026": 0.4872,
+    "vendor2026": 0.2652
    },
    "mean": 0.8666,
    "exam2026_judged": 0.4872,
@@ -412,7 +445,8 @@
    "netapi_shuffleB": 0.8947,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.9667,
-   "rank": 17
+   "rank": 17,
+   "vendor2026_judged": 0.2652
   },
   {
    "rank": 18,
@@ -428,7 +462,8 @@
     "ntn_bench": 0.9222,
     "netapi_bench": 0.8421,
     "aiops_bench": 0.9333,
-    "exam2026": 0.4894
+    "exam2026": 0.4894,
+    "vendor2026": 0.2919
    },
    "ntn_shuffleA": 0.9333,
    "ntn_shuffleB": 0.9111,
@@ -436,7 +471,8 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9167,
    "aiops_shuffleB": 0.95,
-   "exam2026_judged": 0.4894
+   "exam2026_judged": 0.4894,
+   "vendor2026_judged": 0.2919
   },
   {
    "model": "glm-4-7-flash",
@@ -448,7 +484,8 @@
     "ntn_bench": 0.8333,
     "netapi_bench": 0.8289,
     "aiops_bench": 0.9583,
-    "exam2026": 0.3846
+    "exam2026": 0.3846,
+    "vendor2026": 0.2194
    },
    "mean": 0.8619,
    "exam2026_judged": 0.3846,
@@ -460,7 +497,8 @@
    "netapi_shuffleB": 0.8684,
    "aiops_shuffleA": 0.9667,
    "aiops_shuffleB": 0.95,
-   "rank": 19
+   "rank": 19,
+   "vendor2026_judged": 0.2194
   },
   {
    "model": "lfm2-5-vl-3b",
@@ -472,7 +510,8 @@
     "ntn_bench": 0.8,
     "netapi_bench": 0.8158,
     "aiops_bench": 0.9583,
-    "exam2026": 0.1718
+    "exam2026": 0.1718,
+    "vendor2026": 0.1996
    },
    "mean": 0.8407,
    "exam2026_judged": 0.1718,
@@ -484,7 +523,8 @@
    "netapi_shuffleB": 0.8421,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 20
+   "rank": 20,
+   "vendor2026_judged": 0.1996
   },
   {
    "model": "lfm2-5-2-6b-base",
@@ -496,7 +536,8 @@
     "ntn_bench": 0.8111,
     "netapi_bench": 0.7763,
     "aiops_bench": 0.9583,
-    "exam2026": 0.2096
+    "exam2026": 0.2096,
+    "vendor2026": 0.155
    },
    "mean": 0.8336,
    "exam2026_judged": 0.2096,
@@ -508,7 +549,8 @@
    "netapi_shuffleB": 0.7632,
    "aiops_shuffleA": 0.9333,
    "aiops_shuffleB": 0.9833,
-   "rank": 21
+   "rank": 21,
+   "vendor2026_judged": 0.155
   }
  ],
  "suite_names": {
@@ -516,7 +558,8 @@
   "ntn_bench": "NTN-Bench",
   "netapi_bench": "NetAPI-Bench",
   "aiops_bench": "AIOps-Bench",
-  "exam2026": "Exam-2026 \u00b7 judged"
+  "exam2026": "Exam-2026 \u00b7 judged",
+  "vendor2026": "Vendor-2026 \u00b7 judged"
  },
- "scoring": "Per AUTO-SCORED suite: mean of two fixed answer-shuffles (greedy, temp 0); Score = equal-weight mean across the four auto-scored suites. Exam-2026 column: LLM-as-judge (gpt-5.6-sol) 0-10 grading vs worked references, points-weighted; informational until the judged track completes."
+ "scoring": "Per AUTO-SCORED suite: mean of two fixed answer-shuffles (greedy, temp 0); Score = equal-weight mean across the four auto-scored suites. Judged columns (Exam-2026, Vendor-2026): LLM-as-judge (gpt-5.6-sol) grading - exam vs worked references (points-weighted), vendor vs anchored rubric (accuracy/completeness/depth/honesty 0.40/0.20/0.15/0.25); informational, not in Score."
 }

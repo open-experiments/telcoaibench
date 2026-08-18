@@ -27,6 +27,34 @@ baits and rubric weights; five honesty traps (M-E, S-E, R-E, S-F, R-F) reward st
 that a vendor does not play in a domain. Source of truth:
 [`vendor-genai-2026.md`](vendor-genai-2026.md).
 
+### 2026-expansion marathon results (judge: gpt-5.6-sol, 2026-08-18)
+
+| # | Model | Score |
+|---|---|---|
+| 1 | gemma4-31b-it-base | **0.4279** |
+| 2 | muse-glimmer-30b | **0.4208** |
+| 3 | otel2-llm-31b-it | **0.3325** |
+| 4 | synlogic-mix-3-32b | **0.3160** |
+| 5 | nemotron-3-5-lightning-30b | **0.3088** |
+| 6 | llama31-nemotron-70b | **0.2944** |
+| 7 | nemotron-3-super-120b | **0.2919** |
+| 8 | qwen3-8-27b | **0.2875** |
+| 9 | falcon-h1-34b | **0.2796** |
+| 10 | qwen3-6-35b-a3b | **0.2750** |
+| 11 | qwq-32b | **0.2660** |
+| 12 | telecomgpt-r1 | **0.2656** |
+| 13 | mistral-small-3-2-24b | **0.2652** |
+| 14 | seed-oss-36b | **0.2548** |
+| 15 | qwen3-5-9b-base | **0.2454** |
+| 16 | gpt-oss-120b | **0.2354** |
+| 17 | glm-4-7-flash | **0.2194** |
+| 18 | nemotron-cascade-2-30b | **0.2135** |
+| 19 | lfm2-5-8b-a1b | **0.2060** |
+| 20 | lfm2-5-vl-3b | **0.1996** |
+| 21 | lfm2-5-2-6b-base | **0.1550** |
+
+All 21 board models, 24 cells each, zero judge errors. The honesty-weighted rubric compresses scores hard: no model exceeds 0.43 - fabricated product names and invented market claims dominate the losses, and the five honesty traps reward the rare model that states a vendor does not play in a domain.
+
 ## Layout
 
 ```
