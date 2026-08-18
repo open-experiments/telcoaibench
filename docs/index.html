@@ -114,14 +114,14 @@
     <a class="btn ghost" href="https://github.com/open-experiments/telcoaibench#readme">Read the Docs</a>
   </div>
   <div class="pills">
-    <span class="pill"><b>10</b> telco benchmarks</span>
+    <span class="pill"><b>16</b> telco benchmarks - two tracks</span>
     <span class="pill">LLM-as-judge suites</span>
     <span class="pill">Per-question failure reports</span>
     <span class="pill">Parity-validated scoring</span>
     <span class="pill">Any OpenAI-compatible endpoint</span>
     <span class="pill">MIT licensed</span>
   </div>
-  <div class="shot"><img src="assets/tab-benchmark-done.png" alt="Two models benchmarked side by side with judged scores"/></div>
+  <div class="shot"><img src="assets/tab-benchmark-2026.png" alt="Two-track Benchmark tab - Legacy Test Benchmarks and 2026 Test Suite, two live models"/></div>
 </header>
 
 <section id="why">
@@ -149,7 +149,7 @@
 <section id="portal">
   <div class="wrap">
     <h2>The <span>Portal</span></h2>
-    <p class="sub">One Benchmark Portal, four tabs: Chat, Prompt Manager, Observability, Benchmark.</p>
+    <p class="sub">One Benchmark Portal, seven tabs: Models, Chat, Prompt Manager, Observability, Benchmark, Leaderboard, Tenants.</p>
 
     <div class="feature">
       <div>
@@ -164,6 +164,22 @@
       <div>
         <h3>Live observability</h3>
         <p>The dashboard polls the model server's metrics endpoint directly: request rates, latency, token throughput, cache utilization, health, and efficiency analysis - with Plotly visualizations and automated collection.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div>
+        <h3>Multi-tenant quotas</h3>
+        <p>Admins create tenant accounts scoped to allowed local models, with lifetime token quotas (prompt + completion) and benchmark attempt quotas for the AUTO-SCORED suites. Each local model carries its own GPU token pool; tenant traffic charges both, and external AIaaS endpoints stay admin-only.</p>
+      </div>
+      <img src="assets/tab-tenants.png" alt="Tenants tab - accounts, quotas and model pools"/>
+    </div>
+
+    <div class="feature">
+      <img src="assets/tab-obs-quota.png" alt="Per-tenant token usage build-up in Observability"/>
+      <div>
+        <h3>Per-tenant usage build-up</h3>
+        <p>The Observability tab's quota panel tracks every tenant's token build-up across chat and benchmark traffic - next to the live vLLM metrics of every registered endpoint, side by side.</p>
       </div>
     </div>
   </div>
@@ -216,9 +232,9 @@
       .lb-tabbtn.active{color:var(--txt);border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan) inset}
       .m02-bar{display:inline-block;height:8px;border-radius:4px;background:linear-gradient(90deg,#22D3EE,#67E8F9);vertical-align:middle}
     </style>
-    <div class="card" id="m02-card" style="display:none;padding:22px">
+    <div class="card" id="m02-card" style="display:none;padding:22px;width:min(1280px,96vw);position:relative;left:50%;transform:translateX(-50%)">
       <div id="m02-meta" style="color:var(--faint);font-size:13px;margin-bottom:14px"></div>
-      <div id="m02-board"></div>
+      <div id="m02-board" style="overflow-x:auto"></div>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.7">
         <b style="color:var(--dim)">What this measures.</b> AUTO-SCORED functional knowhow for operational
         telco AI: <b>Rel19-Bench</b> (52q &mdash; Rel-18/19 &amp; 6G readiness), <b>NTN-Bench</b> (45q &mdash;
@@ -349,15 +365,15 @@ fetch('data/marathon02.json').then(r=>r.json()).then(d=>{
             :delta<0?'<span style="color:var(--amber)">&#9660; '+(-delta)+'</span>'
             :'<span style="color:var(--faint)">&ndash;</span>';
     h+='<tr style="border-top:1px solid var(--line)">'
-      +'<td style="padding:7px 8px;color:var(--dim)">'+r.rank+'</td>'
-      +'<td style="padding:7px 8px;color:var(--txt);white-space:nowrap"><b>'+r.model+'</b></td>'
-      +'<td style="padding:7px 8px;color:var(--dim);white-space:nowrap">'+(r.origin_flag||'')+' '+(r.origin||'')+'</td>'
-      +'<td style="padding:7px 8px;font-variant-numeric:tabular-nums"><b>'+r.mean.toFixed(4)+'</b></td>'
-      +'<td style="padding:7px 8px"><span class="m02-bar" style="width:'+Math.round(18+(m02mx>m02mn?(r.mean-m02mn)/(m02mx-m02mn):1)*102)+'px"></span></td>'
-      +suiteKeys.map(k=>{const v=(r.suites||{})[k];return v==null?'<td style="padding:7px 8px;color:var(--faint)">&ndash;</td>'
-        :'<td style="padding:7px 8px"><span class="lb-cell" style="'+m02heat(v)+'">'+v.toFixed(4)+'</span></td>';}).join('')
-      +'<td style="padding:7px 8px;color:var(--faint)">'+(hasLegacy?('#'+r.board2025_rank):'new')+'</td>'
-      +'<td style="padding:7px 8px">'+ds+'</td></tr>';
+      +'<td style="padding:7px 6px;color:var(--dim)">'+r.rank+'</td>'
+      +'<td style="padding:7px 6px;color:var(--txt);white-space:nowrap"><b>'+r.model+'</b></td>'
+      +'<td style="padding:7px 6px;color:var(--dim);white-space:nowrap">'+(r.origin_flag||'')+' '+(r.origin||'')+'</td>'
+      +'<td style="padding:7px 6px;font-variant-numeric:tabular-nums"><b>'+r.mean.toFixed(4)+'</b></td>'
+      +'<td style="padding:7px 6px"><span class="m02-bar" style="width:'+Math.round(18+(m02mx>m02mn?(r.mean-m02mn)/(m02mx-m02mn):1)*102)+'px"></span></td>'
+      +suiteKeys.map(k=>{const v=(r.suites||{})[k];return v==null?'<td style="padding:7px 6px;color:var(--faint)">&ndash;</td>'
+        :'<td style="padding:7px 6px"><span class="lb-cell" style="'+m02heat(v)+'">'+v.toFixed(4)+'</span></td>';}).join('')
+      +'<td style="padding:7px 6px;color:var(--faint)">'+(hasLegacy?('#'+r.board2025_rank):'new')+'</td>'
+      +'<td style="padding:7px 6px">'+ds+'</td></tr>';
   }
   document.getElementById('m02-board').innerHTML=h+'</table>';
 }).catch(()=>{document.getElementById('m02-meta').textContent='Marathon #02 data not available yet.';});

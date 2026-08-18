@@ -12,7 +12,7 @@
 
 <img src="docs/assets/icons/icon-portal.svg" width="18" align="top"/> [Landing Page](https://open-experiments.github.io/telcoaibench/) &nbsp;|&nbsp; <img src="docs/assets/icons/icon-article.svg" width="18" align="top"/> [Article](https://medium.com/open-5g-hypercore/episode-xxix-the-prompt-engineering-how-to-make-a-toddler-act-talk-nice-83e9aab2e3b9) &nbsp;|&nbsp; <img src="docs/assets/icons/icon-suite.svg" width="18" align="top"/> [Benchmark Suites](benchmarks/README.md) &nbsp;|&nbsp; <img src="docs/assets/icons/icon-report.svg" width="18" align="top"/> [Verification Report](benchmarks/open-telco/reference/)
 
-<img src="docs/assets/tab-benchmark-done.png" alt="Benchmark tab - live results" width="920"/>
+<img src="docs/assets/tab-benchmark-2026.png" alt="Two-track Benchmark tab - Legacy Test Benchmarks and 2026 Test Suite" width="920"/>
 
 </div>
 
@@ -98,6 +98,21 @@ latency, token throughput, cache utilization, health, efficiency analysis,
 and diagnostics - with Plotly visualizations.
 </details>
 
+<details>
+<summary><img src="docs/assets/icons/icon-observe.svg" width="20" align="top"/> <b>Tenants - multi-tenant quotas</b></summary>
+<br/>
+
+![Tenants tab](docs/assets/tab-tenants.png)
+
+Admin-managed tenant accounts scoped to allowed local models: lifetime token
+quotas (prompt + completion), benchmark attempt quotas (AUTO-SCORED suites
+only - judged suites and external AIaaS endpoints stay admin-only), and
+per-model GPU token pools. The admin password is changeable from the same
+tab. The Observability tab tracks every tenant's token build-up live:
+
+![Per-tenant usage build-up](docs/assets/tab-obs-quota.png)
+</details>
+
 <details open>
 <summary><img src="docs/assets/icons/icon-bench.svg" width="20" align="top"/> <b>Benchmark - leaderboard-grade evals, one click</b></summary>
 <br/>
@@ -155,6 +170,8 @@ renders the public board from the versioned snapshot.
 </details>
 
 ## Benchmark Suites
+
+<img src="docs/assets/board-2026.png" alt="2026 Test Suite board - 21 models" width="920"/>
 
 All benchmark assets live under [`benchmarks/`](benchmarks/README.md):
 
